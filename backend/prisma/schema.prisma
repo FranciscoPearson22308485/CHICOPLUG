@@ -1,0 +1,476 @@
+// CHICOPLUG — modelo de dados da loja.
+//
+// Convenção monetária: todos os valores são inteiros em Kwanzas (Kz), sem casas
+// decimais. O frontend formata com `Intl.NumberFormat("pt-AO")` e
+// `maximumFractionDigits: 0`, por isso guardar cêntimos só criaria divergência.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+/// Ciclo de vida da encomenda, exactamente como especificado.
+enum OrderStatus {
+  NOVA
+  CONFIRMADA
+  EM_PREPARACAO
+  ENVIADA
+  ENTREGUE
+  CANCELADA
+}
+
+/// Estados de pagamento, exactamente como especificado.
+enum PaymentStatus {
+  PENDENTE
+  PAGO
+  CANCELADO
+  FALHADO
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+/// Distintivos apresentados no ProductCard. Espelha o tipo `badge` do frontend.
+enum ProductBadge {
+  NOVO
+  DROP
+  ESGOTADO
+  ULTIMAS_UNIDADES
+}
+
+// ─── Utilizadores e autenticação ──────────────────────────────────────────────
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  role         Role    @default(USER)
+
+  /// Preferência do toggle "Notificações de drops" na área de cliente.
+  marketingOptIn Boolean @default(true)
+  active         Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses     Address[]
+  orders        Order[]
+  cart          Cart?
+  wishlist      WishlistItem[]
+  refreshTokens RefreshToken[]
+  passwordResets PasswordResetToken[]
+  orderEvents   OrderEvent[]
+
+  @@index([role])
+  @@map("users")
+}
+
+/// Refresh tokens rotativos. Guardamos apenas o hash SHA-256: uma fuga da base
+/// de dados não permite personificar ninguém.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  /// Preenchido quando o token é rodado, para detectar reutilização de tokens roubados.
+  replacedByHash String?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ─── Catálogo ─────────────────────────────────────────────────────────────────
+
+model Category {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String  @unique
+  description String?
+  position    Int     @default(0)
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([active, position])
+  @@map("categories")
+}
+
+model Collection {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  season      String
+  description String?
+  imageUrl    String?
+  imagePublicId String?
+  position    Int     @default(0)
+  active      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([active, position])
+  @@map("collections")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  /// Lista de bullet points apresentada no acordeão "Detalhes".
+  details     String[] @default([])
+
+  price     Int
+  compareAt Int?
+
+  categoryId   String
+  category     Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+
+  badge      ProductBadge?
+  isNew      Boolean       @default(false)
+  isDrop     Boolean       @default(false)
+  bestSeller Boolean       @default(false)
+  active     Boolean       @default(true)
+
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images   ProductImage[]
+  variants ProductVariant[]
+  wishedBy WishlistItem[]
+
+  @@index([active, createdAt])
+  @@index([categoryId])
+  @@index([collectionId])
+  @@index([price])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  /// `public_id` do Cloudinary — necessário para apagar o ficheiro remoto.
+  publicId  String?
+  alt       String?
+  position  Int     @default(0)
+  width     Int?
+  height    Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([productId, position])
+  @@map("product_images")
+}
+
+/// Uma variante é a combinação tamanho + cor. É aqui que vive o stock real:
+/// o "stock" agregado que o frontend mostra é a soma das variantes activas.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  size      String
+  colorName String
+  colorHex  String
+
+  sku   String @unique
+  stock Int    @default(0)
+  /// Abaixo deste valor a variante entra nos alertas de stock baixo.
+  lowStockThreshold Int @default(6)
+  /// Sobrepõe o preço do produto quando definido (ex.: tamanhos especiais).
+  priceOverride Int?
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@unique([productId, size, colorName])
+  @@index([productId])
+  @@index([stock])
+  @@map("product_variants")
+}
+
+// ─── Carrinho e favoritos ─────────────────────────────────────────────────────
+
+/// Carrinho persistente. Pertence a um utilizador autenticado OU a uma sessão
+/// anónima (cookie `cp_cart`); ao entrar na conta os dois são fundidos.
+model Cart {
+  id        String  @id @default(cuid())
+  userId    String? @unique
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int            @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlist_items")
+}
+
+// ─── Endereços ────────────────────────────────────────────────────────────────
+
+model Address {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label         String
+  recipientName String
+  phone         String
+  province      String
+  municipality  String
+  street        String
+  notes         String?
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ─── Encomendas ───────────────────────────────────────────────────────────────
+
+model Order {
+  /// Referência legível apresentada ao cliente, ex.: "CP-2044".
+  reference String @unique
+  id        String @id @default(cuid())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// Dados de contacto copiados no momento da compra — sobrevivem à remoção da conta.
+  customerName String
+  email        String
+  phone        String
+
+  status OrderStatus @default(NOVA)
+
+  subtotal Int
+  shipping Int
+  discount Int @default(0)
+  total    Int
+
+  shippingProvince     String
+  shippingMunicipality String
+  shippingStreet       String
+  shippingNotes        String?
+
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  /// Marcado quando o stock é devolvido ao inventário, para evitar dupla reposição.
+  stockRestored Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items    OrderItem[]
+  payments Payment[]
+  events   OrderEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+/// Instantâneo do produto no momento da compra. Guardamos nome, preço e imagem
+/// desnormalizados para que o histórico não mude se o catálogo for editado.
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  productName String
+  productSlug String
+  imageUrl    String?
+  size        String
+  colorName   String
+  sku         String?
+
+  unitPrice Int
+  quantity  Int
+  lineTotal Int
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// Trilho de auditoria das transições de estado.
+model OrderEvent {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
+}
+
+// ─── Pagamentos ───────────────────────────────────────────────────────────────
+
+model Payment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// "multicaixa" | "mock". Deixado como String para admitir novos provedores
+  /// sem migração de enum.
+  provider String
+  status   PaymentStatus @default(PENDENTE)
+
+  amount   Int
+  currency String @default("AOA")
+
+  /// Referência que enviamos ao provedor (idempotente por tentativa).
+  reference String @unique
+  /// Identificador devolvido pelo provedor (token / id de transacção EMIS).
+  providerRef String?
+
+  /// Última resposta bruta do provedor — indispensável para reconciliação.
+  rawPayload Json?
+
+  failureReason String?
+  paidAt        DateTime?
+  expiresAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@index([providerRef])
+  @@map("payments")
+}
+
+// ─── Cupões ───────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id    String     @id @default(cuid())
+  code  String     @unique
+  type  CouponType
+  /// Percentagem (1–100) quando `type = PERCENT`; Kwanzas quando `FIXED`.
+  value Int
+
+  minSubtotal    Int?
+  maxRedemptions Int?
+  timesRedeemed  Int  @default(0)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+  active   Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([active])
+  @@map("coupons")
+}
+
+// ─── Definições da loja ───────────────────────────────────────────────────────
+
+/// Suporta o ecrã /admin/configuracoes sem exigir migração por cada toggle novo.
+model StoreSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("store_settings")
+}

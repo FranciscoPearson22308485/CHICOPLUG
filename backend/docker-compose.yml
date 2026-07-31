@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chicoplug-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chicoplug
+      POSTGRES_PASSWORD: chicoplug
+      POSTGRES_DB: chicoplug
+    ports:
+      - "5433:5432"
+    volumes:
+      - chicoplug-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chicoplug -d chicoplug"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Base de dados isolada para a suite de testes de integração.
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: chicoplug-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chicoplug
+      POSTGRES_PASSWORD: chicoplug
+      POSTGRES_DB: chicoplug_test
+    ports:
+      - "5434:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chicoplug -d chicoplug_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  chicoplug-pgdata:

@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.output/
+.nitro/
+.tanstack/
+.vinxi/
+build/
+
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Uploads locais (fallback quando o Cloudinary não está configurado).
+backend/uploads/
+
+*.log
+npm-debug.log*
+coverage/
+.vitest/
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
