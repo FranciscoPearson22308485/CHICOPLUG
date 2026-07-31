@@ -34,6 +34,8 @@ export type SerializedVariant = {
   stock: number;
   price: number;
   lowStock: boolean;
+  /** Limiar de alerta, necessário para o formulário do admin o poder editar. */
+  lowStockThreshold: number;
   active: boolean;
 };
 
@@ -54,7 +56,16 @@ export type SerializedProduct = {
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   images: string[];
+  /** Rótulo apresentado na UI, já acentuado (ex.: "ÚLTIMAS UNIDADES"). */
   badge?: string;
+  /**
+   * Chave original do enum (ex.: "ULTIMAS_UNIDADES"), ou `null`.
+   *
+   * O `badge` acima é para mostrar; este é para editar. Sem ele, o formulário
+   * do admin não conseguiria repor o valor guardado e gravaria `null` por
+   * omissão — apagando o distintivo em cada edição.
+   */
+  badgeKey: string | null;
   stock: number;
   isNew?: boolean;
   isDrop?: boolean;
@@ -82,6 +93,7 @@ export function serializeVariant(variant: ProductVariant, productPrice: number):
     stock: variant.stock,
     price: variant.priceOverride ?? productPrice,
     lowStock: variant.stock > 0 && variant.stock <= variant.lowStockThreshold,
+    lowStockThreshold: variant.lowStockThreshold,
     active: variant.active,
   };
 }
@@ -123,6 +135,7 @@ export function serializeProduct(product: ProductWithRelations): SerializedProdu
     sizes,
     images,
     ...(badge ? { badge } : {}),
+    badgeKey: product.badge,
     stock,
     ...(product.isNew ? { isNew: true } : {}),
     ...(product.isDrop ? { isDrop: true } : {}),

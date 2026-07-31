@@ -26,6 +26,7 @@ export type ProductVariant = {
   stock: number;
   price: number;
   lowStock: boolean;
+  lowStockThreshold?: number;
   active: boolean;
 };
 
@@ -46,6 +47,8 @@ export type Product = {
   sizes: string[];
   images: string[];
   badge?: string;
+  /** Chave do enum, para o formulário do admin poder repor o valor. */
+  badgeKey: string | null;
   stock: number;
   isNew?: boolean;
   isDrop?: boolean;

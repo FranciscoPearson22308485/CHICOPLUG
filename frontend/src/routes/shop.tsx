@@ -17,11 +17,29 @@ const FALLBACK_FACETS: Facets = {
   priceRange: { min: 20000, max: 150000 },
 };
 
+type ShopSearch = { search?: string };
+
 export const Route = createFileRoute("/shop")({
+  /**
+   * A pesquisa vive no URL, não em estado local: é o que permite partilhar
+   * `/shop?search=hoodie`, usar o botão "voltar" do browser e renderizar o
+   * resultado já no servidor.
+   */
+  validateSearch: (input: Record<string, unknown>): ShopSearch => {
+    const term = typeof input["search"] === "string" ? input["search"].trim() : "";
+    return term ? { search: term.slice(0, 120) } : {};
+  },
+
+  loaderDeps: ({ search }) => ({ search: search.search }),
+
   // Primeira página renderizada no servidor — indexável e sem salto visual.
-  loader: async (): Promise<ProductListResponse | null> => {
+  loader: async ({ deps }): Promise<ProductListResponse | null> => {
     try {
-      return await catalogApi.products({ sort: "novidades", pageSize: 24 });
+      return await catalogApi.products({
+        ...(deps.search ? { search: deps.search } : {}),
+        sort: "novidades",
+        pageSize: 24,
+      });
     } catch (error) {
       console.error("Falha ao carregar o catálogo", error);
       return null;
@@ -50,6 +68,8 @@ const SORTS = [
 
 function Shop() {
   const initial = Route.useLoaderData() as ProductListResponse | null;
+  const { search: term } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const facets = initial?.facets ?? FALLBACK_FACETS;
   const priceCeiling = facets.priceRange.max || 150000;
 
@@ -73,6 +93,7 @@ function Shop() {
   // catálogo inteiro, e assim a grelha não fica limitada à página já carregada.
   const params = useMemo(
     () => ({
+      ...(term ? { search: term } : {}),
       category: cats,
       size: sizes,
       color: colors,
@@ -80,7 +101,7 @@ function Shop() {
       sort: sort as "novidades" | "preco-asc" | "preco-desc" | "nome",
       pageSize: 24,
     }),
-    [cats, sizes, colors, max, sort, priceCeiling],
+    [term, cats, sizes, colors, max, sort, priceCeiling],
   );
 
   const { data, isFetching } = useQuery({
@@ -168,8 +189,22 @@ function Shop() {
     <div className="pb-28 pt-14 md:pt-20">
       <div className="shell">
         <Reveal>
-          <p className="eyebrow">Todas as peças</p>
+          <p className="eyebrow">{term ? "Resultados da pesquisa" : "Todas as peças"}</p>
           <h1 className="mt-5 text-6xl sm:text-7xl xl:text-8xl">Shop</h1>
+          {term && (
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <span className="inline-flex items-center gap-3 border border-foreground px-4 py-2 text-[11px] uppercase tracking-[0.16em]">
+                {term}
+                <button
+                  aria-label="Limpar pesquisa"
+                  onClick={() => void navigate({ search: {} })}
+                  className="transition-opacity hover:opacity-60"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
+            </div>
+          )}
         </Reveal>
 
         <div className="mt-14 grid gap-3 border-y border-border py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">

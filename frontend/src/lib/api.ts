@@ -66,8 +66,29 @@ export type RequestOptions = {
   signal?: AbortSignal | undefined;
 };
 
+/**
+ * Garante que existe cookie CSRF antes de uma mutação.
+ *
+ * O backend emite o cookie em qualquer pedido a /api, e normalmente já existe
+ * quando o utilizador submete algo (o AuthProvider faz `GET /api/auth/me` ao
+ * arrancar). Mas se a primeira acção da sessão for uma submissão — separador
+ * restaurado, navegação directa para /entrar com JS já hidratado — o cookie
+ * ainda não existe e o pedido levaria 403. Este pedido de aquecimento fecha
+ * essa janela sem o utilizador dar por nada.
+ */
+async function ensureCsrfCookie(): Promise<void> {
+  if (isServer || csrfToken()) return;
+  try {
+    await fetch(`${baseUrl()}/api/health`, { credentials: "include" });
+  } catch {
+    // Sem rede o pedido seguinte falha de qualquer forma, com melhor mensagem.
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, headers = {}, signal } = options;
+
+  if (method !== "GET") await ensureCsrfCookie();
 
   const finalHeaders: Record<string, string> = { ...headers };
 

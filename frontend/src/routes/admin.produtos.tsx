@@ -114,7 +114,8 @@ function AdminProdutos() {
       compareAt: product.compareAt ?? null,
       categoryId: categories.find((c) => c.name === product.category)?.id ?? "",
       collectionId: collections.find((c) => c.slug === product.collectionSlug)?.id ?? null,
-      badge: null,
+      // `badgeKey` é a chave do enum; `badge` é só o rótulo apresentado.
+      badge: (product.badgeKey as ProductInput["badge"]) ?? null,
       isNew: Boolean(product.isNew),
       isDrop: Boolean(product.isDrop),
       bestSeller: Boolean(product.bestSeller),
@@ -128,7 +129,7 @@ function AdminProdutos() {
         colorName: v.colorName,
         colorHex: v.colorHex,
         stock: v.stock,
-        lowStockThreshold: 6,
+        lowStockThreshold: v.lowStockThreshold ?? 6,
         active: v.active,
       })),
     });
