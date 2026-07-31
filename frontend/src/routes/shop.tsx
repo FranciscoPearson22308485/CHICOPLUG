@@ -1,14 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, X } from "lucide-react";
-import { CATEGORIES, COLORS, PRODUCTS, SIZES, formatKz } from "@/lib/catalog";
+import { CATEGORIES, COLORS, SIZES, formatKz, type Facets, type Product } from "@/lib/catalog";
+import { catalogApi, type ProductListResponse } from "@/lib/queries";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
-import { EmptyState } from "@/components/site/Primitives";
+import { EmptyState, ProductSkeleton } from "@/components/site/Primitives";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
+const FALLBACK_FACETS: Facets = {
+  categories: [...CATEGORIES],
+  sizes: [...SIZES],
+  colors: COLORS,
+  priceRange: { min: 20000, max: 150000 },
+};
+
 export const Route = createFileRoute("/shop")({
+  // Primeira página renderizada no servidor — indexável e sem salto visual.
+  loader: async (): Promise<ProductListResponse | null> => {
+    try {
+      return await catalogApi.products({ sort: "novidades", pageSize: 24 });
+    } catch (error) {
+      console.error("Falha ao carregar o catálogo", error);
+      return null;
+    }
+  },
   head: () => ({
     meta: [
       { title: "Shop — CHICOPLUG Streetwear" },
@@ -31,46 +49,64 @@ const SORTS = [
 ] as const;
 
 function Shop() {
+  const initial = Route.useLoaderData() as ProductListResponse | null;
+  const facets = initial?.facets ?? FALLBACK_FACETS;
+  const priceCeiling = facets.priceRange.max || 150000;
+
   const [cats, setCats] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
-  const [max, setMax] = useState(150000);
+  const [max, setMax] = useState(priceCeiling);
   const [sort, setSort] = useState<string>("novidades");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // O tecto do slider só é conhecido depois de a API responder; sem isto o
+  // valor inicial ficaria preso no fallback e esconderia as peças mais caras.
+  useEffect(() => {
+    setMax((current) => (current === 150000 ? priceCeiling : current));
+  }, [priceCeiling]);
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
-  const results = useMemo(() => {
-    const filtered = PRODUCTS.filter(
-      (p) =>
-        (cats.length === 0 || cats.includes(p.category)) &&
-        (sizes.length === 0 || p.sizes.some((s) => sizes.includes(s))) &&
-        (colors.length === 0 || p.colors.some((c) => colors.includes(c.name))) &&
-        p.price <= max,
-    );
-    const sorted = [...filtered];
-    if (sort === "preco-asc") sorted.sort((a, b) => a.price - b.price);
-    if (sort === "preco-desc") sorted.sort((a, b) => b.price - a.price);
-    if (sort === "nome") sorted.sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "novidades") sorted.sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew));
-    return sorted;
-  }, [cats, sizes, colors, max, sort]);
+  // A filtragem passa a ser feita pelo servidor: é o único sítio que conhece o
+  // catálogo inteiro, e assim a grelha não fica limitada à página já carregada.
+  const params = useMemo(
+    () => ({
+      category: cats,
+      size: sizes,
+      color: colors,
+      maxPrice: max < priceCeiling ? max : undefined,
+      sort: sort as "novidades" | "preco-asc" | "preco-desc" | "nome",
+      pageSize: 24,
+    }),
+    [cats, sizes, colors, max, sort, priceCeiling],
+  );
 
-  const activeCount = cats.length + sizes.length + colors.length + (max < 150000 ? 1 : 0);
+  const { data, isFetching } = useQuery({
+    queryKey: ["produtos", params],
+    queryFn: () => catalogApi.products(params),
+    ...(initial ? { initialData: initial } : {}),
+    // Mantém a grelha anterior visível enquanto a nova chega, em vez de
+    // colapsar para vazio a cada clique num filtro.
+    placeholderData: keepPreviousData,
+  });
+
+  const results: Product[] = data?.products ?? [];
+  const activeCount = cats.length + sizes.length + colors.length + (max < priceCeiling ? 1 : 0);
 
   const clearAll = () => {
     setCats([]);
     setSizes([]);
     setColors([]);
-    setMax(150000);
+    setMax(priceCeiling);
   };
 
   const filterPanel = (
     <div className="space-y-10">
       <FilterGroup title="Categoria">
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
+          {facets.categories.map((c) => (
             <Chip key={c} active={cats.includes(c)} onClick={() => toggle(cats, setCats, c)}>
               {c}
             </Chip>
@@ -80,7 +116,7 @@ function Shop() {
 
       <FilterGroup title="Tamanho">
         <div className="flex flex-wrap gap-2">
-          {SIZES.map((s) => (
+          {facets.sizes.map((s) => (
             <Chip key={s} active={sizes.includes(s)} onClick={() => toggle(sizes, setSizes, s)}>
               {s}
             </Chip>
@@ -90,7 +126,7 @@ function Shop() {
 
       <FilterGroup title="Cor">
         <div className="flex flex-wrap gap-3">
-          {COLORS.map((c) => (
+          {facets.colors.map((c) => (
             <button
               key={c.name}
               type="button"
@@ -110,9 +146,9 @@ function Shop() {
       <FilterGroup title={`Preço até ${formatKz(max)}`}>
         <Slider
           value={[max]}
-          onValueChange={([v]) => setMax(v ?? 150000)}
-          min={20000}
-          max={150000}
+          onValueChange={([v]) => setMax(v ?? priceCeiling)}
+          min={facets.priceRange.min}
+          max={priceCeiling}
           step={2000}
         />
       </FilterGroup>
@@ -146,7 +182,7 @@ function Shop() {
               Filtros{activeCount > 0 ? ` (${activeCount})` : ""}
             </button>
             <p className="truncate text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              {results.length} peças
+              {data?.total ?? results.length} peças
             </p>
           </div>
           <div className="no-scrollbar -mx-1 flex items-center gap-5 overflow-x-auto px-1 sm:mx-0 sm:shrink-0 sm:px-0">
@@ -173,7 +209,13 @@ function Shop() {
           </aside>
 
           <div>
-            {results.length === 0 ? (
+            {isFetching && results.length === 0 ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-3 md:gap-x-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ProductSkeleton key={i} />
+                ))}
+              </div>
+            ) : results.length === 0 ? (
               <EmptyState
                 title="Nada encontrado"
                 description="Nenhuma peça corresponde a estes filtros. Ajusta a seleção e tenta de novo."

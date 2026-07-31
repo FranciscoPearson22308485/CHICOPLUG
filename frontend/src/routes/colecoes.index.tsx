@@ -1,8 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { COLLECTIONS } from "@/lib/catalog";
+import type { Collection } from "@/lib/catalog";
+import { catalogApi } from "@/lib/queries";
 import { Reveal } from "@/components/site/Reveal";
 
 export const Route = createFileRoute("/colecoes/")({
+  loader: async (): Promise<Collection[]> => {
+    try {
+      const { collections } = await catalogApi.collections();
+      return collections;
+    } catch (error) {
+      console.error("Falha ao carregar colecções", error);
+      return [];
+    }
+  },
   head: () => ({
     meta: [
       { title: "Coleções — CHICOPLUG" },
@@ -18,6 +28,8 @@ export const Route = createFileRoute("/colecoes/")({
 });
 
 function Colecoes() {
+  const COLLECTIONS = Route.useLoaderData() as Collection[];
+
   return (
     <div className="pb-28 pt-16 md:pt-24">
       <div className="shell">

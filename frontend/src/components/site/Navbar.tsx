@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CATEGORIES, COLLECTIONS, DEMO_CART } from "@/lib/catalog";
+import { CATEGORIES } from "@/lib/catalog";
+import { catalogApi } from "@/lib/queries";
+import { useCart } from "@/context/cart";
+import { useAuth } from "@/context/auth";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV = [
@@ -16,7 +20,30 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mega, setMega] = useState(false);
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [term, setTerm] = useState("");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+
+  const { itemCount: count } = useCart();
+  const { user } = useAuth();
+
+  // Categorias e colecções reais. `staleTime` alto porque mudam com o catálogo,
+  // não com a navegação — não vale a pena refazer o pedido em cada página.
+  const { data: taxonomy } = useQuery({
+    queryKey: ["navbar-taxonomy"],
+    queryFn: async () => {
+      const [categories, collections] = await Promise.all([
+        catalogApi.categories(),
+        catalogApi.collections(),
+      ]);
+      return { categories: categories.categories, collections: collections.collections };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories = taxonomy?.categories.map((c) => c.name) ?? [...CATEGORIES];
+  const collections = taxonomy?.collections ?? [];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -28,9 +55,17 @@ export function Navbar() {
   useEffect(() => {
     setOpen(false);
     setMega(false);
+    setSearchOpen(false);
   }, [pathname]);
 
-  const count = DEMO_CART.reduce((n, l) => n + l.quantity, 0);
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const query = term.trim();
+    if (!query) return;
+    void navigate({ to: "/shop", search: { search: query } as never });
+    setSearchOpen(false);
+    setTerm("");
+  };
 
   return (
     <header
@@ -68,7 +103,7 @@ export function Navbar() {
               <div className="px-5">
                 <p className="eyebrow mb-4">Categorias</p>
                 <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((c) => (
+                  {categories.map((c) => (
                     <Link
                       key={c}
                       to="/shop"
@@ -79,7 +114,9 @@ export function Navbar() {
                   ))}
                 </div>
                 <div className="mt-10 flex flex-col gap-3 text-[11px] uppercase tracking-[0.2em]">
-                  <Link to="/conta">Área do cliente</Link>
+                  <Link to={user ? "/conta" : "/entrar"}>
+                    {user ? "Área do cliente" : "Entrar / Registar"}
+                  </Link>
                   <Link to="/faq">FAQ</Link>
                   <Link to="/admin">Admin</Link>
                 </div>
@@ -112,11 +149,23 @@ export function Navbar() {
         </Link>
 
         <div className="flex items-center gap-1 justify-self-end md:gap-3">
-          <button aria-label="Pesquisar" className="grid size-9 place-items-center">
-            <Search className="size-[18px]" />
+          <button
+            aria-label="Pesquisar"
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((v) => !v)}
+            className="grid size-9 place-items-center"
+          >
+            {searchOpen ? <X className="size-[18px]" /> : <Search className="size-[18px]" />}
           </button>
-          <Link to="/conta" aria-label="Conta" className="hidden size-9 place-items-center md:grid">
+          <Link
+            to={user ? "/conta" : "/entrar"}
+            aria-label={user ? "A minha conta" : "Entrar"}
+            className="relative hidden size-9 place-items-center md:grid"
+          >
             <User className="size-[18px]" />
+            {user && (
+              <span className="absolute bottom-1 right-1 size-1.5 rounded-full bg-brand" />
+            )}
           </Link>
           <Link to="/carrinho" aria-label="Carrinho" className="relative grid size-9 place-items-center">
             <ShoppingBag className="size-[18px]" />
@@ -129,6 +178,29 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Painel de pesquisa */}
+      {searchOpen && (
+        <div className="border-t border-border">
+          <form onSubmit={submitSearch} className="shell flex items-center gap-4 py-5">
+            <Search className="size-4 shrink-0 text-muted-foreground" />
+            <input
+              autoFocus
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              placeholder="Procurar peças, categorias…"
+              aria-label="Pesquisar no catálogo"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+            <button
+              type="submit"
+              className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+            >
+              Procurar
+            </button>
+          </form>
+        </div>
+      )}
+
       {/* Mega menu */}
       <div
         className={cn(
@@ -140,7 +212,7 @@ export function Navbar() {
           <div className="col-span-3">
             <p className="eyebrow mb-6">Categorias</p>
             <ul className="space-y-3">
-              {CATEGORIES.map((c) => (
+              {categories.map((c) => (
                 <li key={c}>
                   <Link to="/shop" className="link-underline text-sm">
                     {c}
@@ -152,7 +224,7 @@ export function Navbar() {
           <div className="col-span-3">
             <p className="eyebrow mb-6">Coleções</p>
             <ul className="space-y-3">
-              {COLLECTIONS.map((c) => (
+              {collections.map((c) => (
                 <li key={c.slug}>
                   <Link
                     to="/colecoes/$slug"
@@ -166,7 +238,7 @@ export function Navbar() {
             </ul>
           </div>
           <div className="col-span-6 grid grid-cols-2 gap-6">
-            {COLLECTIONS.slice(0, 2).map((c) => (
+            {collections.slice(0, 2).map((c) => (
               <Link
                 key={c.slug}
                 to="/colecoes/$slug"

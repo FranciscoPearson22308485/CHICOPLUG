@@ -1,14 +1,18 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { COLLECTIONS, PRODUCTS, type Collection } from "@/lib/catalog";
+import type { Collection, Product } from "@/lib/catalog";
+import { catalogApi } from "@/lib/queries";
+import { JsonLd, breadcrumbSchema, collectionSchema } from "@/lib/seo";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
 import { EmptyState } from "@/components/site/Primitives";
 
 export const Route = createFileRoute("/colecoes/$slug")({
-  loader: ({ params }): { collection: Collection } => {
-    const collection = COLLECTIONS.find((c) => c.slug === params.slug);
-    if (!collection) throw notFound();
-    return { collection };
+  loader: async ({ params }): Promise<{ collection: Collection; products: Product[] }> => {
+    try {
+      return await catalogApi.collection(params.slug);
+    } catch {
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -28,11 +32,28 @@ export const Route = createFileRoute("/colecoes/$slug")({
 });
 
 function ColecaoDetalhe() {
-  const { collection } = Route.useLoaderData() as { collection: Collection };
-  const items = PRODUCTS.filter((p) => p.collection === collection.slug);
+  const { collection, products: items } = Route.useLoaderData() as {
+    collection: Collection;
+    products: Product[];
+  };
 
   return (
     <div className="pb-28">
+      <JsonLd
+        schema={collectionSchema({
+          name: collection.name,
+          description: collection.description,
+          slug: collection.slug,
+          products: items,
+        })}
+      />
+      <JsonLd
+        schema={breadcrumbSchema([
+          { name: "Home", url: "/" },
+          { name: "Coleções", url: "/colecoes" },
+          { name: collection.name, url: `/colecoes/${collection.slug}` },
+        ])}
+      />
       <section className="relative h-[70svh] min-h-[420px] overflow-hidden bg-foreground">
         <img
           src={collection.image}

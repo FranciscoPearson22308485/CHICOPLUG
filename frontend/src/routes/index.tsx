@@ -1,12 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram } from "lucide-react";
 import hero from "@/assets/hero.jpg";
-import { COLLECTIONS, IMAGES, PRODUCTS } from "@/lib/catalog";
+import { IMAGES, type Collection, type Product } from "@/lib/catalog";
+import { catalogApi } from "@/lib/queries";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
 import { Marquee, SectionHeading, TextLink } from "@/components/site/Primitives";
 
+type HomeData = {
+  featured: Product[];
+  drops: Product[];
+  bestSellers: Product[];
+  collections: Collection[];
+};
+
+const EMPTY_HOME: HomeData = { featured: [], drops: [], bestSellers: [], collections: [] };
+
 export const Route = createFileRoute("/")({
+  // Carregado no servidor: a homepage chega ao browser já com o catálogo
+  // renderizado, que é o que os motores de busca indexam.
+  loader: async (): Promise<HomeData> => {
+    try {
+      return await catalogApi.home();
+    } catch (error) {
+      // Uma API em baixo não deve deixar a montra em branco: o resto da
+      // página (hero, marca, Instagram) continua a ter valor.
+      console.error("Falha ao carregar a homepage", error);
+      return EMPTY_HOME;
+    }
+  },
   head: () => ({
     meta: [
       { title: "CHICOPLUG — Streetwear Premium de Edição Limitada" },
@@ -26,9 +48,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const novidades = PRODUCTS.filter((p) => p.isNew);
-  const drops = PRODUCTS.filter((p) => p.isDrop);
-  const best = PRODUCTS.filter((p) => p.bestSeller);
+  const data = Route.useLoaderData() as HomeData;
+  const novidades = data.featured;
+  const drops = data.drops;
+  const best = data.bestSellers;
+  const COLLECTIONS = data.collections;
 
   return (
     <div>

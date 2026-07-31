@@ -15,6 +15,10 @@ import { Navbar } from "@/components/site/Navbar";
 import { Footer } from "@/components/site/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { useRouterState } from "@tanstack/react-router";
+import { AuthProvider } from "@/context/auth";
+import { CartProvider } from "@/context/cart";
+import { WishlistProvider } from "@/context/wishlist";
+import { JsonLd, organizationSchema, websiteSchema } from "@/lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -134,13 +138,22 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {!isAdmin && <Navbar />}
-      <main className="min-h-screen">
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </main>
-      {!isAdmin && <Footer />}
-      <Toaster />
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            {/* Dados estruturados da marca — aplicam-se a todas as páginas. */}
+            <JsonLd schema={organizationSchema()} />
+            <JsonLd schema={websiteSchema()} />
+            {!isAdmin && <Navbar />}
+            <main className="min-h-screen">
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </main>
+            {!isAdmin && <Footer />}
+            <Toaster />
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

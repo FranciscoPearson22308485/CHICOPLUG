@@ -9,9 +9,29 @@ export function AdminHeading({ title, action }: { title: string; action?: ReactN
   );
 }
 
-export function AdminButton({ children }: { children: ReactNode }) {
+/**
+ * Botão de acção do painel. As classes são exactamente as do protótipo — só
+ * acrescentámos as props que faltavam para o tornar funcional (`onClick`,
+ * `disabled`, `type`), sem mexer numa única classe de estilo.
+ */
+export function AdminButton({
+  children,
+  onClick,
+  disabled,
+  type = "button",
+}: {
+  children: ReactNode;
+  onClick?: (() => void) | undefined;
+  disabled?: boolean | undefined;
+  type?: ("button" | "submit") | undefined;
+}) {
   return (
-    <button className="bg-foreground px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="bg-foreground px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-background transition-colors hover:bg-brand hover:text-brand-foreground disabled:cursor-not-allowed disabled:opacity-60"
+    >
       {children}
     </button>
   );
@@ -24,7 +44,7 @@ export function StatCard({
 }: {
   label: string;
   value: string;
-  delta?: string;
+  delta?: string | undefined;
 }) {
   return (
     <div className="border border-border bg-background p-6">

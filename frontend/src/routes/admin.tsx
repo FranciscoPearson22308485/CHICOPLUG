@@ -9,10 +9,13 @@ import {
   Settings,
   ShoppingCart,
   Tags,
+  Ticket,
   Users,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RequireAuth } from "@/components/site/RequireAuth";
+import { useAuth } from "@/context/auth";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -34,12 +37,19 @@ const ITEMS = [
   { label: "Clientes", to: "/admin/clientes", icon: Users },
   { label: "Categorias", to: "/admin/categorias", icon: Tags },
   { label: "Stock", to: "/admin/stock", icon: Boxes },
+  { label: "Cupões", to: "/admin/cupoes", icon: Ticket },
   { label: "Relatórios", to: "/admin/relatorios", icon: BarChart3 },
   { label: "Configurações", to: "/admin/configuracoes", icon: Settings },
 ];
 
 function AdminLayout() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Iniciais do administrador com sessão, no lugar do "CP" fixo do protótipo.
+  const initials = user
+    ? `${user.firstName[0] ?? ""}${user.lastName[0] ?? ""}`.toUpperCase()
+    : "CP";
 
   return (
     <div className="flex min-h-screen w-full bg-surface">
@@ -89,14 +99,21 @@ function AdminLayout() {
             <Link to="/" className="link-underline text-[11px] uppercase tracking-[0.18em]">
               Ver loja
             </Link>
-            <div className="grid size-9 place-items-center bg-foreground text-[11px] font-semibold text-background">
-              CP
+            <div
+              title={user?.email ?? undefined}
+              className="grid size-9 place-items-center bg-foreground text-[11px] font-semibold text-background"
+            >
+              {initials}
             </div>
           </div>
         </header>
 
         <div className="min-w-0 flex-1 p-5 lg:p-10">
-          <Outlet />
+          {/* A protecção real está no backend; esta guarda evita que a UI do
+              painel chegue sequer a pintar-se para quem não é administrador. */}
+          <RequireAuth adminOnly>
+            <Outlet />
+          </RequireAuth>
         </div>
       </div>
     </div>

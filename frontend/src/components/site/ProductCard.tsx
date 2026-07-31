@@ -2,9 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { formatKz, type Product } from "@/lib/catalog";
 import { Badge } from "@/components/site/Primitives";
+import { useWishlist } from "@/context/wishlist";
+import { cn } from "@/lib/utils";
 
 export function ProductCard({ product, priority }: { product: Product; priority?: boolean }) {
   const soldOut = product.stock === 0;
+  const wishlist = useWishlist();
+  const isFavourite = wishlist.isFavourite(product.id);
 
   return (
     <article className="group relative">
@@ -69,10 +73,17 @@ export function ProductCard({ product, priority }: { product: Product; priority?
 
       <button
         type="button"
-        aria-label="Adicionar aos favoritos"
-        className="absolute right-3 top-3 grid size-9 place-items-center bg-background/85 opacity-0 transition-opacity duration-300 hover:bg-background group-hover:opacity-100 max-md:opacity-100"
+        aria-label={isFavourite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        aria-pressed={isFavourite}
+        onClick={() => void wishlist.toggle(product.id)}
+        className={cn(
+          "absolute right-3 top-3 grid size-9 place-items-center bg-background/85 transition-opacity duration-300 hover:bg-background max-md:opacity-100",
+          // Um favorito activo fica sempre visível — esconder o estado no hover
+          // faria o cliente perder a noção do que já guardou.
+          isFavourite ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+        )}
       >
-        <Heart className="size-4" />
+        <Heart className={cn("size-4 transition-colors", isFavourite && "fill-brand text-brand")} />
       </button>
     </article>
   );

@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Minus, Plus, Truck, RefreshCcw, Heart } from "lucide-react";
 import { toast } from "sonner";
-import { PRODUCTS, SIZE_GUIDE, formatKz, getProduct, type Product } from "@/lib/catalog";
+import {
+  SIZE_GUIDE,
+  availableSizesForColor,
+  findVariant,
+  formatKz,
+  type Product,
+} from "@/lib/catalog";
+import { catalogApi } from "@/lib/queries";
+import { useCart } from "@/context/cart";
+import { useWishlist } from "@/context/wishlist";
+import { JsonLd, breadcrumbSchema, productSchema } from "@/lib/seo";
 import { Reveal } from "@/components/site/Reveal";
 import { ProductCard } from "@/components/site/ProductCard";
-import { Badge, SectionHeading } from "@/components/site/Primitives";
+import { Badge, SectionHeading, Spinner } from "@/components/site/Primitives";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -22,10 +32,18 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/produto/$slug")({
-  loader: ({ params }): { product: Product } => {
-    const product = getProduct(params.slug);
-    if (!product) throw notFound();
-    return { product };
+  loader: async ({ params }): Promise<{ product: Product; related: Product[] }> => {
+    try {
+      const [{ product }, { products: related }] = await Promise.all([
+        catalogApi.product(params.slug),
+        catalogApi.related(params.slug),
+      ]);
+      return { product, related };
+    } catch {
+      // Qualquer falha na peça (inexistente, inactiva ou API em baixo) leva ao
+      // 404 do router, que já tem o tratamento visual definido.
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -47,7 +65,7 @@ export const Route = createFileRoute("/produto/$slug")({
 });
 
 function ProdutoPage() {
-  const { product } = Route.useLoaderData() as { product: Product };
+  const { product, related } = Route.useLoaderData() as { product: Product; related: Product[] };
   const [size, setSize] = useState<string | null>(null);
   const [color, setColor] = useState(product.colors[0]?.name ?? "");
   const [qty, setQty] = useState(1);
@@ -55,21 +73,55 @@ function ProdutoPage() {
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
 
-  const soldOut = product.stock === 0;
-  const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
+  const cart = useCart();
+  const wishlist = useWishlist();
 
-  const addToCart = () => {
+  const soldOut = product.stock === 0;
+
+  // A cor escolhida restringe os tamanhos disponíveis: um hoodie pode ter L em
+  // preto e estar esgotado em cinzento. Sem isto, o cliente escolheria uma
+  // combinação inexistente e só descobria ao carregar em "Adicionar".
+  const sizesInStock = useMemo(
+    () => availableSizesForColor(product, color),
+    [product, color],
+  );
+
+  const selectedVariant = findVariant(product, size, color);
+  // Enquanto não há tamanho escolhido mostramos o stock total da peça.
+  const stockForSelection = selectedVariant?.stock ?? product.stock;
+
+  const addToCart = async () => {
     if (!size) {
       toast("Escolhe um tamanho", { description: "Seleciona o tamanho antes de adicionar." });
       return;
     }
-    toast.success("Adicionado ao carrinho", {
-      description: `${product.name} · ${color} · ${size} · ${qty}x`,
-    });
+
+    if (!selectedVariant) {
+      toast("Combinação indisponível", {
+        description: `${color} em ${size} não está disponível.`,
+      });
+      return;
+    }
+
+    const ok = await cart.addItem(selectedVariant.id, qty);
+    if (ok) {
+      toast.success("Adicionado ao carrinho", {
+        description: `${product.name} · ${color} · ${size} · ${qty}x`,
+      });
+    }
   };
 
   return (
     <div className="pb-28">
+      {/* Rich snippet: preço e disponibilidade directamente na pesquisa Google. */}
+      <JsonLd schema={productSchema(product)} />
+      <JsonLd
+        schema={breadcrumbSchema([
+          { name: "Home", url: "/" },
+          { name: "Shop", url: "/shop" },
+          { name: product.name, url: `/produto/${product.slug}` },
+        ])}
+      />
       <div className="shell pt-8">
         <nav className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           <Link to="/" className="hover:text-foreground">
@@ -212,20 +264,27 @@ function ProdutoPage() {
               </Dialog>
             </div>
             <div className="mt-4 grid grid-cols-5 gap-2">
-              {product.sizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSize(s)}
-                  className={cn(
-                    "border py-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300",
-                    size === s
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border hover:border-foreground",
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
+              {product.sizes.map((s) => {
+                const unavailable = !sizesInStock.has(s);
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setSize(s)}
+                    disabled={unavailable}
+                    title={unavailable ? `Esgotado em ${color}` : undefined}
+                    className={cn(
+                      "border py-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300",
+                      size === s
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:border-foreground",
+                      unavailable &&
+                        "cursor-not-allowed border-border text-muted-foreground line-through opacity-40 hover:border-border",
+                    )}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -242,30 +301,49 @@ function ProdutoPage() {
               <span className="w-10 text-center text-sm font-semibold">{qty}</span>
               <button
                 aria-label="Aumentar"
-                onClick={() => setQty((q) => Math.min(product.stock || 1, q + 1))}
+                onClick={() => setQty((q) => Math.min(stockForSelection || 1, q + 1))}
                 className="grid size-12 place-items-center hover:bg-muted"
               >
                 <Plus className="size-4" />
               </button>
             </div>
             <p className="min-w-0 truncate text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              {soldOut ? "Sem stock" : `${product.stock} em stock`}
+              {soldOut
+                ? "Sem stock"
+                : selectedVariant
+                  ? `${selectedVariant.stock} em stock · ${size} / ${color}`
+                  : `${product.stock} em stock`}
             </p>
           </div>
 
           <div className="mt-8 flex gap-3">
             <button
-              disabled={soldOut}
-              onClick={addToCart}
+              disabled={soldOut || cart.pending}
+              onClick={() => void addToCart()}
               className="flex-1 bg-foreground py-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
             >
-              {soldOut ? "Esgotado" : "Adicionar ao carrinho"}
+              {soldOut ? (
+                "Esgotado"
+              ) : cart.pending ? (
+                <span className="inline-flex items-center gap-3">
+                  <Spinner className="border-background" /> A adicionar
+                </span>
+              ) : (
+                "Adicionar ao carrinho"
+              )}
             </button>
             <button
               aria-label="Favoritos"
+              aria-pressed={wishlist.isFavourite(product.id)}
+              onClick={() => void wishlist.toggle(product.id)}
               className="grid size-[60px] place-items-center border border-border transition-colors hover:border-foreground"
             >
-              <Heart className="size-5" />
+              <Heart
+                className={cn(
+                  "size-5 transition-colors",
+                  wishlist.isFavourite(product.id) && "fill-brand text-brand",
+                )}
+              />
             </button>
           </div>
 

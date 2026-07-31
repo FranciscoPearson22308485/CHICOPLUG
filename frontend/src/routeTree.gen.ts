@@ -15,9 +15,13 @@ import { Route as CarrinhoRouteImport } from './routes/carrinho'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as ContactoRouteImport } from './routes/contacto'
+import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
 import { Route as PoliticaDeTrocasRouteImport } from './routes/politica-de-trocas'
+import { Route as RecuperarPasswordRouteImport } from './routes/recuperar-password'
+import { Route as RegistoRouteImport } from './routes/registo'
+import { Route as ReporPasswordRouteImport } from './routes/repor-password'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as TermosRouteImport } from './routes/termos'
@@ -25,6 +29,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
 import { Route as AdminClientesRouteImport } from './routes/admin.clientes'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminCupoesRouteImport } from './routes/admin.cupoes'
 import { Route as AdminEncomendasRouteImport } from './routes/admin.encomendas'
 import { Route as AdminProdutosRouteImport } from './routes/admin.produtos'
 import { Route as AdminRelatoriosRouteImport } from './routes/admin.relatorios'
@@ -67,6 +72,11 @@ const ContactoRoute = ContactoRouteImport.update({
   path: '/contacto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -80,6 +90,21 @@ const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
 const PoliticaDeTrocasRoute = PoliticaDeTrocasRouteImport.update({
   id: '/politica-de-trocas',
   path: '/politica-de-trocas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarPasswordRoute = RecuperarPasswordRouteImport.update({
+  id: '/recuperar-password',
+  path: '/recuperar-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegistoRoute = RegistoRouteImport.update({
+  id: '/registo',
+  path: '/registo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReporPasswordRoute = ReporPasswordRouteImport.update({
+  id: '/repor-password',
+  path: '/repor-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShopRoute = ShopRouteImport.update({
@@ -115,6 +140,11 @@ const AdminClientesRoute = AdminClientesRouteImport.update({
 const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCupoesRoute = AdminCupoesRouteImport.update({
+  id: '/cupoes',
+  path: '/cupoes',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminEncomendasRoute = AdminEncomendasRouteImport.update({
@@ -180,15 +210,20 @@ export interface FileRoutesByFullPath {
   '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/entrar': typeof EntrarRoute
   '/faq': typeof FaqRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/politica-de-trocas': typeof PoliticaDeTrocasRoute
+  '/recuperar-password': typeof RecuperarPasswordRoute
+  '/registo': typeof RegistoRoute
+  '/repor-password': typeof ReporPasswordRoute
   '/shop': typeof ShopRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/cupoes': typeof AdminCupoesRoute
   '/admin/encomendas': typeof AdminEncomendasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -207,15 +242,20 @@ export interface FileRoutesByTo {
   '/carrinho': typeof CarrinhoRoute
   '/checkout': typeof CheckoutRoute
   '/contacto': typeof ContactoRoute
+  '/entrar': typeof EntrarRoute
   '/faq': typeof FaqRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/politica-de-trocas': typeof PoliticaDeTrocasRoute
+  '/recuperar-password': typeof RecuperarPasswordRoute
+  '/registo': typeof RegistoRoute
+  '/repor-password': typeof ReporPasswordRoute
   '/shop': typeof ShopRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/cupoes': typeof AdminCupoesRoute
   '/admin/encomendas': typeof AdminEncomendasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -237,15 +277,20 @@ export interface FileRoutesById {
   '/checkout': typeof CheckoutRoute
   '/conta': typeof ContaRouteWithChildren
   '/contacto': typeof ContactoRoute
+  '/entrar': typeof EntrarRoute
   '/faq': typeof FaqRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/politica-de-trocas': typeof PoliticaDeTrocasRoute
+  '/recuperar-password': typeof RecuperarPasswordRoute
+  '/registo': typeof RegistoRoute
+  '/repor-password': typeof ReporPasswordRoute
   '/shop': typeof ShopRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/cupoes': typeof AdminCupoesRoute
   '/admin/encomendas': typeof AdminEncomendasRoute
   '/admin/produtos': typeof AdminProdutosRoute
   '/admin/relatorios': typeof AdminRelatoriosRoute
@@ -268,15 +313,20 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/conta'
     | '/contacto'
+    | '/entrar'
     | '/faq'
     | '/politica-de-privacidade'
     | '/politica-de-trocas'
+    | '/recuperar-password'
+    | '/registo'
+    | '/repor-password'
     | '/shop'
     | '/sobre'
     | '/termos'
     | '/admin/categorias'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/cupoes'
     | '/admin/encomendas'
     | '/admin/produtos'
     | '/admin/relatorios'
@@ -295,15 +345,20 @@ export interface FileRouteTypes {
     | '/carrinho'
     | '/checkout'
     | '/contacto'
+    | '/entrar'
     | '/faq'
     | '/politica-de-privacidade'
     | '/politica-de-trocas'
+    | '/recuperar-password'
+    | '/registo'
+    | '/repor-password'
     | '/shop'
     | '/sobre'
     | '/termos'
     | '/admin/categorias'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/cupoes'
     | '/admin/encomendas'
     | '/admin/produtos'
     | '/admin/relatorios'
@@ -324,15 +379,20 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/conta'
     | '/contacto'
+    | '/entrar'
     | '/faq'
     | '/politica-de-privacidade'
     | '/politica-de-trocas'
+    | '/recuperar-password'
+    | '/registo'
+    | '/repor-password'
     | '/shop'
     | '/sobre'
     | '/termos'
     | '/admin/categorias'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/cupoes'
     | '/admin/encomendas'
     | '/admin/produtos'
     | '/admin/relatorios'
@@ -354,9 +414,13 @@ export interface RootRouteChildren {
   CheckoutRoute: typeof CheckoutRoute
   ContaRoute: typeof ContaRouteWithChildren
   ContactoRoute: typeof ContactoRoute
+  EntrarRoute: typeof EntrarRoute
   FaqRoute: typeof FaqRoute
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   PoliticaDeTrocasRoute: typeof PoliticaDeTrocasRoute
+  RecuperarPasswordRoute: typeof RecuperarPasswordRoute
+  RegistoRoute: typeof RegistoRoute
+  ReporPasswordRoute: typeof ReporPasswordRoute
   ShopRoute: typeof ShopRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
@@ -409,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
@@ -428,6 +499,27 @@ declare module '@tanstack/react-router' {
       path: '/politica-de-trocas'
       fullPath: '/politica-de-trocas'
       preLoaderRoute: typeof PoliticaDeTrocasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-password': {
+      id: '/recuperar-password'
+      path: '/recuperar-password'
+      fullPath: '/recuperar-password'
+      preLoaderRoute: typeof RecuperarPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/registo': {
+      id: '/registo'
+      path: '/registo'
+      fullPath: '/registo'
+      preLoaderRoute: typeof RegistoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/repor-password': {
+      id: '/repor-password'
+      path: '/repor-password'
+      fullPath: '/repor-password'
+      preLoaderRoute: typeof ReporPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shop': {
@@ -477,6 +569,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/admin/configuracoes'
       preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cupoes': {
+      id: '/admin/cupoes'
+      path: '/cupoes'
+      fullPath: '/admin/cupoes'
+      preLoaderRoute: typeof AdminCupoesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/encomendas': {
@@ -563,6 +662,7 @@ interface AdminRouteChildren {
   AdminCategoriasRoute: typeof AdminCategoriasRoute
   AdminClientesRoute: typeof AdminClientesRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminCupoesRoute: typeof AdminCupoesRoute
   AdminEncomendasRoute: typeof AdminEncomendasRoute
   AdminProdutosRoute: typeof AdminProdutosRoute
   AdminRelatoriosRoute: typeof AdminRelatoriosRoute
@@ -574,6 +674,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriasRoute: AdminCategoriasRoute,
   AdminClientesRoute: AdminClientesRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminCupoesRoute: AdminCupoesRoute,
   AdminEncomendasRoute: AdminEncomendasRoute,
   AdminProdutosRoute: AdminProdutosRoute,
   AdminRelatoriosRoute: AdminRelatoriosRoute,
@@ -606,9 +707,13 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutRoute: CheckoutRoute,
   ContaRoute: ContaRouteWithChildren,
   ContactoRoute: ContactoRoute,
+  EntrarRoute: EntrarRoute,
   FaqRoute: FaqRoute,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   PoliticaDeTrocasRoute: PoliticaDeTrocasRoute,
+  RecuperarPasswordRoute: RecuperarPasswordRoute,
+  RegistoRoute: RegistoRoute,
+  ReporPasswordRoute: ReporPasswordRoute,
   ShopRoute: ShopRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
@@ -619,3 +724,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
