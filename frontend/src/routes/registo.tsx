@@ -11,7 +11,10 @@ export const Route = createFileRoute("/registo")({
   head: () => ({
     meta: [
       { title: "Criar conta — CHICOPLUG" },
-      { name: "description", content: "Cria a tua conta CHICOPLUG e acompanha as tuas encomendas." },
+      {
+        name: "description",
+        content: "Cria a tua conta CHICOPLUG e acompanha as tuas encomendas.",
+      },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
@@ -82,7 +85,7 @@ function Registo() {
     <AuthShell
       eyebrow="Nova conta"
       title="Criar conta"
-      intro="Guarda favoritos, acompanha encomendas e sabe dos drops primeiro."
+      intro="Guarda favoritos, acompanha encomendas e sabe das novidades primeiro."
       footer={
         <p>
           Já tens conta? <AuthLink to="/entrar">Entrar</AuthLink>

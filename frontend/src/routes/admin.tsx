@@ -8,6 +8,7 @@ import {
   Package,
   Settings,
   ShoppingCart,
+  Store,
   Tags,
   Ticket,
   Users,
@@ -35,6 +36,7 @@ const ITEMS = [
   { label: "Produtos", to: "/admin/produtos", icon: Package },
   { label: "Encomendas", to: "/admin/encomendas", icon: ShoppingCart },
   { label: "Clientes", to: "/admin/clientes", icon: Users },
+  { label: "Marcas", to: "/admin/marcas", icon: Store },
   { label: "Categorias", to: "/admin/categorias", icon: Tags },
   { label: "Stock", to: "/admin/stock", icon: Boxes },
   { label: "Cupões", to: "/admin/cupoes", icon: Ticket },
@@ -76,7 +78,9 @@ function AdminLayout() {
               onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors"
               activeProps={{ className: "bg-foreground text-background" }}
-              inactiveProps={{ className: "text-muted-foreground hover:bg-muted hover:text-foreground" }}
+              inactiveProps={{
+                className: "text-muted-foreground hover:bg-muted hover:text-foreground",
+              }}
             >
               <item.icon className="size-4 shrink-0" />
               {item.label}

@@ -37,13 +37,13 @@ export function ProductCard({ product, priority }: { product: Product; priority?
               className="absolute inset-0 aspect-[4/5] w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100"
             />
           )}
-          {product.badge && (
-            <div className="absolute left-3 top-3">
-              <Badge tone={soldOut ? "muted" : product.badge === "DROP" ? "brand" : "dark"}>
-                {product.badge}
-              </Badge>
-            </div>
-          )}
+          <div className="absolute left-3 top-3 flex flex-col items-start gap-2">
+            {product.badge && <Badge tone={soldOut ? "muted" : "dark"}>{product.badge}</Badge>}
+            {/* Só faz sentido anunciar desconto no que ainda se pode comprar. */}
+            {!soldOut && product.discountPercent ? (
+              <Badge tone="brand">−{product.discountPercent}%</Badge>
+            ) : null}
+          </div>
           <div className="pointer-events-none absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 max-md:hidden">
             <span className="block bg-background px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em]">
               {soldOut ? "Esgotado" : "Ver peça"}
@@ -53,7 +53,12 @@ export function ProductCard({ product, priority }: { product: Product; priority?
 
         <div className="mt-4 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <h3 className="text-[13px] font-semibold tracking-normal normal-case sm:truncate">
+            {/* A marca vem primeiro: numa boutique multimarca é o que o cliente
+                procura antes do nome da peça. */}
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {product.brand}
+            </p>
+            <h3 className="mt-1.5 text-[13px] font-semibold tracking-normal normal-case sm:truncate">
               {product.name}
             </h3>
             <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">

@@ -34,7 +34,7 @@ export const Route = createFileRoute("/termos")({
         {
           title: "3. Preços e stock",
           body: [
-            "Todos os preços estão em Kwanzas e incluem impostos aplicáveis. O stock é limitado por drop e pode esgotar durante o processo de compra.",
+            "Todos os preços estão em Kwanzas e incluem impostos aplicáveis. O stock é limitado e pode esgotar durante o processo de compra.",
           ],
         },
         {

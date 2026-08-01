@@ -8,7 +8,7 @@ import { adminOrdersRouter } from "./admin.orders.js";
 import { adminProductsRouter } from "./admin.products.js";
 import { adminSettingsRouter } from "./admin.settings.js";
 import { adminStockRouter } from "./admin.stock.js";
-import { adminCategoriesRouter, adminCollectionsRouter } from "./admin.taxonomy.js";
+import { adminBrandsRouter, adminCategoriesRouter } from "./admin.taxonomy.js";
 
 export const adminRouter = Router();
 
@@ -19,7 +19,7 @@ adminRouter.use(authenticate, requireAdmin);
 adminRouter.use("/dashboard", adminDashboardRouter);
 adminRouter.use("/products", adminProductsRouter);
 adminRouter.use("/categories", adminCategoriesRouter);
-adminRouter.use("/collections", adminCollectionsRouter);
+adminRouter.use("/brands", adminBrandsRouter);
 adminRouter.use("/customers", adminCustomersRouter);
 adminRouter.use("/orders", adminOrdersRouter);
 adminRouter.use("/stock", adminStockRouter);

@@ -192,7 +192,7 @@ function AdminCupoes() {
               id="cp-code"
               label="Código"
               value={form.code}
-              placeholder="DROP10"
+              placeholder="STREET10"
               onChange={(v) => setForm({ ...form, code: v.toUpperCase() })}
               error={errors["code"]}
             />
@@ -304,9 +304,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className={cn("h-12 rounded-none border-border", error && "border-destructive")}
       />
-      {error && (
-        <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>
-      )}
+      {error && <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>}
     </div>
   );
 }

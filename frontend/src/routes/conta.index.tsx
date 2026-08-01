@@ -18,8 +18,18 @@ export const Route = createFileRoute("/conta/")({
 });
 
 const MONTHS = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
 ];
 
 function Perfil() {
@@ -113,9 +123,9 @@ function Perfil() {
         />
         <div className="flex items-center justify-between border-t border-border pt-6">
           <div>
-            <p className="text-sm font-semibold">Notificações de drops</p>
+            <p className="text-sm font-semibold">Notificações de novidades</p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              Avisos por email antes de cada lançamento
+              Avisos por email quando chegam peças novas
             </p>
           </div>
           <Switch checked={marketingOptIn} onCheckedChange={setMarketingOptIn} />
@@ -184,9 +194,7 @@ function Field({
           error && "border-destructive",
         )}
       />
-      {error && (
-        <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>
-      )}
+      {error && <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>}
     </div>
   );
 }

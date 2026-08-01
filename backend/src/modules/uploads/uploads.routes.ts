@@ -25,7 +25,7 @@ uploadsRouter.get("/status", (_req, res) => {
 });
 
 const folderSchema = z.object({
-  folder: z.enum(["produtos", "coleccoes"]).default("produtos"),
+  folder: z.enum(["produtos", "marcas"]).default("produtos"),
 });
 
 uploadsRouter.post(
@@ -37,7 +37,7 @@ uploadsRouter.post(
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
     if (files.length === 0) throw badRequest("Nenhum ficheiro recebido.");
 
-    const folder = (req.query as unknown as { folder: "produtos" | "coleccoes" }).folder;
+    const folder = (req.query as unknown as { folder: "produtos" | "marcas" }).folder;
 
     for (const file of files) assertValidImage(file);
 

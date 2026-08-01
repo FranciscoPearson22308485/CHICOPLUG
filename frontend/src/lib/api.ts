@@ -16,8 +16,7 @@ const isServer = typeof window === "undefined";
 function baseUrl(): string {
   if (isServer) {
     return (
-      (import.meta.env["VITE_API_INTERNAL_URL"] as string | undefined) ??
-      "http://localhost:4000"
+      (import.meta.env["VITE_API_INTERNAL_URL"] as string | undefined) ?? "http://localhost:4000"
     );
   }
   return "";
@@ -103,9 +102,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     headers: finalHeaders,
     // Sem isto os cookies de sessão não acompanham o pedido.
     credentials: "include",
-    ...(body !== undefined
-      ? { body: isFormData ? (body as FormData) : JSON.stringify(body) }
-      : {}),
+    ...(body !== undefined ? { body: isFormData ? (body as FormData) : JSON.stringify(body) } : {}),
     ...(signal ? { signal } : {}),
   });
 

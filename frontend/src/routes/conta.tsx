@@ -9,7 +9,10 @@ export const Route = createFileRoute("/conta")({
   head: () => ({
     meta: [
       { title: "Área do Cliente — CHICOPLUG" },
-      { name: "description", content: "Perfil, encomendas, favoritos e moradas da tua conta CHICOPLUG." },
+      {
+        name: "description",
+        content: "Perfil, encomendas, favoritos e moradas da tua conta CHICOPLUG.",
+      },
       { property: "og:title", content: "Área do Cliente — CHICOPLUG" },
       { property: "og:description", content: "Perfil, encomendas, favoritos e moradas." },
       { name: "robots", content: "noindex" },

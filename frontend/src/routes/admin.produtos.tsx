@@ -12,12 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -34,7 +29,6 @@ export const Route = createFileRoute("/admin/produtos")({
 const BADGES = [
   { value: "none", label: "Sem distintivo" },
   { value: "NOVO", label: "Novo" },
-  { value: "DROP", label: "Drop" },
   { value: "ULTIMAS_UNIDADES", label: "Últimas unidades" },
 ] as const;
 
@@ -57,10 +51,9 @@ const EMPTY_FORM: FormState = {
   price: 0,
   compareAt: null,
   categoryId: "",
-  collectionId: null,
+  brandId: "",
   badge: null,
   isNew: false,
-  isDrop: false,
   bestSeller: false,
   active: true,
   metaTitle: null,
@@ -87,18 +80,18 @@ function AdminProdutos() {
   const { data: taxonomy } = useQuery({
     queryKey: ["admin-taxonomy"],
     queryFn: async () => {
-      const [cats, cols] = await Promise.all([adminApi.categories(), adminApi.collections()]);
-      return { categories: cats.categories, collections: cols.collections };
+      const [cats, brs] = await Promise.all([adminApi.categories(), adminApi.brands()]);
+      return { categories: cats.categories, brands: brs.brands };
     },
   });
 
   const products = data?.products ?? [];
   const categories = taxonomy?.categories ?? [];
-  const collections = taxonomy?.collections ?? [];
+  const brands = taxonomy?.brands ?? [];
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id ?? "" });
+    setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id ?? "", brandId: brands[0]?.id ?? "" });
     setErrors({});
     setOpen(true);
   };
@@ -113,11 +106,10 @@ function AdminProdutos() {
       price: product.price,
       compareAt: product.compareAt ?? null,
       categoryId: categories.find((c) => c.name === product.category)?.id ?? "",
-      collectionId: collections.find((c) => c.slug === product.collectionSlug)?.id ?? null,
+      brandId: brands.find((b) => b.name === product.brand)?.id ?? "",
       // `badgeKey` é a chave do enum; `badge` é só o rótulo apresentado.
       badge: (product.badgeKey as ProductInput["badge"]) ?? null,
       isNew: Boolean(product.isNew),
-      isDrop: Boolean(product.isDrop),
       bestSeller: Boolean(product.bestSeller),
       active: product.active,
       metaTitle: product.metaTitle,
@@ -144,7 +136,10 @@ function AdminProdutos() {
       const result = await adminApi.uploadImages(Array.from(files), "produtos");
       setForm((prev) => ({
         ...prev,
-        images: [...prev.images, ...result.images.map((i) => ({ url: i.url, publicId: i.publicId }))],
+        images: [
+          ...prev.images,
+          ...result.images.map((i) => ({ url: i.url, publicId: i.publicId })),
+        ],
       }));
       toast.success(`${result.images.length} imagem(ns) optimizada(s)`);
     } catch (error) {
@@ -168,7 +163,6 @@ function AdminProdutos() {
         .filter(Boolean),
       price: Number(form.price),
       compareAt: form.compareAt ? Number(form.compareAt) : null,
-      collectionId: form.collectionId || null,
     };
 
     try {
@@ -235,16 +229,21 @@ function AdminProdutos() {
         </div>
       ) : (
         <DataTable
-          columns={["Peça", "Categoria", "Preço", "Stock", "Estado", "Acções"]}
+          columns={["Peça", "Marca", "Categoria", "Preço", "Stock", "Estado", "Acções"]}
           rows={products.map((p) => [
             <div className="flex items-center gap-4">
               {p.images[0] ? (
-                <img src={p.images[0]} alt="" className="size-12 shrink-0 bg-surface object-cover" />
+                <img
+                  src={p.images[0]}
+                  alt=""
+                  className="size-12 shrink-0 bg-surface object-cover"
+                />
               ) : (
                 <div className="size-12 shrink-0 bg-surface" />
               )}
               <span className="truncate">{p.name}</span>
             </div>,
+            <span className="font-semibold">{p.brand}</span>,
             p.category,
             formatKz(p.price),
             `${p.stock}`,
@@ -354,25 +353,23 @@ function AdminProdutos() {
                   {errors["categoryId"] && <ErrorText>{errors["categoryId"]}</ErrorText>}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[11px] uppercase tracking-[0.16em]">Colecção</Label>
+                  <Label className="text-[11px] uppercase tracking-[0.16em]">Marca</Label>
                   <Select
-                    value={form.collectionId ?? "none"}
-                    onValueChange={(v) =>
-                      setForm({ ...form, collectionId: v === "none" ? null : v })
-                    }
+                    value={form.brandId}
+                    onValueChange={(v) => setForm({ ...form, brandId: v })}
                   >
                     <SelectTrigger className="h-12 rounded-none border-border">
-                      <SelectValue placeholder="Sem colecção" />
+                      <SelectValue placeholder="Seleciona" />
                     </SelectTrigger>
                     <SelectContent className="rounded-none">
-                      <SelectItem value="none">Sem colecção</SelectItem>
-                      {collections.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
+                      {brands.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors["brandId"] && <ErrorText>{errors["brandId"]}</ErrorText>}
                 </div>
               </div>
 
@@ -406,11 +403,6 @@ function AdminProdutos() {
                   label="Novidade"
                   checked={form.isNew}
                   onChange={(v) => setForm({ ...form, isNew: v })}
-                />
-                <Toggle
-                  label="Drop"
-                  checked={form.isDrop}
-                  onChange={(v) => setForm({ ...form, isDrop: v })}
                 />
                 <Toggle
                   label="Best seller"

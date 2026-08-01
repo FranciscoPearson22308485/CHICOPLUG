@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Menu, Moon, Search, ShoppingBag, Sun, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/catalog";
 import { catalogApi } from "@/lib/queries";
 import { useCart } from "@/context/cart";
 import { useAuth } from "@/context/auth";
+import { useTheme } from "@/context/theme";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV = [
   { label: "Shop", to: "/shop" },
-  { label: "Coleções", to: "/colecoes" },
+  { label: "Marcas", to: "/marcas" },
   { label: "Sobre", to: "/sobre" },
   { label: "Contacto", to: "/contacto" },
 ];
@@ -27,23 +28,25 @@ export function Navbar() {
 
   const { itemCount: count } = useCart();
   const { user } = useAuth();
+  const { resolved, toggle: toggleTheme } = useTheme();
 
   // Categorias e colecções reais. `staleTime` alto porque mudam com o catálogo,
   // não com a navegação — não vale a pena refazer o pedido em cada página.
   const { data: taxonomy } = useQuery({
     queryKey: ["navbar-taxonomy"],
     queryFn: async () => {
-      const [categories, collections] = await Promise.all([
+      const [categories, brands] = await Promise.all([
         catalogApi.categories(),
-        catalogApi.collections(),
+        catalogApi.brands(),
       ]);
-      return { categories: categories.categories, collections: collections.collections };
+      return { categories: categories.categories, brands: brands.brands };
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const categories = taxonomy?.categories.map((c) => c.name) ?? [...CATEGORIES];
-  const collections = taxonomy?.collections ?? [];
+  const categories =
+    taxonomy?.categories ?? CATEGORIES.map((name) => ({ slug: name.toLowerCase(), name }));
+  const brands = taxonomy?.brands ?? [];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -71,7 +74,9 @@ export function Navbar() {
     <header
       className={cn(
         "sticky top-0 z-50 border-b transition-colors duration-500",
-        scrolled || mega ? "border-border bg-background/92 backdrop-blur-xl" : "border-transparent bg-background",
+        scrolled || mega
+          ? "border-border bg-background/92 backdrop-blur-xl"
+          : "border-transparent bg-background",
       )}
       onMouseLeave={() => setMega(false)}
     >
@@ -105,11 +110,12 @@ export function Navbar() {
                 <div className="flex flex-wrap gap-2">
                   {categories.map((c) => (
                     <Link
-                      key={c}
+                      key={c.slug}
                       to="/shop"
+                      search={{ categoria: c.slug } as never}
                       className="border border-border px-3 py-2 text-[11px] uppercase tracking-[0.16em]"
                     >
-                      {c}
+                      {c.name}
                     </Link>
                   ))}
                 </div>
@@ -131,7 +137,7 @@ export function Navbar() {
             <Link
               key={item.to}
               to={item.to}
-              onMouseEnter={() => setMega(item.to === "/shop" || item.to === "/colecoes")}
+              onMouseEnter={() => setMega(item.to === "/shop" || item.to === "/marcas")}
               className="link-underline text-[11px] font-semibold uppercase tracking-[0.2em]"
               activeProps={{ className: "text-foreground" }}
               inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
@@ -150,6 +156,18 @@ export function Navbar() {
 
         <div className="flex items-center gap-1 justify-self-end md:gap-3">
           <button
+            onClick={toggleTheme}
+            aria-label={resolved === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
+            title={resolved === "dark" ? "Tema claro" : "Tema escuro"}
+            className="grid size-9 place-items-center"
+          >
+            {resolved === "dark" ? (
+              <Sun className="size-[18px]" />
+            ) : (
+              <Moon className="size-[18px]" />
+            )}
+          </button>
+          <button
             aria-label="Pesquisar"
             aria-expanded={searchOpen}
             onClick={() => setSearchOpen((v) => !v)}
@@ -163,11 +181,13 @@ export function Navbar() {
             className="relative hidden size-9 place-items-center md:grid"
           >
             <User className="size-[18px]" />
-            {user && (
-              <span className="absolute bottom-1 right-1 size-1.5 rounded-full bg-brand" />
-            )}
+            {user && <span className="absolute bottom-1 right-1 size-1.5 rounded-full bg-brand" />}
           </Link>
-          <Link to="/carrinho" aria-label="Carrinho" className="relative grid size-9 place-items-center">
+          <Link
+            to="/carrinho"
+            aria-label="Carrinho"
+            className="relative grid size-9 place-items-center"
+          >
             <ShoppingBag className="size-[18px]" />
             {count > 0 && (
               <span className="absolute -right-0.5 -top-0.5 grid size-4 place-items-center bg-brand text-[9px] font-bold text-brand-foreground">
@@ -213,22 +233,10 @@ export function Navbar() {
             <p className="eyebrow mb-6">Categorias</p>
             <ul className="space-y-3">
               {categories.map((c) => (
-                <li key={c}>
-                  <Link to="/shop" className="link-underline text-sm">
-                    {c}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="col-span-3">
-            <p className="eyebrow mb-6">Coleções</p>
-            <ul className="space-y-3">
-              {collections.map((c) => (
                 <li key={c.slug}>
                   <Link
-                    to="/colecoes/$slug"
-                    params={{ slug: c.slug }}
+                    to="/shop"
+                    search={{ categoria: c.slug } as never}
                     className="link-underline text-sm"
                   >
                     {c.name}
@@ -237,22 +245,42 @@ export function Navbar() {
               ))}
             </ul>
           </div>
+          <div className="col-span-3">
+            <p className="eyebrow mb-6">Marcas</p>
+            <ul className="space-y-3">
+              {brands.slice(0, 8).map((b) => (
+                <li key={b.slug}>
+                  <Link
+                    to="/marcas/$slug"
+                    params={{ slug: b.slug }}
+                    className="link-underline text-sm"
+                  >
+                    {b.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
           <div className="col-span-6 grid grid-cols-2 gap-6">
-            {collections.slice(0, 2).map((c) => (
+            {brands.slice(0, 2).map((b) => (
               <Link
-                key={c.slug}
-                to="/colecoes/$slug"
-                params={{ slug: c.slug }}
+                key={b.slug}
+                to="/marcas/$slug"
+                params={{ slug: b.slug }}
                 className="group relative overflow-hidden bg-surface"
               >
-                <img
-                  src={c.image}
-                  alt={c.name}
-                  loading="lazy"
-                  className="aspect-[16/9] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
-                />
+                {b.image ? (
+                  <img
+                    src={b.image}
+                    alt={b.name}
+                    loading="lazy"
+                    className="aspect-[16/9] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="aspect-[16/9] w-full bg-surface" />
+                )}
                 <span className="absolute bottom-4 left-4 bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em]">
-                  {c.name}
+                  {b.name}
                 </span>
               </Link>
             ))}

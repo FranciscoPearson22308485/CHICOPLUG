@@ -44,7 +44,7 @@ function Carrinho() {
         <div className="mt-16">
           <EmptyState
             title="O carrinho está vazio"
-            description="Ainda não escolheste nenhuma peça. Explora o drop mais recente."
+            description="Ainda não escolheste nenhuma peça. Explora as novidades da loja."
             action={
               <Link
                 to="/shop"

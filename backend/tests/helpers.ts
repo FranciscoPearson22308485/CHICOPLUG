@@ -22,15 +22,18 @@ export async function resetDatabase(): Promise<void> {
   await prisma.productImage.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
-  await prisma.collection.deleteMany();
+  await prisma.brand.deleteMany();
   await prisma.category.deleteMany();
   await prisma.coupon.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.newsletterSubscriber.deleteMany();
   await prisma.storeSetting.deleteMany();
 }
 
 export type SeededCatalog = {
   categoryId: string;
+  brandId: string;
+  brandSlug: string;
   productId: string;
   productSlug: string;
   /** Variante com stock — a usada na maioria dos testes. */
@@ -45,6 +48,10 @@ export async function seedCatalog(): Promise<SeededCatalog> {
     data: { name: "Hoodies", slug: "hoodies" },
   });
 
+  const brand = await prisma.brand.create({
+    data: { name: "Marca Teste", slug: "marca-teste", tagline: "Para testes", featured: true },
+  });
+
   const product = await prisma.product.create({
     data: {
       slug: "hoodie-teste",
@@ -53,6 +60,7 @@ export async function seedCatalog(): Promise<SeededCatalog> {
       details: ["Algodão 480gsm"],
       price: 50000,
       categoryId: category.id,
+      brandId: brand.id,
       images: { create: [{ url: "/static/uploads/produtos/teste.webp", position: 0 }] },
       variants: {
         create: [
@@ -80,6 +88,8 @@ export async function seedCatalog(): Promise<SeededCatalog> {
 
   return {
     categoryId: category.id,
+    brandId: brand.id,
+    brandSlug: brand.slug,
     productId: product.id,
     productSlug: product.slug,
     variantId: main!.id,

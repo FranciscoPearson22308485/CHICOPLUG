@@ -46,7 +46,7 @@ const productBaseSchema = z.object({
   compareAt: z.coerce.number().int().positive().nullable().optional(),
 
   categoryId: z.string().min(1, "Escolhe a categoria."),
-  collectionId: z.string().nullable().optional(),
+  brandId: z.string().min(1, "Escolhe a marca."),
 
   badge: z.enum(["NOVO", "DROP", "ESGOTADO", "ULTIMAS_UNIDADES"]).nullable().optional(),
   isNew: z.boolean().default(false),
@@ -88,17 +88,21 @@ export const categorySchema = z.object({
   active: z.boolean().default(true),
 });
 
-export const collectionSchema = z.object({
-  name: z.string().trim().min(1, "Indica o nome.").max(120),
+export const brandSchema = z.object({
+  name: z.string().trim().min(1, "Indica o nome da marca.").max(120),
   slug: z
     .string()
     .trim()
     .regex(/^[a-z0-9-]+$/)
     .optional(),
-  season: z.string().trim().min(1, "Indica a estação/drop.").max(80),
+  tagline: z.string().trim().max(160).nullable().optional(),
   description: z.string().trim().max(1000).nullable().optional(),
   imageUrl: z.string().trim().nullable().optional(),
   imagePublicId: z.string().trim().nullable().optional(),
+  logoUrl: z.string().trim().nullable().optional(),
+  logoPublicId: z.string().trim().nullable().optional(),
+  /** Destaca a marca na secção "Marcas Populares" da homepage. */
+  featured: z.boolean().default(false),
   position: z.coerce.number().int().min(0).default(0),
   active: z.boolean().default(true),
 });

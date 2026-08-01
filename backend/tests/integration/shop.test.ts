@@ -29,7 +29,8 @@ describe("loja", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.total).toBe(1);
-      expect(response.body.facets.categories).toContain("Hoodies");
+      expect(response.body.facets.categories.map((c: { name: string }) => c.name)).toContain("Hoodies");
+      expect(response.body.facets.brands.map((b: { name: string }) => b.name)).toContain("Marca Teste");
     });
 
     it("soma o stock das variantes no produto", async () => {
@@ -89,6 +90,7 @@ describe("loja", () => {
           description: "Tee",
           price: 10000,
           categoryId: catalog.categoryId,
+          brandId: catalog.brandId,
           variants: {
             create: {
               size: "M",
@@ -292,5 +294,176 @@ describe("loja", () => {
       expect(principais).toHaveLength(1);
       expect(principais[0].label).toBe("Trabalho");
     });
+  });
+});
+
+describe("marcas", () => {
+  let catalog: SeededCatalog;
+
+  beforeEach(async () => {
+    await resetDatabase();
+    catalog = await seedCatalog();
+  });
+
+  it("lista as marcas activas com contagem de peças", async () => {
+    const client = await testClient();
+    const response = await client.get("/api/catalog/brands");
+
+    expect(response.status).toBe(200);
+    expect(response.body.brands).toHaveLength(1);
+    expect(response.body.brands[0].name).toBe("Marca Teste");
+    expect(response.body.brands[0].productCount).toBe(1);
+  });
+
+  it("devolve só as marcas em destaque quando pedido", async () => {
+    await prisma.brand.create({
+      data: { name: "Sem Destaque", slug: "sem-destaque", featured: false },
+    });
+
+    const client = await testClient();
+    const todas = await client.get("/api/catalog/brands");
+    const destaque = await client.get("/api/catalog/brands?featured=true");
+
+    expect(todas.body.brands).toHaveLength(2);
+    expect(destaque.body.brands).toHaveLength(1);
+  });
+
+  it("mostra apenas os produtos da marca escolhida", async () => {
+    const outra = await prisma.brand.create({
+      data: { name: "Outra Marca", slug: "outra-marca" },
+    });
+    await prisma.product.create({
+      data: {
+        slug: "peca-outra",
+        name: "Peça Outra",
+        description: "Teste",
+        price: 30000,
+        categoryId: catalog.categoryId,
+        brandId: outra.id,
+        variants: {
+          create: {
+            size: "M",
+            colorName: "Preto",
+            colorHex: "#111111",
+            sku: "CP-OUTRA-M-PRETO",
+            stock: 3,
+          },
+        },
+      },
+    });
+
+    const client = await testClient();
+    const response = await client.get(`/api/catalog/brands/${catalog.brandSlug}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.products).toHaveLength(1);
+    expect(response.body.products[0].brand).toBe("Marca Teste");
+  });
+
+  it("devolve 404 para marca inexistente", async () => {
+    const client = await testClient();
+    expect((await client.get("/api/catalog/brands/nao-existe")).status).toBe(404);
+  });
+
+  it("filtra o catálogo por marca", async () => {
+    const client = await testClient();
+    const hit = await client.get(`/api/catalog/products?brand=${catalog.brandSlug}`);
+    const miss = await client.get("/api/catalog/products?brand=inexistente");
+
+    expect(hit.body.total).toBe(1);
+    expect(miss.body.total).toBe(0);
+  });
+
+  it("pesquisa por nome de marca", async () => {
+    const client = await testClient();
+    const response = await client.get("/api/catalog/products?search=Marca Teste");
+    expect(response.body.total).toBe(1);
+  });
+
+  it("filtra por disponibilidade", async () => {
+    await prisma.productVariant.updateMany({
+      where: { productId: catalog.productId },
+      data: { stock: 0 },
+    });
+
+    const client = await testClient();
+    const comStock = await client.get("/api/catalog/products?inStock=true");
+    const todos = await client.get("/api/catalog/products");
+
+    expect(comStock.body.total).toBe(0);
+    expect(todos.body.total).toBe(1);
+  });
+
+  it("filtra por promoção e calcula a percentagem de desconto", async () => {
+    await prisma.product.update({
+      where: { id: catalog.productId },
+      data: { compareAt: 100000 },
+    });
+
+    const client = await testClient();
+    const response = await client.get("/api/catalog/products?onSale=true");
+
+    expect(response.body.total).toBe(1);
+    // 50.000 sobre um anterior de 100.000 → 50% de desconto.
+    expect(response.body.products[0].discountPercent).toBe(50);
+  });
+
+  it("lista as promoções no endpoint dedicado", async () => {
+    await prisma.product.update({
+      where: { id: catalog.productId },
+      data: { compareAt: 80000 },
+    });
+
+    const client = await testClient();
+    const response = await client.get("/api/catalog/promotions");
+    expect(response.body.products).toHaveLength(1);
+  });
+});
+
+describe("newsletter", () => {
+  beforeEach(async () => {
+    await resetDatabase();
+  });
+
+  it("regista uma inscrição", async () => {
+    const client = await testClient();
+    const response = await client
+      .post("/api/newsletter/subscribe")
+      .send({ email: "ana@chicoplug.ao", source: "home" });
+
+    expect(response.status).toBe(201);
+    expect(await prisma.newsletterSubscriber.count()).toBe(1);
+  });
+
+  it("é idempotente: reinscrever não é erro nem cria duplicados", async () => {
+    const client = await testClient();
+    await client.post("/api/newsletter/subscribe").send({ email: "ana@chicoplug.ao" });
+    const segunda = await client.post("/api/newsletter/subscribe").send({ email: "ana@chicoplug.ao" });
+
+    expect(segunda.status).toBe(201);
+    expect(await prisma.newsletterSubscriber.count()).toBe(1);
+  });
+
+  it("reactiva quem se tinha removido", async () => {
+    const client = await testClient();
+    await client.post("/api/newsletter/subscribe").send({ email: "ana@chicoplug.ao" });
+    await client.post("/api/newsletter/unsubscribe").send({ email: "ana@chicoplug.ao" });
+    await client.post("/api/newsletter/subscribe").send({ email: "ana@chicoplug.ao" });
+
+    const sub = await prisma.newsletterSubscriber.findUniqueOrThrow({
+      where: { email: "ana@chicoplug.ao" },
+    });
+    expect(sub.active).toBe(true);
+  });
+
+  it("recusa emails inválidos", async () => {
+    const client = await testClient();
+    const response = await client.post("/api/newsletter/subscribe").send({ email: "nao-e-email" });
+    expect(response.status).toBe(422);
+  });
+
+  it("exige perfil de administrador para listar subscritores", async () => {
+    const client = await testClient();
+    expect((await client.get("/api/newsletter")).status).toBe(401);
   });
 });

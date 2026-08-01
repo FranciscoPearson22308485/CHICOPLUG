@@ -28,7 +28,7 @@ export const Route = createFileRoute("/politica-de-privacidade")({
         {
           title: "2. Finalidade",
           body: [
-            "Os dados são usados exclusivamente para processar encomendas, prestar apoio ao cliente e, com consentimento, enviar comunicações sobre drops.",
+            "Os dados são usados exclusivamente para processar encomendas, prestar apoio ao cliente e, com consentimento, enviar comunicações sobre novidades e promoções.",
           ],
         },
         {
@@ -39,7 +39,9 @@ export const Route = createFileRoute("/politica-de-privacidade")({
         },
         {
           title: "4. Conservação",
-          body: ["Mantemos os dados de encomenda pelo período legal exigido em Angola e apagamos o restante a pedido."],
+          body: [
+            "Mantemos os dados de encomenda pelo período legal exigido em Angola e apagamos o restante a pedido.",
+          ],
         },
         {
           title: "5. Os teus direitos",

@@ -7,7 +7,8 @@ export const Route = createFileRoute("/politica-de-trocas")({
       { title: "Política de Trocas — CHICOPLUG" },
       {
         name: "description",
-        content: "Condições de troca e devolução das peças CHICOPLUG: prazos, estado das peças e custos.",
+        content:
+          "Condições de troca e devolução das peças CHICOPLUG: prazos, estado das peças e custos.",
       },
       { property: "og:title", content: "Política de Trocas — CHICOPLUG" },
       { property: "og:description", content: "Prazos, condições e custos de troca." },
@@ -46,7 +47,9 @@ export const Route = createFileRoute("/politica-de-trocas")({
         },
         {
           title: "5. Peças excluídas",
-          body: ["Acessórios de uso pessoal e peças de arquivo em saldo final não são elegíveis para troca."],
+          body: [
+            "Acessórios de uso pessoal e peças de arquivo em saldo final não são elegíveis para troca.",
+          ],
         },
       ]}
     />

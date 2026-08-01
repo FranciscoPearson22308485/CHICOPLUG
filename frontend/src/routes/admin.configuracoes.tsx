@@ -19,7 +19,7 @@ const TOGGLES: Array<{ key: keyof StoreSettings; title: string; description: str
   {
     key: "storeActive",
     title: "Loja ativa",
-    description: "Desliga para colocar a loja em modo drop fechado",
+    description: "Desliga para fechar temporariamente a loja ao público",
   },
   {
     key: "multicaixaEnabled",
@@ -33,8 +33,8 @@ const TOGGLES: Array<{ key: keyof StoreSettings; title: string; description: str
   },
   {
     key: "dropWaitlistEnabled",
-    title: "Lista de espera de drops",
-    description: "Permitir inscrições na newsletter",
+    title: "Newsletter",
+    description: "Permitir inscrições na lista de novidades",
   },
 ];
 

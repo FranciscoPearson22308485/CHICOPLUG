@@ -67,7 +67,10 @@ function AdminStock() {
       <AdminHeading
         title="Stock"
         action={
-          <AdminButton onClick={() => void applyAdjustments()} disabled={pendingCount === 0 || saving}>
+          <AdminButton
+            onClick={() => void applyAdjustments()}
+            disabled={pendingCount === 0 || saving}
+          >
             {saving ? "A guardar…" : `Aplicar ${pendingCount > 0 ? `(${pendingCount})` : ""}`}
           </AdminButton>
         }

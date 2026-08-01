@@ -9,19 +9,31 @@ export const Route = createFileRoute("/sobre")({
       {
         name: "description",
         content:
-          "A CHICOPLUG nasceu em Luanda: roupa pesada, cortes certos e produções limitadas de streetwear premium.",
+          "A CHICOPLUG é a boutique de streetwear premium de Luanda: as melhores marcas internacionais, seleccionadas peça a peça, com origem garantida.",
       },
       { property: "og:title", content: "Sobre — CHICOPLUG" },
-      { property: "og:description", content: "Cultura urbana, padrão premium. Feito em Luanda." },
+      { property: "og:description", content: "Selecção rigorosa, origem garantida. Em Luanda." },
     ],
   }),
   component: Sobre,
 });
 
 const PILLARS = [
-  { n: "01", t: "Produção limitada", d: "Cada peça é feita uma vez. Sem restocks, sem excesso." },
-  { n: "02", t: "Matéria-prima honesta", d: "Gramagens pesadas, algodões densos, acabamentos revistos à mão." },
-  { n: "03", t: "Cultura primeiro", d: "Desenhamos com a rua, não para a rua. A comunidade valida o drop." },
+  {
+    n: "01",
+    t: "Produto original",
+    d: "Trabalhamos apenas com fornecedores verificados. Cada peça chega com a garantia da marca.",
+  },
+  {
+    n: "02",
+    t: "Selecção criteriosa",
+    d: "Não vendemos tudo. Escolhemos o que vale a pena vestir e ignoramos o resto.",
+  },
+  {
+    n: "03",
+    t: "Entrega em todo o país",
+    d: "De Luanda a Cabinda. Pagamento por Multicaixa Express e acompanhamento da encomenda.",
+  },
 ];
 
 function Sobre() {
@@ -29,9 +41,9 @@ function Sobre() {
     <div className="pb-28">
       <section className="shell pt-16 md:pt-24">
         <Reveal>
-          <p className="eyebrow">A marca</p>
+          <p className="eyebrow">A loja</p>
           <h1 className="mt-6 max-w-[18ch] text-6xl sm:text-7xl xl:text-[7rem]">
-            Cultura urbana, padrão premium
+            As marcas certas, num só lugar
           </h1>
         </Reveal>
       </section>
@@ -39,7 +51,7 @@ function Sobre() {
       <Reveal className="shell mt-20">
         <img
           src={IMAGES.editorial1}
-          alt="Equipa e comunidade CHICOPLUG na rua"
+          alt="Loja e comunidade CHICOPLUG em Luanda"
           loading="lazy"
           className="aspect-[16/9] w-full object-cover"
         />
@@ -47,20 +59,21 @@ function Sobre() {
 
       <section className="shell grid gap-16 py-24 md:grid-cols-2 md:py-32">
         <Reveal>
-          <h2 className="text-4xl sm:text-5xl">Começou num bairro</h2>
+          <h2 className="text-4xl sm:text-5xl">Começou por necessidade</h2>
         </Reveal>
         <Reveal delay={120} className="space-y-6 text-sm leading-relaxed text-muted-foreground">
           <p>
-            A CHICOPLUG começou com vinte hoodies e uma lista de espera. Sem showroom, sem
-            intermediários — só peças pesadas e pessoas que as queriam vestir todos os dias.
+            Em Luanda, quem queria uma peça da Nike, da Corteiz ou da Represent tinha duas
+            hipóteses: pagar portes internacionais e esperar semanas, ou arriscar numa réplica. A
+            CHICOPLUG existe para acabar com essa escolha.
           </p>
           <p>
-            Hoje trabalhamos por volumes: cada volume é uma coleção fechada, com número de peças
-            definido antes da produção. O que sobra volta ao arquivo; o que esgota fica na memória.
+            Curamos o catálogo peça a peça. Trabalhamos com fornecedores verificados e só colocamos
+            à venda o que confirmamos ser original — do sneaker à t-shirt.
           </p>
           <p>
-            Continuamos a desenhar em Luanda, a produzir em pequenas séries e a enviar para todo o
-            país.
+            Não fabricamos roupa. O nosso trabalho é escolher bem, garantir a origem e pôr a peça à
+            tua porta em todo o Angola.
           </p>
         </Reveal>
       </section>
@@ -79,15 +92,15 @@ function Sobre() {
 
       <section className="shell py-24 text-center md:py-32">
         <Reveal className="mx-auto max-w-2xl">
-          <h2 className="text-4xl sm:text-5xl">Próximo drop em breve</h2>
+          <h2 className="text-4xl sm:text-5xl">Vê o que temos</h2>
           <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
-            Segue a lista para acesso antecipado. As peças esgotam em horas.
+            Novas peças todas as semanas. As mais procuradas esgotam depressa.
           </p>
           <Link
             to="/shop"
             className="mt-10 inline-block bg-foreground px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground"
           >
-            Shop Now
+            Comprar Agora
           </Link>
         </Reveal>
       </section>

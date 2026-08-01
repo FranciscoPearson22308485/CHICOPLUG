@@ -111,9 +111,7 @@ function AdminClientes() {
                     <Switch
                       checked={detail.role === "ADMIN"}
                       disabled={detail.id === user?.id}
-                      onCheckedChange={(v) =>
-                        void update(detail, { role: v ? "ADMIN" : "USER" })
-                      }
+                      onCheckedChange={(v) => void update(detail, { role: v ? "ADMIN" : "USER" })}
                     />
                   </div>
 

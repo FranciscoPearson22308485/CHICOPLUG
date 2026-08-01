@@ -19,6 +19,7 @@ import { AuthProvider } from "@/context/auth";
 import { CartProvider } from "@/context/cart";
 import { WishlistProvider } from "@/context/wishlist";
 import { JsonLd, organizationSchema, websiteSchema } from "@/lib/seo";
+import { ThemeProvider, themeInitScript } from "@/context/theme";
 
 function NotFoundComponent() {
   return (
@@ -85,17 +86,35 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CHICOPLUG — Streetwear Premium" },
+      { title: "CHICOPLUG — Streetwear Premium | Nike, Jordan, Corteiz e mais" },
       {
         name: "description",
-        content: "CHICOPLUG — streetwear premium de edição limitada. Drops, essenciais e coleções.",
+        content:
+          "As melhores marcas de streetwear num só lugar. Nike, Jordan, Adidas, Corteiz, Represent, Essentials e Denim Tears, com entrega em todo o Angola.",
       },
       { name: "author", content: "CHICOPLUG" },
+      { name: "theme-color", content: "#111111" },
+      { name: "apple-mobile-web-app-title", content: "CHICOPLUG" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+
+      { property: "og:site_name", content: "CHICOPLUG" },
       { property: "og:title", content: "CHICOPLUG — Streetwear Premium" },
-      { property: "og:description", content: "Drops limitados, essenciais pesados. Feito em Luanda." },
+      {
+        property: "og:description",
+        content: "As melhores marcas de streetwear num só lugar. Entrega em todo o Angola.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "pt_AO" },
+      { property: "og:image", content: "/icon-512.png" },
+
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@chicoplug" },
+      { name: "twitter:title", content: "CHICOPLUG — Streetwear Premium" },
+      {
+        name: "twitter:description",
+        content: "As melhores marcas de streetwear num só lugar.",
+      },
+      { name: "twitter:image", content: "/icon-512.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -104,11 +123,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap",
       },
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "stylesheet", href: appCss },
+
+      // O SVG é preferido pelos browsers modernos e escala sem perder nitidez;
+      // o .ico serve os que ainda não o suportam.
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -121,6 +143,9 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        {/* Corre antes da primeira pintura: aplica o tema guardado (ou o do
+            sistema) para que ninguém veja um clarão branco ao entrar. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <HeadContent />
       </head>
       <body>
@@ -138,22 +163,24 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            {/* Dados estruturados da marca — aplicam-se a todas as páginas. */}
-            <JsonLd schema={organizationSchema()} />
-            <JsonLd schema={websiteSchema()} />
-            {!isAdmin && <Navbar />}
-            <main className="min-h-screen">
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-            </main>
-            {!isAdmin && <Footer />}
-            <Toaster />
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              {/* Dados estruturados da marca — aplicam-se a todas as páginas. */}
+              <JsonLd schema={organizationSchema()} />
+              <JsonLd schema={websiteSchema()} />
+              {!isAdmin && <Navbar />}
+              <main className="min-h-screen">
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+              </main>
+              {!isAdmin && <Footer />}
+              <Toaster />
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

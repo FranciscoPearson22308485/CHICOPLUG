@@ -46,13 +46,13 @@ seoRouter.get(
   asyncHandler(async (_req, res) => {
     const base = env.PUBLIC_SITE_URL.replace(/\/$/, "");
 
-    const [products, collections] = await Promise.all([
+    const [products, brands] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: { slug: true, updatedAt: true },
         orderBy: { updatedAt: "desc" },
       }),
-      prisma.collection.findMany({
+      prisma.brand.findMany({
         where: { active: true },
         select: { slug: true, updatedAt: true },
       }),
@@ -61,7 +61,7 @@ seoRouter.get(
     const staticPages: Entry[] = [
       { loc: `${base}/`, changefreq: "daily", priority: "1.0" },
       { loc: `${base}/shop`, changefreq: "daily", priority: "0.9" },
-      { loc: `${base}/colecoes`, changefreq: "weekly", priority: "0.8" },
+      { loc: `${base}/marcas`, changefreq: "weekly", priority: "0.8" },
       { loc: `${base}/sobre`, changefreq: "monthly", priority: "0.5" },
       { loc: `${base}/contacto`, changefreq: "monthly", priority: "0.5" },
       { loc: `${base}/faq`, changefreq: "monthly", priority: "0.4" },
@@ -72,11 +72,11 @@ seoRouter.get(
 
     const entries: Entry[] = [
       ...staticPages,
-      ...collections.map((c) => ({
-        loc: `${base}/colecoes/${c.slug}`,
-        lastmod: c.updatedAt.toISOString(),
+      ...brands.map((b) => ({
+        loc: `${base}/marcas/${b.slug}`,
+        lastmod: b.updatedAt.toISOString(),
         changefreq: "weekly",
-        priority: "0.7",
+        priority: "0.8",
       })),
       ...products.map((p) => ({
         loc: `${base}/produto/${p.slug}`,

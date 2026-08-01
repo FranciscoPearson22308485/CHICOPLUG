@@ -26,7 +26,7 @@ catalogRouter.get(
   validate({ query: searchQuerySchema }),
   asyncHandler(async (req, res) => {
     const { q, limit } = req.query as unknown as { q: string; limit: number };
-    res.json({ products: await service.searchSuggestions(q, limit) });
+    res.json(await service.searchSuggestions(q, limit));
   }),
 );
 
@@ -58,19 +58,28 @@ catalogRouter.get(
 );
 
 catalogRouter.get(
-  "/collections",
-  asyncHandler(async (_req, res) => {
+  "/brands",
+  asyncHandler(async (req, res) => {
+    const featuredOnly = req.query["featured"] === "true";
     res.set("Cache-Control", publicCache);
-    res.json({ collections: await service.listCollections() });
+    res.json({ brands: await service.listBrands({ featuredOnly }) });
   }),
 );
 
 catalogRouter.get(
-  "/collections/:slug",
+  "/brands/:slug",
   validate({ params: slugParamSchema }),
   asyncHandler(async (req, res) => {
     res.set("Cache-Control", publicCache);
-    res.json(await service.getCollectionBySlug(req.params.slug!));
+    res.json(await service.getBrandBySlug(req.params.slug!));
+  }),
+);
+
+catalogRouter.get(
+  "/promotions",
+  asyncHandler(async (_req, res) => {
+    res.set("Cache-Control", publicCache);
+    res.json({ products: await service.listPromotions(12) });
   }),
 );
 

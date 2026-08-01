@@ -84,10 +84,8 @@ adminProductsRouter.post(
     const category = await prisma.category.findUnique({ where: { id: body.categoryId } });
     if (!category) throw badRequest("Categoria inexistente.");
 
-    if (body.collectionId) {
-      const collection = await prisma.collection.findUnique({ where: { id: body.collectionId } });
-      if (!collection) throw badRequest("Colecção inexistente.");
-    }
+    const brand = await prisma.brand.findUnique({ where: { id: body.brandId } });
+    if (!brand) throw badRequest("Marca inexistente.");
 
     // Duas variantes com o mesmo (tamanho, cor) violariam a chave única — vale
     // a pena dizer isso claramente em vez de deixar rebentar no Postgres.
@@ -111,7 +109,7 @@ adminProductsRouter.post(
         price: body.price,
         compareAt: body.compareAt ?? null,
         categoryId: body.categoryId,
-        collectionId: body.collectionId ?? null,
+        brandId: body.brandId,
         badge: body.badge ?? null,
         isNew: body.isNew,
         isDrop: body.isDrop,
@@ -192,7 +190,7 @@ adminProductsRouter.patch(
           ...(body.price !== undefined ? { price: body.price } : {}),
           ...(body.compareAt !== undefined ? { compareAt: body.compareAt } : {}),
           ...(body.categoryId !== undefined ? { categoryId: body.categoryId } : {}),
-          ...(body.collectionId !== undefined ? { collectionId: body.collectionId } : {}),
+          ...(body.brandId !== undefined ? { brandId: body.brandId } : {}),
           ...(body.badge !== undefined ? { badge: body.badge } : {}),
           ...(body.isNew !== undefined ? { isNew: body.isNew } : {}),
           ...(body.isDrop !== undefined ? { isDrop: body.isDrop } : {}),

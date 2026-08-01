@@ -133,16 +133,28 @@ model Category {
   @@map("categories")
 }
 
-model Collection {
+/// Marca vendida na loja (Nike, Corteiz, Represent…).
+///
+/// A CHICOPLUG é uma boutique multimarca: não fabrica roupa, cura e revende.
+/// Substitui o antigo modelo `Collection`, que representava colecções próprias.
+model Brand {
   id          String  @id @default(cuid())
   slug        String  @unique
-  name        String
-  season      String
+  name        String  @unique
+  /// Texto curto apresentado na página da marca.
   description String?
-  imageUrl    String?
+  /// Frase de posicionamento ("Sportswear icónico desde 1964").
+  tagline     String?
+  /// Imagem editorial de topo da página da marca.
+  imageUrl      String?
   imagePublicId String?
-  position    Int     @default(0)
-  active      Boolean @default(true)
+  /// Logótipo usado na grelha "Marcas Populares".
+  logoUrl      String?
+  logoPublicId String?
+  /// Destaca a marca na homepage.
+  featured Boolean @default(false)
+  position Int     @default(0)
+  active   Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,7 +162,8 @@ model Collection {
   products Product[]
 
   @@index([active, position])
-  @@map("collections")
+  @@index([featured])
+  @@map("brands")
 }
 
 model Product {
@@ -164,10 +177,10 @@ model Product {
   price     Int
   compareAt Int?
 
-  categoryId   String
-  category     Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  collectionId String?
-  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brandId    String
+  brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
   badge      ProductBadge?
   isNew      Boolean       @default(false)
@@ -187,8 +200,9 @@ model Product {
 
   @@index([active, createdAt])
   @@index([categoryId])
-  @@index([collectionId])
+  @@index([brandId])
   @@index([price])
+  @@index([compareAt])
   @@map("products")
 }
 
@@ -473,4 +487,19 @@ model StoreSetting {
   updatedAt DateTime @updatedAt
 
   @@map("store_settings")
+}
+
+/// Inscrições na newsletter, recolhidas no rodapé e na secção da homepage.
+model NewsletterSubscriber {
+  id    String @id @default(cuid())
+  email String @unique
+  /// Onde a inscrição foi feita ("footer", "home"), útil para medir conversão.
+  source String?
+  active Boolean @default(true)
+
+  createdAt      DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([active])
+  @@map("newsletter_subscribers")
 }

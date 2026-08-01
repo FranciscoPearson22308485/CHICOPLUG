@@ -78,10 +78,7 @@ function AdminRelatorios() {
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Receita" value={formatKz(report?.revenue ?? 0)} />
             <StatCard label="Peças vendidas" value={String(report?.itemsSold ?? 0)} />
-            <StatCard
-              label="Descontos concedidos"
-              value={formatKz(report?.discountGiven ?? 0)}
-            />
+            <StatCard label="Descontos concedidos" value={formatKz(report?.discountGiven ?? 0)} />
             <StatCard
               label="Taxa de cancelamento"
               value={`${report?.cancellationRate ?? 0}%`}

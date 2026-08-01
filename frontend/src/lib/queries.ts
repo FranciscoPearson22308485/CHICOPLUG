@@ -1,14 +1,5 @@
 import { api } from "./api";
-import type {
-  Address,
-  Cart,
-  Category,
-  Collection,
-  Facets,
-  Order,
-  Product,
-  User,
-} from "./catalog";
+import type { Address, Brand, Cart, Category, Facets, Order, Product, User } from "./catalog";
 
 /** Chamadas tipadas à API, agrupadas por área. */
 
@@ -16,13 +7,13 @@ import type {
 
 export type ProductListParams = {
   search?: string | undefined;
+  brand?: string[] | undefined;
   category?: string[] | undefined;
-  collection?: string | undefined;
   size?: string[] | undefined;
   color?: string[] | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
-  sort?: ("novidades" | "preco-asc" | "preco-desc" | "nome") | undefined;
+  sort?: ("novidades" | "preco-asc" | "preco-desc" | "nome" | "marca") | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
 };
@@ -63,27 +54,32 @@ export const catalogApi = {
     api.get<{ products: Product[] }>(`/catalog/products/${slug}/related`, { headers }),
 
   search: (q: string, limit = 6) =>
-    api.get<{ products: Product[] }>(
+    api.get<{ products: Product[]; brands: Brand[] }>(
       `/catalog/products/search?q=${encodeURIComponent(q)}&limit=${limit}`,
     ),
 
   categories: (headers?: Record<string, string>) =>
     api.get<{ categories: Category[] }>("/catalog/categories", { headers }),
 
-  collections: (headers?: Record<string, string>) =>
-    api.get<{ collections: Collection[] }>("/catalog/collections", { headers }),
-
-  collection: (slug: string, headers?: Record<string, string>) =>
-    api.get<{ collection: Collection; products: Product[] }>(`/catalog/collections/${slug}`, {
+  brands: (options: { featuredOnly?: boolean } = {}, headers?: Record<string, string>) =>
+    api.get<{ brands: Brand[] }>(`/catalog/brands${options.featuredOnly ? "?featured=true" : ""}`, {
       headers,
     }),
 
+  brand: (slug: string, headers?: Record<string, string>) =>
+    api.get<{ brand: Brand; products: Product[] }>(`/catalog/brands/${slug}`, { headers }),
+
+  promotions: (headers?: Record<string, string>) =>
+    api.get<{ products: Product[] }>("/catalog/promotions", { headers }),
+
+  /** Alimenta a homepage na ordem em que as secções aparecem. */
   home: (headers?: Record<string, string>) =>
     api.get<{
-      featured: Product[];
-      drops: Product[];
+      newArrivals: Product[];
+      brands: Brand[];
       bestSellers: Product[];
-      collections: Collection[];
+      categories: Category[];
+      promotions: Product[];
     }>("/catalog/home", { headers }),
 
   facets: (headers?: Record<string, string>) =>
@@ -219,10 +215,18 @@ export const paymentsApi = {
   status: (reference: string) => api.get<{ payment: PaymentInfo }>(`/payments/${reference}`),
   start: (orderReference: string) =>
     api.post<{ payment: PaymentInfo }>(`/payments/orders/${orderReference}/start`),
-  cancel: (reference: string) => api.post<{ payment: PaymentInfo }>(`/payments/${reference}/cancel`),
+  cancel: (reference: string) =>
+    api.post<{ payment: PaymentInfo }>(`/payments/${reference}/cancel`),
   /** Só disponível fora de produção — simula a confirmação na app do banco. */
   simulate: (reference: string, status: "PAGO" | "CANCELADO" | "FALHADO") =>
     api.post<{ payment: PaymentInfo }>("/payments/simulate", { reference, status }),
   providerStatus: () =>
     api.get<{ provider: string; configured: boolean; missing: string[] }>("/payments/status"),
+};
+
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+
+export const newsletterApi = {
+  subscribe: (email: string, source: "footer" | "home" | "checkout" = "footer") =>
+    api.post<{ subscribed: boolean; message: string }>("/newsletter/subscribe", { email, source }),
 };

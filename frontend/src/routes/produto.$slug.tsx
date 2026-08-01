@@ -81,10 +81,7 @@ function ProdutoPage() {
   // A cor escolhida restringe os tamanhos disponíveis: um hoodie pode ter L em
   // preto e estar esgotado em cinzento. Sem isto, o cliente escolheria uma
   // combinação inexistente e só descobria ao carregar em "Adicionar".
-  const sizesInStock = useMemo(
-    () => availableSizesForColor(product, color),
-    [product, color],
-  );
+  const sizesInStock = useMemo(() => availableSizesForColor(product, color), [product, color]);
 
   const selectedVariant = findVariant(product, size, color);
   // Enquanto não há tamanho escolhido mostramos o stock total da peça.
@@ -119,6 +116,7 @@ function ProdutoPage() {
         schema={breadcrumbSchema([
           { name: "Home", url: "/" },
           { name: "Shop", url: "/shop" },
+          { name: product.brand, url: `/marcas/${product.brandSlug}` },
           { name: product.name, url: `/produto/${product.slug}` },
         ])}
       />
@@ -130,6 +128,14 @@ function ProdutoPage() {
           <span>/</span>
           <Link to="/shop" className="hover:text-foreground">
             Shop
+          </Link>
+          <span>/</span>
+          <Link
+            to="/marcas/$slug"
+            params={{ slug: product.brandSlug }}
+            className="hover:text-foreground"
+          >
+            {product.brand}
           </Link>
           <span>/</span>
           <span className="truncate text-foreground">{product.name}</span>
@@ -189,14 +195,26 @@ function ProdutoPage() {
 
         {/* Info */}
         <div className="lg:sticky lg:top-28 lg:self-start">
-          <p className="eyebrow">{product.category}</p>
+          <Link
+            to="/marcas/$slug"
+            params={{ slug: product.brandSlug }}
+            className="link-underline font-display text-2xl uppercase leading-none tracking-brand"
+          >
+            {product.brand}
+          </Link>
           <h1 className="mt-4 text-4xl normal-case tracking-tight sm:text-5xl">{product.name}</h1>
-          <div className="mt-5 flex items-baseline gap-4">
+          <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {product.category}
+          </p>
+          <div className="mt-5 flex flex-wrap items-baseline gap-4">
             <p className="text-xl font-semibold">{formatKz(product.price)}</p>
             {product.compareAt && (
-              <p className="text-sm text-muted-foreground line-through">
-                {formatKz(product.compareAt)}
-              </p>
+              <>
+                <p className="text-sm text-muted-foreground line-through">
+                  {formatKz(product.compareAt)}
+                </p>
+                {product.discountPercent && <Badge tone="brand">−{product.discountPercent}%</Badge>}
+              </>
             )}
           </div>
 
@@ -374,7 +392,8 @@ function ProdutoPage() {
                 Envio e devoluções
               </AccordionTrigger>
               <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                Envios para todas as províncias. Trocas gratuitas em Luanda até 7 dias após a entrega.
+                Envios para todas as províncias. Trocas gratuitas em Luanda até 7 dias após a
+                entrega.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -383,7 +402,7 @@ function ProdutoPage() {
 
       <section className="shell mt-28 md:mt-40">
         <Reveal>
-          <SectionHeading eyebrow="Combina com" title="Produtos relacionados" />
+          <SectionHeading eyebrow="Também te pode interessar" title="Produtos relacionados" />
         </Reveal>
         <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-8">
           {related.map((p, i) => (

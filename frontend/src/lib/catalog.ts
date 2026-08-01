@@ -41,8 +41,12 @@ export type Product = {
   name: string;
   price: number;
   compareAt?: number;
+  /** Percentagem de desconto, já calculada pela API. */
+  discountPercent?: number;
   category: string;
-  collection: string;
+  categorySlug: string;
+  brand: string;
+  brandSlug: string;
   colors: ColorOption[];
   sizes: string[];
   images: string[];
@@ -50,14 +54,13 @@ export type Product = {
   /** Chave do enum, para o formulário do admin poder repor o valor. */
   badgeKey: string | null;
   stock: number;
+  inStock: boolean;
   isNew?: boolean;
   isDrop?: boolean;
   bestSeller?: boolean;
   description: string;
   details: string[];
 
-  categorySlug: string;
-  collectionSlug: string | null;
   variants: ProductVariant[];
   metaTitle: string | null;
   metaDescription: string | null;
@@ -66,14 +69,17 @@ export type Product = {
   updatedAt: string;
 };
 
-export type Collection = {
+/** Marca vendida na boutique. */
+export type Brand = {
   id: string;
   slug: string;
   name: string;
-  season: string;
-  image: string;
-  pieces: number;
+  tagline: string;
   description: string;
+  image: string;
+  logo: string | null;
+  productCount: number;
+  featured: boolean;
   active: boolean;
 };
 
@@ -85,10 +91,15 @@ export type Category = {
   position: number;
   active: boolean;
   productCount: number;
+  /** Imagem de uma peça da categoria, para a grelha da homepage. */
+  image: string | null;
 };
 
+export type FacetEntry = { name: string; slug: string; count: number };
+
 export type Facets = {
-  categories: string[];
+  brands: FacetEntry[];
+  categories: FacetEntry[];
   sizes: string[];
   colors: ColorOption[];
   priceRange: { min: number; max: number };
@@ -119,12 +130,7 @@ export type Cart = {
 };
 
 export type OrderStatus =
-  | "NOVA"
-  | "CONFIRMADA"
-  | "EM_PREPARACAO"
-  | "ENVIADA"
-  | "ENTREGUE"
-  | "CANCELADA";
+  "NOVA" | "CONFIRMADA" | "EM_PREPARACAO" | "ENVIADA" | "ENTREGUE" | "CANCELADA";
 
 export type PaymentStatus = "PENDENTE" | "PAGO" | "CANCELADO" | "FALHADO";
 
@@ -208,11 +214,13 @@ export type User = {
  * vazios — e são substituídos assim que a resposta chega.
  */
 export const CATEGORIES = [
-  "Hoodies",
   "T-Shirts",
+  "Hoodies",
+  "Jeans",
+  "Sneakers",
   "Calças",
-  "Outerwear",
-  "Denim",
+  "Casacos",
+  "Bonés",
   "Acessórios",
 ] as const;
 

@@ -13,10 +13,14 @@ export const Route = createFileRoute("/faq")({
       { title: "FAQ — CHICOPLUG" },
       {
         name: "description",
-        content: "Perguntas frequentes sobre drops, tamanhos, envios, pagamentos e trocas CHICOPLUG.",
+        content:
+          "Perguntas frequentes sobre autenticidade, marcas, tamanhos, envios, pagamentos e trocas na CHICOPLUG.",
       },
       { property: "og:title", content: "FAQ — CHICOPLUG" },
-      { property: "og:description", content: "Drops, tamanhos, envios, pagamentos e trocas." },
+      {
+        property: "og:description",
+        content: "Autenticidade, tamanhos, envios, pagamentos e trocas.",
+      },
     ],
   }),
   component: Faq,
@@ -24,24 +28,46 @@ export const Route = createFileRoute("/faq")({
 
 const GROUPS = [
   {
-    title: "Drops",
+    title: "Autenticidade",
     items: [
-      ["Com que frequência lançam drops?", "Lançamos entre quatro e seis drops por ano, sempre anunciados na lista de email e no Instagram."],
-      ["Há restock das peças esgotadas?", "Não. Cada coleção é produzida uma única vez."],
+      [
+        "As peças são originais?",
+        "Sim. Trabalhamos apenas com fornecedores verificados e cada peça é conferida antes de entrar no catálogo. Não vendemos réplicas.",
+      ],
+      [
+        "Que marcas têm disponíveis?",
+        "Nike, Jordan, Adidas, Corteiz, Represent, Hellstar, Denim Tears, Essentials e Gallery Dept. A lista completa está na página de Marcas.",
+      ],
+      [
+        "Fazem reposição das peças esgotadas?",
+        "Depende da disponibilidade junto do fornecedor. Inscreve-te na newsletter para saberes quando uma peça volta.",
+      ],
     ],
   },
   {
     title: "Tamanhos",
     items: [
-      ["Os cortes são oversized?", "Sim, a maioria das peças tem corte oversized. Consulta a tabela de tamanhos em cada produto."],
-      ["E se errar o tamanho?", "Podes trocar em 7 dias, desde que a peça esteja intacta e com etiqueta."],
+      [
+        "Como sei o meu tamanho?",
+        "Cada peça tem a tabela de tamanhos da respectiva marca. Atenção: o corte varia entre marcas — uma L da Essentials não é igual a uma L da Nike.",
+      ],
+      [
+        "E se errar o tamanho?",
+        "Podes trocar em 7 dias, desde que a peça esteja intacta e com etiqueta.",
+      ],
     ],
   },
   {
     title: "Envios e pagamentos",
     items: [
-      ["Enviam para todas as províncias?", "Sim. Luanda em 24–72h; restantes províncias entre 3 e 7 dias úteis."],
-      ["Que métodos de pagamento aceitam?", "Multicaixa Express. Outros métodos serão adicionados em breve."],
+      [
+        "Enviam para todas as províncias?",
+        "Sim. Luanda em 24–72h; restantes províncias entre 3 e 7 dias úteis.",
+      ],
+      [
+        "Que métodos de pagamento aceitam?",
+        "Multicaixa Express. Outros métodos serão adicionados em breve.",
+      ],
     ],
   },
 ];
@@ -67,7 +93,9 @@ function Faq() {
               <Accordion type="single" collapsible>
                 {g.items.map(([q, a]) => (
                   <AccordionItem key={q} value={q as string}>
-                    <AccordionTrigger className="text-left text-sm normal-case">{q}</AccordionTrigger>
+                    <AccordionTrigger className="text-left text-sm normal-case">
+                      {q}
+                    </AccordionTrigger>
                     <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
                       {a}
                     </AccordionContent>

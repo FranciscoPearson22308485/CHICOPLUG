@@ -1,20 +1,28 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Instagram } from "lucide-react";
 import hero from "@/assets/hero.jpg";
-import { IMAGES, type Collection, type Product } from "@/lib/catalog";
+import { IMAGES, formatKz, type Brand, type Category, type Product } from "@/lib/catalog";
 import { catalogApi } from "@/lib/queries";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
+import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { Marquee, SectionHeading, TextLink } from "@/components/site/Primitives";
 
 type HomeData = {
-  featured: Product[];
-  drops: Product[];
+  newArrivals: Product[];
+  brands: Brand[];
   bestSellers: Product[];
-  collections: Collection[];
+  categories: Category[];
+  promotions: Product[];
 };
 
-const EMPTY_HOME: HomeData = { featured: [], drops: [], bestSellers: [], collections: [] };
+const EMPTY_HOME: HomeData = {
+  newArrivals: [],
+  brands: [],
+  bestSellers: [],
+  categories: [],
+  promotions: [],
+};
 
 export const Route = createFileRoute("/")({
   // Carregado no servidor: a homepage chega ao browser já com o catálogo
@@ -23,24 +31,24 @@ export const Route = createFileRoute("/")({
     try {
       return await catalogApi.home();
     } catch (error) {
-      // Uma API em baixo não deve deixar a montra em branco: o resto da
-      // página (hero, marca, Instagram) continua a ter valor.
+      // Uma API em baixo não deve deixar a montra em branco: o resto da página
+      // continua a ter valor.
       console.error("Falha ao carregar a homepage", error);
       return EMPTY_HOME;
     }
   },
   head: () => ({
     meta: [
-      { title: "CHICOPLUG — Streetwear Premium de Edição Limitada" },
+      { title: "CHICOPLUG — Streetwear Premium | Nike, Jordan, Corteiz e mais" },
       {
         name: "description",
         content:
-          "Drops limitados, essenciais pesados e coleções feitas para durar. CHICOPLUG, streetwear premium de Luanda para o mundo.",
+          "As melhores marcas de streetwear num só lugar. Nike, Jordan, Adidas, Corteiz, Represent e Essentials, com entrega em todo o Angola.",
       },
       { property: "og:title", content: "CHICOPLUG — Streetwear Premium" },
       {
         property: "og:description",
-        content: "Drops limitados, essenciais pesados. Streetwear premium.",
+        content: "As melhores marcas de streetwear num só lugar.",
       },
     ],
   }),
@@ -49,53 +57,65 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const data = Route.useLoaderData() as HomeData;
-  const novidades = data.featured;
-  const drops = data.drops;
-  const best = data.bestSellers;
-  const COLLECTIONS = data.collections;
 
   return (
     <div>
-      {/* HERO */}
-      <section className="relative h-[92svh] min-h-[560px] w-full overflow-hidden bg-foreground">
+      {/* ── HERO ───────────────────────────────────────────────────────── */}
+      <section className="relative h-[92svh] min-h-[560px] w-full overflow-hidden bg-ink">
         <img
           src={hero}
-          alt="Campanha editorial CHICOPLUG"
+          alt="Editorial de streetwear CHICOPLUG"
           width={1600}
           height={1904}
           className="absolute inset-0 size-full object-cover object-[50%_35%] opacity-90"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-foreground/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-ink/30" />
         <div className="shell relative flex h-full flex-col justify-end pb-16 md:pb-24">
           <Reveal>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-background/70">
-              Drop 02 / 2026 — Night Shift
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
+              Streetwear premium — Luanda
             </p>
           </Reveal>
           <Reveal delay={120}>
-            <h1 className="display-xl mt-6 max-w-[16ch] text-[16vw] text-background sm:text-[11vw] lg:text-[8.5vw]">
-              Feito para
+            <h1 className="display-xl mt-6 max-w-[16ch] text-[13vw] text-white sm:text-[10vw] lg:text-[7.5vw]">
+              As melhores
               <br />
-              a rua
+              marcas num
+              <br />
+              só lugar
             </h1>
           </Reveal>
-          <Reveal delay={240} className="mt-10 flex items-center gap-6">
+          <Reveal delay={240} className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               to="/shop"
-              className="group inline-flex items-center gap-4 bg-background px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground transition-colors hover:bg-brand"
+              /* O hero assenta sobre uma fotografia escura nos dois temas, por
+                 isso o botão principal é branco fixo: se seguisse o tema,
+                 tornar-se-ia escuro sobre escuro em modo noturno. */
+              className="group inline-flex items-center gap-4 bg-white px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ink transition-colors hover:bg-brand hover:text-brand-foreground"
             >
-              Shop Now
+              Comprar Agora
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              to="/marcas"
+              className="inline-flex items-center gap-4 border border-white/40 px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-white transition-colors hover:border-white hover:bg-white hover:text-ink"
+            >
+              Ver Marcas
             </Link>
           </Reveal>
         </div>
       </section>
 
       <Marquee
-        items={["Edição limitada", "Entregas em todo Angola", "Multicaixa Express", "Sem restock"]}
+        items={[
+          "Peças originais",
+          "Entregas em todo Angola",
+          "Multicaixa Express",
+          "As marcas mais procuradas",
+        ]}
       />
 
-      {/* NOVIDADES */}
+      {/* ── NOVIDADES ──────────────────────────────────────────────────── */}
       <section className="shell py-24 md:py-32">
         <Reveal>
           <SectionHeading
@@ -105,52 +125,69 @@ function Home() {
           />
         </Reveal>
         <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-8 xl:grid-cols-4">
-          {novidades.map((p, i) => (
+          {data.newArrivals.map((p, i) => (
             <Reveal key={p.id} delay={i * 90}>
-              <ProductCard product={p} />
+              <ProductCard product={p} priority={i < 2} />
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* DROPS */}
+      {/* ── MARCAS POPULARES ───────────────────────────────────────────── */}
       <section className="bg-surface py-24 md:py-32">
         <div className="shell">
-          <Reveal className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-center">
-            <div>
-              <p className="eyebrow">Drop ativo</p>
-              <h2 className="mt-6 text-5xl sm:text-6xl xl:text-7xl">
-                Night
-                <br />
-                Shift
-              </h2>
-              <p className="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Oito peças. Uma cor. Produzidas uma única vez — quando esgota, não volta.
-              </p>
-              <div className="mt-10">
-                <TextLink to="/colecoes">Explorar o drop</TextLink>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:gap-8">
-              {drops.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+          <Reveal>
+            <SectionHeading
+              eyebrow="Selecção da casa"
+              title="Marcas Populares"
+              action={<TextLink to="/marcas">Todas as marcas</TextLink>}
+            />
           </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4">
+            {data.brands.map((brand, i) => (
+              <Reveal key={brand.id} delay={i * 60}>
+                <Link
+                  to="/marcas/$slug"
+                  params={{ slug: brand.slug }}
+                  className="group flex h-full flex-col justify-between border border-border bg-background p-6 transition-colors duration-500 hover:border-foreground md:p-8"
+                >
+                  <div className="min-w-0">
+                    {/* Sem logótipos de terceiros, a marca é apresentada em
+                        tipografia — mais coerente com o desenho do que um
+                        mosaico de logótipos de proveniências diferentes. */}
+                    <p className="font-display text-2xl uppercase leading-none tracking-brand md:text-3xl">
+                      {brand.name}
+                    </p>
+                    {brand.tagline && (
+                      <p className="mt-3 line-clamp-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                        {brand.tagline}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-8 flex items-center justify-between">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                      {brand.productCount} {brand.productCount === 1 ? "peça" : "peças"}
+                    </span>
+                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* BEST SELLERS */}
+      {/* ── MAIS VENDIDOS ──────────────────────────────────────────────── */}
       <section className="shell py-24 md:py-32">
         <Reveal>
           <SectionHeading
-            eyebrow="Os mais pedidos"
-            title="Best Sellers"
+            eyebrow="Os mais procurados"
+            title="Mais Vendidos"
             action={<TextLink to="/shop">Ver tudo</TextLink>}
           />
         </Reveal>
-        <div className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto md:grid md:grid-cols-3 md:gap-8 md:overflow-visible">
-          {best.map((p, i) => (
+        <div className="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto md:grid md:grid-cols-4 md:gap-8 md:overflow-visible">
+          {data.bestSellers.slice(0, 4).map((p, i) => (
             <Reveal key={p.id} delay={i * 90} className="min-w-[68%] snap-start md:min-w-0">
               <ProductCard product={p} />
             </Reveal>
@@ -158,33 +195,38 @@ function Home() {
         </div>
       </section>
 
-      {/* COLEÇÕES */}
+      {/* ── CATEGORIAS ─────────────────────────────────────────────────── */}
       <section className="shell pb-24 md:pb-32">
         <Reveal>
-          <SectionHeading eyebrow="Arquivo" title="Coleções" action={<TextLink to="/colecoes">Índice</TextLink>} />
+          <SectionHeading
+            eyebrow="Procura por tipo"
+            title="Categorias"
+            action={<TextLink to="/shop">Shop</TextLink>}
+          />
         </Reveal>
-        <div className="mt-12 grid gap-4 md:grid-cols-3 md:gap-8">
-          {COLLECTIONS.map((c, i) => (
-            <Reveal key={c.slug} delay={i * 100}>
+        <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
+          {data.categories.map((category, i) => (
+            <Reveal key={category.id} delay={i * 70}>
               <Link
-                to="/colecoes/$slug"
-                params={{ slug: c.slug }}
-                className="group block overflow-hidden bg-surface"
+                to="/shop"
+                search={{ categoria: category.slug } as never}
+                className="group relative block overflow-hidden bg-surface"
               >
-                <img
-                  src={c.image}
-                  alt={c.name}
-                  loading="lazy"
-                  className="aspect-[3/4] w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
-                />
-                <div className="flex items-end justify-between gap-4 bg-background px-1 pt-5">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-lg">{c.name}</h3>
-                    <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {c.season}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">{c.pieces} peças</span>
+                {category.image ? (
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    loading="lazy"
+                    className="aspect-[3/4] w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="aspect-[3/4] w-full bg-surface" />
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-5 pt-16">
+                  <h3 className="text-lg text-white">{category.name}</h3>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/70">
+                    {category.productCount} {category.productCount === 1 ? "peça" : "peças"}
+                  </p>
                 </div>
               </Link>
             </Reveal>
@@ -192,8 +234,30 @@ function Home() {
         </div>
       </section>
 
-      {/* SOBRE A MARCA */}
-      <section className="border-y border-border bg-foreground text-background">
+      {/* ── PROMOÇÕES ──────────────────────────────────────────────────── */}
+      {data.promotions.length > 0 && (
+        <section className="border-y border-border bg-surface py-24 md:py-32">
+          <div className="shell">
+            <Reveal>
+              <SectionHeading
+                eyebrow="Preços reduzidos"
+                title="Promoções"
+                action={<TextLink to="/shop">Ver todas</TextLink>}
+              />
+            </Reveal>
+            <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-4 md:gap-x-8">
+              {data.promotions.slice(0, 4).map((p, i) => (
+                <Reveal key={p.id} delay={i * 80}>
+                  <ProductCard product={p} />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── SOBRE A LOJA ───────────────────────────────────────────────── */}
+      <section className="border-b border-border bg-ink text-ink-foreground">
         <div className="shell grid gap-16 py-24 md:grid-cols-2 md:py-32">
           <Reveal>
             <img
@@ -204,22 +268,22 @@ function Home() {
             />
           </Reveal>
           <Reveal delay={140} className="flex flex-col justify-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-background/50">
-              A marca
+            <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-ink-foreground/50">
+              A loja
             </p>
             <h2 className="mt-6 text-4xl sm:text-5xl">
-              Cultura urbana,
+              Selecção rigorosa,
               <br />
-              padrão premium
+              origem garantida
             </h2>
-            <p className="mt-8 max-w-md text-sm leading-relaxed text-background/60">
-              Nascemos em Luanda com uma ideia simples: roupa pesada, cortes certos, quantidades
-              pequenas. Cada peça é desenhada para viver anos e não uma estação.
+            <p className="mt-8 max-w-md text-sm leading-relaxed text-ink-foreground/60">
+              Escolhemos peça a peça o que vale a pena vestir. Trabalhamos apenas com produto
+              original, de marcas que definem o streetwear — e entregamos em todo o Angola.
             </p>
             <div className="mt-10">
               <Link
                 to="/sobre"
-                className="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-background"
+                className="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-foreground"
               >
                 Sobre a CHICOPLUG
               </Link>
@@ -228,7 +292,7 @@ function Home() {
         </div>
       </section>
 
-      {/* INSTAGRAM */}
+      {/* ── INSTAGRAM ──────────────────────────────────────────────────── */}
       <section className="shell py-24 md:py-32">
         <Reveal>
           <SectionHeading
@@ -249,7 +313,12 @@ function Home() {
         <div className="mt-12 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
           {[IMAGES.editorial2, IMAGES.p1, IMAGES.editorial1, IMAGES.p5].map((img, i) => (
             <Reveal key={i} delay={i * 80}>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="group block overflow-hidden bg-surface">
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noreferrer"
+                className="group block overflow-hidden bg-surface"
+              >
                 <img
                   src={img}
                   alt="Publicação Instagram CHICOPLUG"
@@ -259,6 +328,26 @@ function Home() {
               </a>
             </Reveal>
           ))}
+        </div>
+      </section>
+
+      {/* ── NEWSLETTER ─────────────────────────────────────────────────── */}
+      <section className="border-t border-border bg-surface">
+        <div className="shell grid gap-10 py-20 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center md:py-28">
+          <Reveal>
+            <p className="eyebrow">Lista de espera</p>
+            <h2 className="mt-6 text-4xl sm:text-5xl">
+              Sabe primeiro
+              <br />o que chega
+            </h2>
+            <p className="mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
+              As peças mais procuradas esgotam em horas. Avisamos-te por email antes de entrarem na
+              loja.
+            </p>
+          </Reveal>
+          <Reveal delay={120}>
+            <NewsletterForm source="home" />
+          </Reveal>
         </div>
       </section>
     </div>

@@ -37,7 +37,10 @@ function Contacto() {
             { icon: Instagram, label: "Instagram", value: "@chicoplug" },
             { icon: MapPin, label: "Studio", value: "Talatona, Luanda — visitas por marcação" },
           ].map((item) => (
-            <div key={item.label} className="grid grid-cols-[auto_minmax(0,1fr)] gap-5 border-b border-border pb-6">
+            <div
+              key={item.label}
+              className="grid grid-cols-[auto_minmax(0,1fr)] gap-5 border-b border-border pb-6"
+            >
               <item.icon className="mt-1 size-5 shrink-0" />
               <div className="min-w-0">
                 <p className="eyebrow">{item.label}</p>
@@ -59,19 +62,33 @@ function Contacto() {
               <Label htmlFor="c-nome" className="text-[11px] uppercase tracking-[0.16em]">
                 Nome
               </Label>
-              <Input id="c-nome" className="h-12 rounded-none border-border" placeholder="Nome e apelido" />
+              <Input
+                id="c-nome"
+                className="h-12 rounded-none border-border"
+                placeholder="Nome e apelido"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="c-email" className="text-[11px] uppercase tracking-[0.16em]">
                 Email
               </Label>
-              <Input id="c-email" type="email" className="h-12 rounded-none border-border" placeholder="o.teu@email.com" />
+              <Input
+                id="c-email"
+                type="email"
+                className="h-12 rounded-none border-border"
+                placeholder="o.teu@email.com"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="c-msg" className="text-[11px] uppercase tracking-[0.16em]">
                 Mensagem
               </Label>
-              <Textarea id="c-msg" rows={6} className="rounded-none border-border" placeholder="Como podemos ajudar?" />
+              <Textarea
+                id="c-msg"
+                rows={6}
+                className="rounded-none border-border"
+                placeholder="Como podemos ajudar?"
+              />
             </div>
             <button
               type="submit"

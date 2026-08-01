@@ -1,10 +1,4 @@
-import type {
-  Category,
-  Collection,
-  Product,
-  ProductImage,
-  ProductVariant,
-} from "@prisma/client";
+import type { Brand, Category, Product, ProductImage, ProductVariant } from "@prisma/client";
 
 /**
  * O frontend define `badge` como união de literais acentuados
@@ -20,7 +14,7 @@ const BADGE_LABEL = {
 
 export type ProductWithRelations = Product & {
   category: Category;
-  collection: Collection | null;
+  brand: Brand;
   images: ProductImage[];
   variants: ProductVariant[];
 };
@@ -34,16 +28,14 @@ export type SerializedVariant = {
   stock: number;
   price: number;
   lowStock: boolean;
-  /** Limiar de alerta, necessário para o formulário do admin o poder editar. */
   lowStockThreshold: number;
   active: boolean;
 };
 
 /**
- * Forma devolvida ao frontend. Os primeiros campos replicam exactamente o tipo
- * `Product` de `src/lib/catalog.ts` — os componentes existentes continuam a
- * funcionar sem uma única alteração. `variants` é aditivo: a página de produto
- * precisa dele para traduzir (tamanho, cor) no `variantId` que o carrinho usa.
+ * Forma devolvida ao frontend. Os primeiros campos replicam o tipo `Product`
+ * original, para que os componentes existentes continuem a funcionar sem
+ * alterações visuais. `brand` é o eixo novo da loja multimarca.
  */
 export type SerializedProduct = {
   id: string;
@@ -51,30 +43,24 @@ export type SerializedProduct = {
   name: string;
   price: number;
   compareAt?: number;
+  /** Percentagem de desconto, já arredondada — usada nas etiquetas de promoção. */
+  discountPercent?: number;
   category: string;
-  collection: string;
+  categorySlug: string;
+  brand: string;
+  brandSlug: string;
   colors: Array<{ name: string; hex: string }>;
   sizes: string[];
   images: string[];
-  /** Rótulo apresentado na UI, já acentuado (ex.: "ÚLTIMAS UNIDADES"). */
   badge?: string;
-  /**
-   * Chave original do enum (ex.: "ULTIMAS_UNIDADES"), ou `null`.
-   *
-   * O `badge` acima é para mostrar; este é para editar. Sem ele, o formulário
-   * do admin não conseguiria repor o valor guardado e gravaria `null` por
-   * omissão — apagando o distintivo em cada edição.
-   */
   badgeKey: string | null;
   stock: number;
+  inStock: boolean;
   isNew?: boolean;
   isDrop?: boolean;
   bestSeller?: boolean;
   description: string;
   details: string[];
-  // Campos adicionais (ignorados pelos componentes que não os usam).
-  categorySlug: string;
-  collectionSlug: string | null;
   variants: SerializedVariant[];
   metaTitle: string | null;
   metaDescription: string | null;
@@ -105,8 +91,8 @@ export function serializeProduct(product: ProductWithRelations): SerializedProdu
   // continua a ser cada variante individualmente.
   const stock = activeVariants.reduce((sum, v) => sum + v.stock, 0);
 
-  // Preserva a ordem de inserção das variantes: é a ordem por que o admin as
-  // criou e a que faz sentido apresentar (XS → XXL, não alfabética).
+  // Preserva a ordem de inserção: é a ordem por que o admin as criou e a que
+  // faz sentido apresentar (S → XXL, não alfabética).
   const sizes: string[] = [];
   const colors: Array<{ name: string; hex: string }> = [];
   for (const variant of activeVariants) {
@@ -121,7 +107,13 @@ export function serializeProduct(product: ProductWithRelations): SerializedProdu
     .map((image) => image.url);
 
   // Sem stock a etiqueta "ESGOTADO" ganha sempre, seja qual for a definida.
-  const badge = stock === 0 ? BADGE_LABEL.ESGOTADO : product.badge ? BADGE_LABEL[product.badge] : undefined;
+  const badge =
+    stock === 0 ? BADGE_LABEL.ESGOTADO : product.badge ? BADGE_LABEL[product.badge] : undefined;
+
+  const discountPercent =
+    product.compareAt && product.compareAt > product.price
+      ? Math.round(((product.compareAt - product.price) / product.compareAt) * 100)
+      : undefined;
 
   return {
     id: product.id,
@@ -129,22 +121,23 @@ export function serializeProduct(product: ProductWithRelations): SerializedProdu
     name: product.name,
     price: product.price,
     ...(product.compareAt !== null ? { compareAt: product.compareAt } : {}),
+    ...(discountPercent ? { discountPercent } : {}),
     category: product.category.name,
-    collection: product.collection?.slug ?? "",
+    categorySlug: product.category.slug,
+    brand: product.brand.name,
+    brandSlug: product.brand.slug,
     colors,
     sizes,
     images,
     ...(badge ? { badge } : {}),
     badgeKey: product.badge,
     stock,
+    inStock: stock > 0,
     ...(product.isNew ? { isNew: true } : {}),
     ...(product.isDrop ? { isDrop: true } : {}),
     ...(product.bestSeller ? { bestSeller: true } : {}),
     description: product.description,
     details: product.details,
-
-    categorySlug: product.category.slug,
-    collectionSlug: product.collection?.slug ?? null,
     variants: activeVariants.map((v) => serializeVariant(v, product.price)),
     metaTitle: product.metaTitle,
     metaDescription: product.metaDescription,
@@ -156,34 +149,39 @@ export function serializeProduct(product: ProductWithRelations): SerializedProdu
 
 export const productInclude = {
   category: true,
-  collection: true,
+  brand: true,
   images: { orderBy: { position: "asc" } },
   variants: { orderBy: { createdAt: "asc" } },
 } as const;
 
-export type SerializedCollection = {
+export type SerializedBrand = {
+  id: string;
   slug: string;
   name: string;
-  season: string;
-  image: string;
-  pieces: number;
+  tagline: string;
   description: string;
-  id: string;
+  image: string;
+  logo: string | null;
+  /** Número de peças disponíveis desta marca. */
+  productCount: number;
+  featured: boolean;
   active: boolean;
 };
 
-export function serializeCollection(
-  collection: Collection & { _count?: { products: number } },
-): SerializedCollection {
+export function serializeBrand(
+  brand: Brand & { _count?: { products: number } },
+): SerializedBrand {
   return {
-    id: collection.id,
-    slug: collection.slug,
-    name: collection.name,
-    season: collection.season,
-    image: collection.imageUrl ?? "",
-    pieces: collection._count?.products ?? 0,
-    description: collection.description ?? "",
-    active: collection.active,
+    id: brand.id,
+    slug: brand.slug,
+    name: brand.name,
+    tagline: brand.tagline ?? "",
+    description: brand.description ?? "",
+    image: brand.imageUrl ?? "",
+    logo: brand.logoUrl,
+    productCount: brand._count?.products ?? 0,
+    featured: brand.featured,
+    active: brand.active,
   };
 }
 
@@ -195,10 +193,12 @@ export type SerializedCategory = {
   position: number;
   active: boolean;
   productCount: number;
+  /** Imagem de uma peça da categoria, para a grelha de categorias da homepage. */
+  image: string | null;
 };
 
 export function serializeCategory(
-  category: Category & { _count?: { products: number } },
+  category: Category & { _count?: { products: number }; products?: Array<{ images: ProductImage[] }> },
 ): SerializedCategory {
   return {
     id: category.id,
@@ -208,5 +208,6 @@ export function serializeCategory(
     position: category.position,
     active: category.active,
     productCount: category._count?.products ?? 0,
+    image: category.products?.[0]?.images?.[0]?.url ?? null,
   };
 }

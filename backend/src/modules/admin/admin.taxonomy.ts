@@ -5,11 +5,11 @@ import { conflict, notFound } from "../../lib/errors.js";
 import { prisma } from "../../lib/prisma.js";
 import { uniqueSlug } from "../../lib/slug.js";
 import { validate } from "../../middleware/validate.js";
-import { serializeCategory, serializeCollection } from "../catalog/catalog.serializer.js";
-import { categorySchema, collectionSchema, idParamSchema } from "./admin.schemas.js";
+import { serializeBrand, serializeCategory } from "../catalog/catalog.serializer.js";
+import { brandSchema, categorySchema, idParamSchema } from "./admin.schemas.js";
 
 export const adminCategoriesRouter = Router();
-export const adminCollectionsRouter = Router();
+export const adminBrandsRouter = Router();
 
 // ─── Categorias ───────────────────────────────────────────────────────────────
 
@@ -89,66 +89,90 @@ adminCategoriesRouter.delete(
   }),
 );
 
-// ─── Colecções ────────────────────────────────────────────────────────────────
+// ─── Marcas ───────────────────────────────────────────────────────────────────
 
-adminCollectionsRouter.get(
+adminBrandsRouter.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const rows = await prisma.collection.findMany({
+    const rows = await prisma.brand.findMany({
       orderBy: [{ position: "asc" }, { name: "asc" }],
       include: { _count: { select: { products: true } } },
     });
-    res.json({ collections: rows.map(serializeCollection) });
+    res.json({ brands: rows.map(serializeBrand) });
   }),
 );
 
-adminCollectionsRouter.post(
+adminBrandsRouter.post(
   "/",
-  validate({ body: collectionSchema }),
+  validate({ body: brandSchema }),
   asyncHandler(async (req, res) => {
     const slug =
       req.body.slug ??
       (await uniqueSlug(req.body.name, async (candidate) =>
-        Boolean(await prisma.collection.findUnique({ where: { slug: candidate } })),
+        Boolean(await prisma.brand.findUnique({ where: { slug: candidate } })),
       ));
 
-    const collection = await prisma.collection.create({
+    const brand = await prisma.brand.create({
       data: {
         name: req.body.name,
         slug,
-        season: req.body.season,
+        tagline: req.body.tagline ?? null,
         description: req.body.description ?? null,
         imageUrl: req.body.imageUrl ?? null,
         imagePublicId: req.body.imagePublicId ?? null,
+        logoUrl: req.body.logoUrl ?? null,
+        logoPublicId: req.body.logoPublicId ?? null,
+        featured: req.body.featured,
         position: req.body.position,
         active: req.body.active,
       },
       include: { _count: { select: { products: true } } },
     });
 
-    res.status(201).json({ collection: serializeCollection(collection) });
+    res.status(201).json({ brand: serializeBrand(brand) });
   }),
 );
 
-adminCollectionsRouter.patch(
+adminBrandsRouter.patch(
   "/:id",
-  validate({ params: idParamSchema, body: collectionSchema.partial() }),
+  validate({ params: idParamSchema, body: brandSchema.partial() }),
   asyncHandler(async (req, res) => {
-    const collection = await prisma.collection.update({
+    const brand = await prisma.brand.update({
       where: { id: req.params.id! },
       data: req.body,
       include: { _count: { select: { products: true } } },
     });
-    res.json({ collection: serializeCollection(collection) });
+    res.json({ brand: serializeBrand(brand) });
   }),
 );
 
-/** Aqui podemos apagar: `Product.collectionId` é opcional e fica a NULL. */
-adminCollectionsRouter.delete(
+/**
+ * Uma marca com produtos não pode ser removida: `Product.brandId` é obrigatório
+ * e apagá-la deixaria peças órfãs. Damos a razão em vez de devolver um erro de
+ * chave estrangeira.
+ */
+adminBrandsRouter.delete(
   "/:id",
   validate({ params: idParamSchema }),
   asyncHandler(async (req, res) => {
-    await prisma.collection.delete({ where: { id: req.params.id! } });
-    res.status(204).end();
+    const brand = await prisma.brand.findUnique({
+      where: { id: req.params.id! },
+      include: { _count: { select: { products: true } } },
+    });
+    if (!brand) throw notFound("Marca não encontrada.");
+
+    if (brand._count.products > 0) {
+      // Desactivar retira-a da loja sem partir o catálogo.
+      await prisma.brand.update({ where: { id: brand.id }, data: { active: false } });
+      res.json({
+        deleted: false,
+        archived: true,
+        message: `Marca desactivada: tem ${brand._count.products} produto(s) associado(s).`,
+      });
+      return;
+    }
+
+    await prisma.brand.delete({ where: { id: brand.id } });
+    res.json({ deleted: true, archived: false });
   }),
 );

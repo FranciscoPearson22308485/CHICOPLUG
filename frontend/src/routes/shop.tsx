@@ -10,33 +10,65 @@ import { EmptyState, ProductSkeleton } from "@/components/site/Primitives";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
+/** Usado só até as facetas reais chegarem, para os filtros não piscarem vazios. */
 const FALLBACK_FACETS: Facets = {
-  categories: [...CATEGORIES],
+  brands: [],
+  categories: CATEGORIES.map((name) => ({ name, slug: name.toLowerCase(), count: 0 })),
   sizes: [...SIZES],
   colors: COLORS,
-  priceRange: { min: 20000, max: 150000 },
+  priceRange: { min: 20000, max: 250000 },
 };
 
-type ShopSearch = { search?: string };
+const SORTS = [
+  { id: "novidades", label: "Novidades" },
+  { id: "preco-asc", label: "Preço ↑" },
+  { id: "preco-desc", label: "Preço ↓" },
+  { id: "marca", label: "Marca" },
+  { id: "nome", label: "A–Z" },
+] as const;
+
+/**
+ * Estado do shop guardado no URL.
+ *
+ * Manter os filtros no URL — e não em estado local — é o que torna
+ * `/shop?marca=nike&categoria=sneakers` partilhável, navegável com o botão
+ * "voltar" e renderizável já no servidor.
+ */
+type ShopSearch = {
+  search?: string;
+  marca?: string;
+  categoria?: string;
+};
 
 export const Route = createFileRoute("/shop")({
-  /**
-   * A pesquisa vive no URL, não em estado local: é o que permite partilhar
-   * `/shop?search=hoodie`, usar o botão "voltar" do browser e renderizar o
-   * resultado já no servidor.
-   */
   validateSearch: (input: Record<string, unknown>): ShopSearch => {
-    const term = typeof input["search"] === "string" ? input["search"].trim() : "";
-    return term ? { search: term.slice(0, 120) } : {};
+    const str = (key: string): string | undefined => {
+      const value = input[key];
+      return typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : undefined;
+    };
+
+    const out: ShopSearch = {};
+    const search = str("search");
+    const marca = str("marca");
+    const categoria = str("categoria");
+    if (search) out.search = search;
+    if (marca) out.marca = marca;
+    if (categoria) out.categoria = categoria;
+    return out;
   },
 
-  loaderDeps: ({ search }) => ({ search: search.search }),
+  loaderDeps: ({ search }) => ({
+    search: search.search,
+    marca: search.marca,
+    categoria: search.categoria,
+  }),
 
-  // Primeira página renderizada no servidor — indexável e sem salto visual.
   loader: async ({ deps }): Promise<ProductListResponse | null> => {
     try {
       return await catalogApi.products({
         ...(deps.search ? { search: deps.search } : {}),
+        ...(deps.marca ? { brand: [deps.marca] } : {}),
+        ...(deps.categoria ? { category: [deps.categoria] } : {}),
         sort: "novidades",
         pageSize: 24,
       });
@@ -45,63 +77,75 @@ export const Route = createFileRoute("/shop")({
       return null;
     }
   },
+
   head: () => ({
     meta: [
-      { title: "Shop — CHICOPLUG Streetwear" },
+      { title: "Shop — CHICOPLUG Streetwear Premium" },
       {
         name: "description",
-        content: "Todas as peças CHICOPLUG: hoodies, t-shirts, calças, outerwear, denim e acessórios.",
+        content:
+          "Todas as peças CHICOPLUG: t-shirts, hoodies, jeans, sneakers, calças, casacos, bonés e acessórios das melhores marcas.",
       },
       { property: "og:title", content: "Shop — CHICOPLUG" },
-      { property: "og:description", content: "Hoodies, tees, calças, outerwear e acessórios." },
+      {
+        property: "og:description",
+        content: "T-shirts, hoodies, jeans, sneakers e mais, das marcas que definem o streetwear.",
+      },
     ],
   }),
   component: Shop,
 });
 
-const SORTS = [
-  { id: "novidades", label: "Novidades" },
-  { id: "preco-asc", label: "Preço ↑" },
-  { id: "preco-desc", label: "Preço ↓" },
-  { id: "nome", label: "A–Z" },
-] as const;
-
 function Shop() {
   const initial = Route.useLoaderData() as ProductListResponse | null;
-  const { search: term } = Route.useSearch();
+  const { search: term, marca, categoria } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const facets = initial?.facets ?? FALLBACK_FACETS;
-  const priceCeiling = facets.priceRange.max || 150000;
 
-  const [cats, setCats] = useState<string[]>([]);
+  const facets = initial?.facets ?? FALLBACK_FACETS;
+  const priceCeiling = facets.priceRange.max || 250000;
+
+  // Os filtros vindos do URL (marca ou categoria) entram já seleccionados.
+  const [brands, setBrands] = useState<string[]>(marca ? [marca] : []);
+  const [cats, setCats] = useState<string[]>(categoria ? [categoria] : []);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
   const [max, setMax] = useState(priceCeiling);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [onSaleOnly, setOnSaleOnly] = useState(false);
   const [sort, setSort] = useState<string>("novidades");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // O tecto do slider só é conhecido depois de a API responder; sem isto o
-  // valor inicial ficaria preso no fallback e esconderia as peças mais caras.
+  // O tecto do slider só é conhecido depois da resposta da API.
   useEffect(() => {
-    setMax((current) => (current === 150000 ? priceCeiling : current));
+    setMax((current) => (current === 250000 ? priceCeiling : current));
   }, [priceCeiling]);
+
+  // Navegar de fora (ex.: card de categoria na homepage) tem de refletir-se
+  // nos filtros, sem apagar o que o utilizador já tinha escolhido à mão.
+  useEffect(() => {
+    if (marca) setBrands([marca]);
+  }, [marca]);
+  useEffect(() => {
+    if (categoria) setCats([categoria]);
+  }, [categoria]);
 
   const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
-  // A filtragem passa a ser feita pelo servidor: é o único sítio que conhece o
-  // catálogo inteiro, e assim a grelha não fica limitada à página já carregada.
   const params = useMemo(
     () => ({
       ...(term ? { search: term } : {}),
+      brand: brands,
       category: cats,
       size: sizes,
       color: colors,
       maxPrice: max < priceCeiling ? max : undefined,
-      sort: sort as "novidades" | "preco-asc" | "preco-desc" | "nome",
+      inStock: inStockOnly || undefined,
+      onSale: onSaleOnly || undefined,
+      sort: sort as "novidades" | "preco-asc" | "preco-desc" | "nome" | "marca",
       pageSize: 24,
     }),
-    [term, cats, sizes, colors, max, sort, priceCeiling],
+    [term, brands, cats, sizes, colors, max, inStockOnly, onSaleOnly, sort, priceCeiling],
   );
 
   const { data, isFetching } = useQuery({
@@ -114,22 +158,55 @@ function Shop() {
   });
 
   const results: Product[] = data?.products ?? [];
-  const activeCount = cats.length + sizes.length + colors.length + (max < priceCeiling ? 1 : 0);
+
+  const activeCount =
+    brands.length +
+    cats.length +
+    sizes.length +
+    colors.length +
+    (max < priceCeiling ? 1 : 0) +
+    (inStockOnly ? 1 : 0) +
+    (onSaleOnly ? 1 : 0);
 
   const clearAll = () => {
+    setBrands([]);
     setCats([]);
     setSizes([]);
     setColors([]);
     setMax(priceCeiling);
+    setInStockOnly(false);
+    setOnSaleOnly(false);
+    // Limpa também os filtros que vieram no URL.
+    void navigate({ search: (prev: ShopSearch) => (prev.search ? { search: prev.search } : {}) });
   };
 
   const filterPanel = (
     <div className="space-y-10">
+      {facets.brands.length > 0 && (
+        <FilterGroup title="Marca">
+          <div className="flex flex-wrap gap-2">
+            {facets.brands.map((b) => (
+              <Chip
+                key={b.slug}
+                active={brands.includes(b.slug)}
+                onClick={() => toggle(brands, setBrands, b.slug)}
+              >
+                {b.name}
+              </Chip>
+            ))}
+          </div>
+        </FilterGroup>
+      )}
+
       <FilterGroup title="Categoria">
         <div className="flex flex-wrap gap-2">
           {facets.categories.map((c) => (
-            <Chip key={c} active={cats.includes(c)} onClick={() => toggle(cats, setCats, c)}>
-              {c}
+            <Chip
+              key={c.slug}
+              active={cats.includes(c.slug)}
+              onClick={() => toggle(cats, setCats, c.slug)}
+            >
+              {c.name}
             </Chip>
           ))}
         </div>
@@ -153,10 +230,13 @@ function Shop() {
               type="button"
               onClick={() => toggle(colors, setColors, c.name)}
               aria-label={c.name}
+              title={c.name}
               aria-pressed={colors.includes(c.name)}
               className={cn(
                 "size-7 border transition-transform duration-300 hover:scale-110",
-                colors.includes(c.name) ? "border-foreground ring-1 ring-foreground ring-offset-2" : "border-border",
+                colors.includes(c.name)
+                  ? "border-foreground ring-1 ring-foreground ring-offset-2 ring-offset-background"
+                  : "border-border",
               )}
               style={{ backgroundColor: c.hex }}
             />
@@ -172,6 +252,17 @@ function Shop() {
           max={priceCeiling}
           step={2000}
         />
+      </FilterGroup>
+
+      <FilterGroup title="Disponibilidade">
+        <div className="flex flex-wrap gap-2">
+          <Chip active={inStockOnly} onClick={() => setInStockOnly((v) => !v)}>
+            Em stock
+          </Chip>
+          <Chip active={onSaleOnly} onClick={() => setOnSaleOnly((v) => !v)}>
+            Em promoção
+          </Chip>
+        </div>
       </FilterGroup>
 
       {activeCount > 0 && (
@@ -240,7 +331,9 @@ function Shop() {
 
         <div className="mt-12 grid gap-12 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
           <aside className="hidden lg:block">
-            <div className="sticky top-28">{filterPanel}</div>
+            <div className="sticky top-28 max-h-[calc(100svh-9rem)] overflow-y-auto pr-2">
+              {filterPanel}
+            </div>
           </aside>
 
           <div>

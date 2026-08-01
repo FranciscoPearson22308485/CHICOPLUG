@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="CHICOPLUG">
+  <!--
+    Marca CHICOPLUG reduzida ao essencial.
+
+    Construída com geometria em vez de texto: um favicon com <text> depende das
+    fontes disponíveis em cada sistema e renderiza diferente em cada um.
+
+    O "C" monolítico e o quadrado azul da marca são os dois elementos que o
+    logótipo já usa (o ponto azul do Marquee, o "PLUG" a azul na navbar), e
+    continuam legíveis a 16 px, onde um "CP" completo viraria uma mancha.
+  -->
+  <rect width="100" height="100" fill="#111111" />
+
+  <!-- Anel espesso; a abertura à direita é recortada a seguir. -->
+  <circle cx="47" cy="47" r="26" fill="none" stroke="#FFFFFF" stroke-width="15" />
+  <rect x="47" y="35" width="45" height="24" fill="#111111" />
+
+  <!-- Acento da marca. -->
+  <rect x="70" y="70" width="16" height="16" fill="#A8D2E8" />
+</svg>

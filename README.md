@@ -1,7 +1,10 @@
 # CHICOPLUG — Loja Online
 
-Streetwear premium de edição limitada. Frontend TanStack Start (originalmente
-gerado no Lovable) + API Express/Prisma/PostgreSQL.
+Boutique multimarca de streetwear premium em Luanda. Frontend TanStack Start
+(originalmente gerado no Lovable) + API Express/Prisma/PostgreSQL.
+
+Nike · Jordan · Adidas · Corteiz · Represent · Hellstar · Denim Tears ·
+Essentials · Gallery Dept
 
 ```
 chicoplug/
@@ -41,7 +44,8 @@ tudo na mesma origem — é isso que faz os cookies de sessão funcionarem.
 | Admin   | `admin@chicoplug.ao`   | `ChicoPlug!2026`|
 | Cliente | `cliente@chicoplug.ao` | `Cliente!2026`  |
 
-Cupões de demonstração: `DROP10` (10%) e `BEMVINDO` (5.000 Kz).
+Cupões de demonstração: `STREET10` (10%, mínimo 80.000 Kz) e `BEMVINDO`
+(5.000 Kz, mínimo 30.000 Kz).
 
 ## Testes
 
@@ -80,6 +84,8 @@ Para ligar o Multicaixa Express real, ver `RELATORIO-TECNICO.md`.
 
 ## Documentação
 
-- [`RELATORIO-TECNICO.md`](RELATORIO-TECNICO.md) — estado de cada
-  funcionalidade, o que está validado, o que falta configurar e o que ficou por
-  implementar.
+- [`RELATORIO-REPOSICIONAMENTO.md`](RELATORIO-REPOSICIONAMENTO.md) — a passagem
+  de marca própria para boutique multimarca: alterações, ficheiros, dark mode,
+  testes e o que falta configurar.
+- [`RELATORIO-TECNICO.md`](RELATORIO-TECNICO.md) — estado de cada funcionalidade
+  da loja, o que está validado e o que depende de configuração.

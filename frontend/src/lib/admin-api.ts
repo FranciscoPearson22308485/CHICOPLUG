@@ -1,5 +1,5 @@
 import { api, apiFetch } from "./api";
-import type { Category, Collection, Order, OrderStatus, Product } from "./catalog";
+import type { Brand, Category, Order, OrderStatus, Product } from "./catalog";
 
 /** Chamadas à área /api/admin. Todas exigem sessão com perfil ADMIN. */
 
@@ -130,10 +130,9 @@ export type ProductInput = {
   price: number;
   compareAt?: (number | null) | undefined;
   categoryId: string;
-  collectionId?: (string | null) | undefined;
+  brandId: string;
   badge?: ("NOVO" | "DROP" | "ESGOTADO" | "ULTIMAS_UNIDADES" | null) | undefined;
   isNew: boolean;
-  isDrop: boolean;
   bestSeller: boolean;
   active: boolean;
   metaTitle?: (string | null) | undefined;
@@ -156,49 +155,83 @@ export const adminApi = {
   dashboard: () => api.get<DashboardData>("/admin/dashboard"),
   reports: (days = 180) => api.get<ReportData>(`/admin/dashboard/reports?days=${days}`),
 
-  products: (params: { page?: number | undefined; pageSize?: number | undefined; search?: string | undefined } = {}) =>
-    api.get<Paginated<"products", Product>>(`/admin/products${query(params)}`),
+  products: (
+    params: {
+      page?: number | undefined;
+      pageSize?: number | undefined;
+      search?: string | undefined;
+    } = {},
+  ) => api.get<Paginated<"products", Product>>(`/admin/products${query(params)}`),
   product: (id: string) => api.get<{ product: Product }>(`/admin/products/${id}`),
-  createProduct: (input: ProductInput) =>
-    api.post<{ product: Product }>("/admin/products", input),
+  createProduct: (input: ProductInput) => api.post<{ product: Product }>("/admin/products", input),
   updateProduct: (id: string, input: Partial<ProductInput>) =>
     api.patch<{ product: Product }>(`/admin/products/${id}`, input),
   deleteProduct: (id: string) =>
-    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(
-      `/admin/products/${id}`,
-    ),
+    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(`/admin/products/${id}`),
 
   categories: () => api.get<{ categories: Category[] }>("/admin/categories"),
-  createCategory: (input: { name: string; description?: (string | null) | undefined; position?: number }) =>
-    api.post<{ category: Category }>("/admin/categories", input),
+  createCategory: (input: {
+    name: string;
+    description?: (string | null) | undefined;
+    position?: number;
+  }) => api.post<{ category: Category }>("/admin/categories", input),
   updateCategory: (id: string, input: Record<string, unknown>) =>
     api.patch<{ category: Category }>(`/admin/categories/${id}`, input),
   deleteCategory: (id: string) => api.delete<void>(`/admin/categories/${id}`),
 
-  collections: () => api.get<{ collections: Collection[] }>("/admin/collections"),
-  createCollection: (input: Record<string, unknown>) =>
-    api.post<{ collection: Collection }>("/admin/collections", input),
-  updateCollection: (id: string, input: Record<string, unknown>) =>
-    api.patch<{ collection: Collection }>(`/admin/collections/${id}`, input),
-  deleteCollection: (id: string) => api.delete<void>(`/admin/collections/${id}`),
+  brands: () => api.get<{ brands: Brand[] }>("/admin/brands"),
+  createBrand: (input: Record<string, unknown>) =>
+    api.post<{ brand: Brand }>("/admin/brands", input),
+  updateBrand: (id: string, input: Record<string, unknown>) =>
+    api.patch<{ brand: Brand }>(`/admin/brands/${id}`, input),
+  deleteBrand: (id: string) =>
+    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(`/admin/brands/${id}`),
 
-  customers: (params: { page?: number | undefined; pageSize?: number | undefined; search?: string | undefined } = {}) =>
-    api.get<Paginated<"customers", AdminCustomer>>(`/admin/customers${query(params)}`),
+  newsletter: () =>
+    api.get<{
+      subscribers: Array<{
+        id: string;
+        email: string;
+        source: string | null;
+        active: boolean;
+        createdAt: string;
+      }>;
+      total: number;
+      active: number;
+    }>("/newsletter"),
+
+  customers: (
+    params: {
+      page?: number | undefined;
+      pageSize?: number | undefined;
+      search?: string | undefined;
+    } = {},
+  ) => api.get<Paginated<"customers", AdminCustomer>>(`/admin/customers${query(params)}`),
   updateCustomer: (id: string, input: Record<string, unknown>) =>
     api.patch<{ customer: AdminCustomer }>(`/admin/customers/${id}`, input),
   deleteCustomer: (id: string) =>
-    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(
-      `/admin/customers/${id}`,
-    ),
+    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(`/admin/customers/${id}`),
 
-  orders: (params: { page?: number | undefined; pageSize?: number | undefined; search?: string | undefined; status?: string | undefined } = {}) =>
-    api.get<Paginated<"orders", Order>>(`/admin/orders${query(params)}`),
+  orders: (
+    params: {
+      page?: number | undefined;
+      pageSize?: number | undefined;
+      search?: string | undefined;
+      status?: string | undefined;
+    } = {},
+  ) => api.get<Paginated<"orders", Order>>(`/admin/orders${query(params)}`),
   order: (id: string) => api.get<{ order: Order }>(`/admin/orders/${id}`),
   setOrderStatus: (id: string, status: OrderStatus, note?: string) =>
     api.post<{ order: Order }>(`/admin/orders/${id}/status`, { status, note }),
 
-  stock: (params: { page?: number | undefined; pageSize?: number | undefined; search?: string | undefined; lowOnly?: boolean | undefined } = {}) =>
-    api.get<Paginated<"variants", StockVariant>>(`/admin/stock${query(params)}`),
+  stock: (
+    params: {
+      page?: number | undefined;
+      pageSize?: number | undefined;
+      search?: string | undefined;
+      lowOnly?: boolean | undefined;
+    } = {},
+  ) => api.get<Paginated<"variants", StockVariant>>(`/admin/stock${query(params)}`),
   stockAlerts: () =>
     api.get<{
       alerts: Array<{
@@ -226,9 +259,7 @@ export const adminApi = {
   updateCoupon: (id: string, input: Record<string, unknown>) =>
     api.patch<{ coupon: Coupon }>(`/admin/coupons/${id}`, input),
   deleteCoupon: (id: string) =>
-    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(
-      `/admin/coupons/${id}`,
-    ),
+    api.delete<{ deleted: boolean; archived: boolean; message?: string }>(`/admin/coupons/${id}`),
 
   settings: () =>
     api.get<{ settings: StoreSettings; integrations: Integrations }>("/admin/settings"),
@@ -239,7 +270,7 @@ export const adminApi = {
    * Upload de imagens. Enviado como `multipart/form-data`, por isso o cliente
    * não define `content-type`: o browser tem de o gerar com o `boundary`.
    */
-  uploadImages: (files: File[], folder: "produtos" | "coleccoes" = "produtos") => {
+  uploadImages: (files: File[], folder: "produtos" | "marcas" = "produtos") => {
     const form = new FormData();
     for (const file of files) form.append("files", file);
     return apiFetch<{

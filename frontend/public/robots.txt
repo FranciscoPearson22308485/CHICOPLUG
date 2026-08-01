@@ -1,14 +1,16 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+
+# Áreas privadas e de transacção — sem valor para indexação e sem interesse
+# em aparecer na pesquisa.
+Disallow: /admin
+Disallow: /conta
+Disallow: /carrinho
+Disallow: /checkout
+Disallow: /entrar
+Disallow: /registo
+Disallow: /recuperar-password
+Disallow: /repor-password
+Disallow: /api/
+
+Sitemap: https://chicoplug.ao/sitemap.xml

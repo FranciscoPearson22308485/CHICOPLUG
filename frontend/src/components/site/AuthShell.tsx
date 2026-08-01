@@ -32,9 +32,7 @@ export function AuthShell({
       <Reveal className="mx-auto w-full max-w-md">
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-5 text-5xl sm:text-6xl">{title}</h1>
-        {intro && (
-          <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{intro}</p>
-        )}
+        {intro && <p className="mt-6 text-sm leading-relaxed text-muted-foreground">{intro}</p>}
 
         <div className="mt-12">{children}</div>
 

@@ -25,7 +25,10 @@ export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout — CHICOPLUG" },
-      { name: "description", content: "Finaliza a tua encomenda CHICOPLUG com Multicaixa Express." },
+      {
+        name: "description",
+        content: "Finaliza a tua encomenda CHICOPLUG com Multicaixa Express.",
+      },
       { property: "og:title", content: "Checkout — CHICOPLUG" },
       { property: "og:description", content: "Pagamento por Multicaixa Express." },
       { name: "robots", content: "noindex" },
@@ -527,7 +530,9 @@ function Checkout() {
 }
 
 function FieldError({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-destructive">{children}</p>;
+  return (
+    <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-destructive">{children}</p>
+  );
 }
 
 function Field({

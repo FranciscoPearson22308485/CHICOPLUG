@@ -11,12 +11,7 @@ import { Badge, Spinner } from "@/components/site/Primitives";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -243,7 +238,9 @@ function Moradas() {
                   disabled={!form.province}
                 >
                   <SelectTrigger className="h-12 rounded-none border-border">
-                    <SelectValue placeholder={form.province ? "Seleciona" : "Escolhe a província"} />
+                    <SelectValue
+                      placeholder={form.province ? "Seleciona" : "Escolhe a província"}
+                    />
                   </SelectTrigger>
                   <SelectContent className="rounded-none">
                     {(MUNICIPALITIES[form.province] ?? []).map((m) => (
@@ -329,9 +326,7 @@ function FormField({
         aria-invalid={Boolean(error)}
         className={cn("h-12 rounded-none border-border", error && "border-destructive")}
       />
-      {error && (
-        <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>
-      )}
+      {error && <p className="text-[11px] uppercase tracking-[0.14em] text-destructive">{error}</p>}
     </div>
   );
 }

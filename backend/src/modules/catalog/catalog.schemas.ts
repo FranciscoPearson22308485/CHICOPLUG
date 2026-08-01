@@ -22,17 +22,19 @@ const boolish = z
 
 export const productQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
+  brand: csvArray,
   category: csvArray,
-  collection: z.string().trim().max(120).optional(),
   size: csvArray,
   color: csvArray,
   minPrice: z.coerce.number().int().nonnegative().optional(),
   maxPrice: z.coerce.number().int().nonnegative().optional(),
+  /** Só peças com stock — o filtro "Disponibilidade". */
   inStock: boolish,
+  /** Só peças com desconto activo. */
+  onSale: boolish,
   isNew: boolish,
-  isDrop: boolish,
   bestSeller: boolish,
-  sort: z.enum(["novidades", "preco-asc", "preco-desc", "nome"]).default("novidades"),
+  sort: z.enum(["novidades", "preco-asc", "preco-desc", "nome", "marca"]).default("novidades"),
   page: z.coerce.number().int().positive().default(1),
   // Tecto de 60 para que ninguém consiga exportar o catálogo inteiro num pedido.
   pageSize: z.coerce.number().int().positive().max(60).default(24),

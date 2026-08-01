@@ -128,7 +128,7 @@ async function uploadToLocalDisk(
  */
 export async function storeImage(
   buffer: Buffer,
-  folder: "produtos" | "coleccoes",
+  folder: "produtos" | "marcas",
 ): Promise<StoredImage> {
   const optimized = await optimize(buffer);
 

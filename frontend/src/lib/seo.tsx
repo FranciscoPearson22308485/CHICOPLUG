@@ -21,12 +21,12 @@ export function absoluteUrl(path: string): string {
 export function organizationSchema() {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "Store",
     name: "CHICOPLUG",
     url: SITE_URL,
     logo: absoluteUrl("/favicon.ico"),
     description:
-      "Streetwear premium de edição limitada. Drops, essenciais e coleções feitas em Luanda.",
+      "Boutique de streetwear premium em Luanda. As melhores marcas internacionais num só lugar.",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Luanda",
@@ -64,7 +64,7 @@ export function productSchema(product: Product) {
     description: product.description,
     sku: product.variants[0]?.sku ?? product.slug,
     image: product.images.map(absoluteUrl),
-    brand: { "@type": "Brand", name: "CHICOPLUG" },
+    brand: { "@type": "Brand", name: product.brand },
     category: product.category,
     color: product.colors.map((c) => c.name).join(", "),
     offers: {
@@ -73,9 +73,7 @@ export function productSchema(product: Product) {
       // AOA é o código ISO 4217 do Kwanza.
       priceCurrency: "AOA",
       price: product.price,
-      availability: inStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "CHICOPLUG" },
     },
@@ -95,7 +93,8 @@ export function breadcrumbSchema(items: Array<{ name: string; url: string }>) {
   };
 }
 
-export function collectionSchema(input: {
+/** Página de marca: declara a marca e lista as peças disponíveis. */
+export function brandSchema(input: {
   name: string;
   description: string;
   slug: string;
@@ -104,9 +103,10 @@ export function collectionSchema(input: {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: input.name,
+    name: `${input.name} — CHICOPLUG`,
     description: input.description,
-    url: `${SITE_URL}/colecoes/${input.slug}`,
+    url: `${SITE_URL}/marcas/${input.slug}`,
+    about: { "@type": "Brand", name: input.name },
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: input.products.length,

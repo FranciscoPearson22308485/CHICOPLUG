@@ -16,6 +16,7 @@ import { adminRouter } from "./modules/admin/admin.routes.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { cartRouter } from "./modules/cart/cart.routes.js";
 import { catalogRouter } from "./modules/catalog/catalog.routes.js";
+import { newsletterRouter } from "./modules/newsletter/newsletter.routes.js";
 import { ordersRouter } from "./modules/orders/orders.routes.js";
 import { paymentsRouter } from "./modules/payments/payments.routes.js";
 import { seoRouter } from "./modules/seo/seo.routes.js";
@@ -90,6 +91,7 @@ export function createApp(): Express {
   app.use("/api/wishlist", wishlistRouter);
   app.use("/api/addresses", addressesRouter);
   app.use("/api/orders", ordersRouter);
+  app.use("/api/newsletter", newsletterRouter);
   app.use("/api/payments", paymentsRouter);
   app.use("/api/uploads", uploadsRouter);
   app.use("/api/admin", adminRouter);

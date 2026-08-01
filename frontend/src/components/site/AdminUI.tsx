@@ -50,18 +50,16 @@ export function StatCard({
     <div className="border border-border bg-background p-6">
       <p className="eyebrow">{label}</p>
       <p className="mt-4 font-display text-3xl tracking-brand">{value}</p>
-      {delta && <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{delta}</p>}
+      {delta && (
+        <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          {delta}
+        </p>
+      )}
     </div>
   );
 }
 
-export function DataTable({
-  columns,
-  rows,
-}: {
-  columns: string[];
-  rows: (ReactNode)[][];
-}) {
+export function DataTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
   return (
     <div className="overflow-x-auto border border-border bg-background">
       <table className="w-full min-w-[640px] text-left text-sm">
