@@ -9,12 +9,13 @@ import logging
 
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 # Reutiliza a excepção já usada em toda a loja em vez de criar um segundo
 # vocabulário de erros para a mesma coisa.
 from encomendas.services import ErroDeNegocio
 
-from .models import Avaliacao, FotoAvaliacao
+from .models import AlertaReposicao, Avaliacao, FotoAvaliacao
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,67 @@ def avaliacoes_de(produto, ordenar="recentes"):
     if ordenar == "fotos":
         return lista.com_fotografias().order_by("-criado_em")
     return lista.order_by("-criado_em")
+
+
+# ─── Alertas de reposição ─────────────────────────────────────────────────────
+
+
+def registar_alerta(produto, nome, email, telefone="", variante=None):
+    """
+    Inscreve alguém na lista de espera de uma peça esgotada.
+
+    Repetir a inscrição não cria uma segunda linha: quem carrega duas vezes no
+    botão não deve receber dois avisos.
+    """
+    email = (email or "").strip().lower()
+    if "@" not in email:
+        raise ErroDeNegocio("Indica um email válido.")
+
+    nome = (nome or "").strip()
+    if not nome:
+        raise ErroDeNegocio("Indica o teu nome.")
+
+    existente = AlertaReposicao.objects.filter(
+        produto=produto, email=email, notificado_em__isnull=True
+    ).first()
+    if existente:
+        return existente
+
+    alerta = AlertaReposicao.objects.create(
+        produto=produto, variante=variante, nome=nome,
+        email=email, telefone=(telefone or "").strip(),
+    )
+    logger.info("Alerta de reposição registado: %s → %s", email, produto.slug)
+    return alerta
+
+
+def notificar_reposicoes(produto):
+    """
+    Avisa quem estava à espera desta peça e marca os alertas como tratados.
+
+    Chamada quando o stock volta a subir acima de zero. Marca antes de enviar
+    é deliberado: se o envio falhar, é preferível não avisar do que avisar a
+    mesma pessoa a cada gravação de stock seguinte.
+    """
+    if not produto.tem_stock:
+        return 0
+
+    pendentes = list(
+        AlertaReposicao.objects.filter(produto=produto, notificado_em__isnull=True)
+    )
+    if not pendentes:
+        return 0
+
+    from .notificacoes import avisar_reposicao
+
+    agora = timezone.now()
+    AlertaReposicao.objects.filter(pk__in=[a.pk for a in pendentes]).update(notificado_em=agora)
+
+    for alerta in pendentes:
+        avisar_reposicao(alerta)
+
+    logger.info("Reposição de %s: %s pessoa(s) avisada(s)", produto.slug, len(pendentes))
+    return len(pendentes)
 
 
 # ─── Galeria dos clientes ─────────────────────────────────────────────────────

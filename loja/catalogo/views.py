@@ -357,6 +357,24 @@ def avaliar(request, slug):
     return redirect(f"{peca.get_absolute_url()}#avaliacoes")
 
 
+@require_POST
+def avisar_reposicao(request, slug):
+    """Inscrição na lista de espera de uma peça esgotada. Não exige conta."""
+    peca = get_object_or_404(Produto.objects.filter(activo=True), slug=slug)
+    try:
+        services.registar_alerta(
+            produto=peca,
+            nome=request.POST.get("nome", ""),
+            email=request.POST.get("email", ""),
+            telefone=request.POST.get("telefone", ""),
+        )
+        messages.success(request, "Avisamos-te assim que esta peça voltar ao stock.")
+    except services.ErroDeNegocio as erro:
+        messages.error(request, str(erro))
+
+    return redirect(peca.get_absolute_url())
+
+
 def galeria(request):
     """Fotografias reais dos clientes, vindas das avaliações publicadas."""
     return render(request, "catalogo/galeria.html", {"fotografias": services.galeria_de_clientes()})

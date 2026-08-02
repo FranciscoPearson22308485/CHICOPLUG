@@ -240,3 +240,13 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": "INFO" if DEBUG else "WARNING"},
 }
+
+# ─── SMS (por configurar) ─────────────────────────────────────────────────────
+#
+# Sem provedor definido, `catalogo.notificacoes` regista no log o que teria
+# enviado em vez de falhar — o resto do fluxo não pode depender de haver um
+# contrato de SMS assinado.
+SMS_PROVEDOR = os.getenv("SMS_PROVEDOR", "")
+SMS_API_URL = os.getenv("SMS_API_URL", "")
+SMS_API_CHAVE = os.getenv("SMS_API_CHAVE", "")
+SMS_REMETENTE = os.getenv("SMS_REMETENTE", "CHICOPLUG")

@@ -31,6 +31,35 @@
     </div>
     {% if alertas %}
       <button type="submit" class="mt-6 bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Guardar alterações</button>
+      <p class="mt-3 text-[11px] text-muted-foreground">
+        Repor o stock de uma peça esgotada avisa automaticamente quem estava na lista de espera.
+      </p>
     {% endif %}
   </form>
+
+  {% if esperas %}
+    <div class="mt-14">
+      <p class="eyebrow mb-4">Lista de espera — procura por servir</p>
+      <div class="overflow-x-auto border border-border bg-background">
+        <table class="w-full min-w-[640px] text-left text-sm">
+          <thead><tr class="border-b border-border">
+            <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peça</th>
+            <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Nome</th>
+            <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Contacto</th>
+            <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Desde</th>
+          </tr></thead>
+          <tbody>
+            {% for e in esperas %}
+              <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+                <td class="px-5 py-4"><a href="{{ e.produto.get_absolute_url }}" class="link-underline">{{ e.produto.marca.nome }} {{ e.produto.nome }}</a></td>
+                <td class="px-5 py-4">{{ e.nome }}</td>
+                <td class="px-5 py-4 text-muted-foreground">{{ e.email }}{% if e.telefone %}<span class="mt-1 block text-[11px]">{{ e.telefone }}</span>{% endif %}</td>
+                <td class="px-5 py-4 whitespace-nowrap text-muted-foreground">{{ e.criado_em|date:"d/m/Y" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}

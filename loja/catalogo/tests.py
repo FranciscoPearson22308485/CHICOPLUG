@@ -566,6 +566,112 @@ class HistoricoDePrecosTests(BaseAvaliacoes):
         self.assertContains(resposta, "Poupas")
 
 
+class AlertaDeReposicaoTests(BaseAvaliacoes):
+    def setUp(self):
+        super().setUp()
+        from catalogo.models import Variante
+
+        Variante.objects.filter(produto=self.produto).update(stock=0)
+        self.produto.refresh_from_db()
+
+    def test_registar(self):
+        from catalogo import services
+        from catalogo.models import AlertaReposicao
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao", "+244900000000")
+        alerta = AlertaReposicao.objects.get()
+        self.assertTrue(alerta.pendente)
+        self.assertEqual(alerta.email, "ana@teste.ao")
+
+    def test_nao_duplica_a_mesma_inscricao(self):
+        from catalogo import services
+        from catalogo.models import AlertaReposicao
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao")
+        services.registar_alerta(self.produto, "Ana", "ANA@teste.ao")
+        # Quem carrega duas vezes no botão não deve receber dois avisos.
+        self.assertEqual(AlertaReposicao.objects.count(), 1)
+
+    def test_recusa_email_invalido(self):
+        from catalogo import services
+        from encomendas.services import ErroDeNegocio
+
+        with self.assertRaises(ErroDeNegocio):
+            services.registar_alerta(self.produto, "Ana", "isto-nao-e-email")
+
+    def test_formulario_so_aparece_quando_esgotado(self):
+        resposta = self.client.get(self.produto.get_absolute_url())
+        self.assertContains(resposta, "Avise-me quando voltar")
+
+        from catalogo.models import Variante
+
+        Variante.objects.filter(produto=self.produto).update(stock=5)
+        resposta = self.client.get(self.produto.get_absolute_url())
+        self.assertNotContains(resposta, "Avise-me quando voltar")
+
+    def test_inscricao_pela_loja_sem_conta(self):
+        from catalogo.models import AlertaReposicao
+
+        resposta = self.client.post(
+            reverse("catalogo:avisar_reposicao", args=[self.produto.slug]),
+            {"nome": "Rui", "email": "rui@teste.ao", "telefone": "+244911111111"},
+        )
+        self.assertEqual(resposta.status_code, 302)
+        self.assertEqual(AlertaReposicao.objects.count(), 1)
+
+    def test_notifica_e_marca_como_tratado(self):
+        from catalogo import services
+        from catalogo.models import AlertaReposicao, Variante
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao")
+        Variante.objects.filter(produto=self.produto).update(stock=4)
+        self.produto.refresh_from_db()
+
+        self.assertEqual(services.notificar_reposicoes(self.produto), 1)
+        self.assertFalse(AlertaReposicao.objects.get().pendente)
+
+    def test_nao_notifica_duas_vezes(self):
+        from catalogo import services
+        from catalogo.models import Variante
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao")
+        Variante.objects.filter(produto=self.produto).update(stock=4)
+        self.produto.refresh_from_db()
+
+        services.notificar_reposicoes(self.produto)
+        self.assertEqual(services.notificar_reposicoes(self.produto), 0)
+
+    def test_nao_notifica_sem_stock(self):
+        from catalogo import services
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao")
+        # Continua esgotado: avisar agora seria mandar as pessoas a uma página
+        # onde não podem comprar.
+        self.assertEqual(services.notificar_reposicoes(self.produto), 0)
+
+    def test_envia_email(self):
+        from django.core import mail
+
+        from catalogo import services
+        from catalogo.models import Variante
+
+        services.registar_alerta(self.produto, "Ana", "ana@teste.ao")
+        Variante.objects.filter(produto=self.produto).update(stock=4)
+        self.produto.refresh_from_db()
+        services.notificar_reposicoes(self.produto)
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("voltou ao stock", mail.outbox[0].subject)
+        self.assertEqual(mail.outbox[0].to, ["ana@teste.ao"])
+
+    def test_sms_por_configurar_nao_rebenta(self):
+        from catalogo.notificacoes import enviar_sms, estado_sms
+
+        # Sem credenciais o adaptador regista e devolve False, em vez de falhar.
+        self.assertFalse(enviar_sms("+244900000000", "teste"))
+        self.assertFalse(estado_sms()["configurado"])
+
+
 class PaginasSemArtefactosTests(TestCase):
     """
     Percorre as páginas públicas e garante que nada de sintaxe de template

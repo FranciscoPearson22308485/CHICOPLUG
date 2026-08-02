@@ -478,6 +478,46 @@ class HistoricoPreco(models.Model):
         return round(abs(self.preco_novo - self.preco_anterior) / self.preco_anterior * 100)
 
 
+class AlertaReposicao(models.Model):
+    """
+    Inscrição para ser avisado quando uma peça esgotada voltar ao stock.
+
+    É a lista de espera e o alerta de reposição ao mesmo tempo: quem se
+    inscreve fica registado até ser avisado. Sem isto, cada esgotamento é uma
+    venda perdida sem rasto — não se sabe sequer quanta procura ficou por
+    servir, que é a informação que diz o que vale a pena repor.
+    """
+
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name="alertas_reposicao")
+    # Opcional: quem quer especificamente um tamanho ou cor pode dizê-lo.
+    variante = models.ForeignKey(
+        "Variante", on_delete=models.SET_NULL, related_name="alertas", null=True, blank=True
+    )
+
+    nome = models.CharField(max_length=120)
+    email = models.EmailField(max_length=254)
+    telefone = models.CharField(max_length=30, blank=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    notificado_em = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "alertas_reposicao"
+        verbose_name_plural = "alertas de reposição"
+        ordering = ["-criado_em"]
+        indexes = [
+            # A consulta feita a cada reposição de stock.
+            models.Index(fields=["produto", "notificado_em"]),
+        ]
+
+    def __str__(self):
+        return f"{self.email} → {self.produto.nome}"
+
+    @property
+    def pendente(self):
+        return self.notificado_em is None
+
+
 class AvaliacaoQuerySet(models.QuerySet):
     def publicadas(self):
         return self.filter(publicada=True)

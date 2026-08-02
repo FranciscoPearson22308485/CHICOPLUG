@@ -12,7 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from catalogo.models import Avaliacao, Categoria, Marca, Produto, Variante
+from catalogo.models import AlertaReposicao, Avaliacao, Categoria, Marca, Produto, Variante
+from catalogo.services import notificar_reposicoes
 from contas.models import Utilizador
 from encomendas.models import Cupao, Encomenda, EstadoEncomenda
 from encomendas.pagamentos import estado_integracao
@@ -397,6 +398,11 @@ def encomendas_exportar(request):
 def stock(request):
     return render(request, "painel/stock.html", {
         **_menu("stock"), "titulo_painel": "Stock", "alertas": alertas_de_stock(),
+        # Procura por servir: diz o que vale mesmo a pena repor.
+        "esperas": (
+            AlertaReposicao.objects.filter(notificado_em__isnull=True)
+            .select_related("produto", "produto__marca")
+        ),
     })
 
 
@@ -405,6 +411,11 @@ def stock(request):
 def stock_ajustar(request):
     """Ajuste em lote: cada campo `stock_<id>` do formulário é uma variante."""
     actualizados = 0
+    # Quem estava esgotado antes deste ajuste. Guardamos o estado *antes* de
+    # escrever, para depois saber quais as peças que voltaram ao stock e avisar
+    # quem estava à espera.
+    esgotados_antes = {}
+
     for chave, valor in request.POST.items():
         if not chave.startswith("stock_"):
             continue
@@ -422,9 +433,27 @@ def stock_ajustar(request):
         if novo_stock < 0:
             continue
 
+        variante = Variante.objects.select_related("produto").filter(pk=identificador).first()
+        if not variante:
+            continue
+
+        if variante.produto_id not in esgotados_antes:
+            esgotados_antes[variante.produto_id] = not variante.produto.tem_stock
+
         actualizados += Variante.objects.filter(pk=identificador).update(stock=novo_stock)
 
+    # Reposições: só as peças que estavam mesmo esgotadas antes do ajuste.
+    avisados = 0
+    for produto_id, estava_esgotado in esgotados_antes.items():
+        if not estava_esgotado:
+            continue
+        produto = Produto.objects.prefetch_related("variantes").filter(pk=produto_id).first()
+        if produto:
+            avisados += notificar_reposicoes(produto)
+
     messages.success(request, f"Stock actualizado em {actualizados} variante(s).")
+    if avisados:
+        messages.success(request, f"{avisados} pessoa(s) avisada(s) da reposição.")
     return redirect("painel:stock")
 
 

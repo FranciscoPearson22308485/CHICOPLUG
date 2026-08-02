@@ -1,0 +1,17 @@
+Olá {{ alerta.nome }},
+
+A peça que estavas à espera voltou ao stock:
+
+{{ produto.marca.nome }} — {{ produto.nome }}
+{{ produto.preco }} Kz
+
+{{ url }}
+
+Não garantimos que dure: só te avisámos a ti e a quem estava na mesma lista,
+mas a peça está disponível para toda a gente.
+
+Se já não te interessa, ignora esta mensagem — não voltamos a avisar-te sobre
+esta peça.
+
+CHICOPLUG
+Streetwear premium · Luanda, Angola

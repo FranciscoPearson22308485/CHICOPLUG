@@ -230,6 +230,54 @@ class ModeracaoAvaliacoesTests(BasePainel):
         self.assertTrue(self.avaliacao.publicada)
 
 
+class ReposicaoPeloPainelTests(BasePainel):
+    """Repor stock no painel tem de avisar quem estava à espera."""
+
+    def setUp(self):
+        super().setUp()
+        from catalogo.models import Variante
+        from catalogo.services import registar_alerta
+
+        Variante.objects.filter(produto=self.produto).update(stock=0)
+        self.produto.refresh_from_db()
+        registar_alerta(self.produto, "Ana", "ana@teste.ao", "+244900000000")
+
+    def test_repor_stock_avisa_a_lista_de_espera(self):
+        from django.core import mail
+
+        from catalogo.models import AlertaReposicao
+
+        self.client.post(reverse("painel:stock_ajustar"), {f"stock_{self.variante.pk}": "10"})
+
+        self.assertFalse(AlertaReposicao.objects.get().pendente)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_ajuste_sem_repor_nao_avisa(self):
+        from django.core import mail
+
+        from catalogo.models import AlertaReposicao
+
+        # Continua a zero: não há nada para avisar.
+        self.client.post(reverse("painel:stock_ajustar"), {f"stock_{self.variante.pk}": "0"})
+
+        self.assertTrue(AlertaReposicao.objects.get().pendente)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_peca_que_ja_tinha_stock_nao_dispara_avisos(self):
+        from django.core import mail
+
+        from catalogo.models import Variante
+
+        Variante.objects.filter(pk=self.variante.pk).update(stock=5)
+        self.client.post(reverse("painel:stock_ajustar"), {f"stock_{self.variante.pk}": "20"})
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_lista_de_espera_aparece_no_painel(self):
+        resposta = self.client.get(reverse("painel:stock"))
+        self.assertContains(resposta, "Lista de espera")
+        self.assertContains(resposta, "ana@teste.ao")
+
+
 class EntradasMalFormadasTests(BasePainel):
     """
     Os nomes dos campos e os valores vêm do cliente. Antes destas guardas, um
