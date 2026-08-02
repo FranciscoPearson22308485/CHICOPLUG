@@ -19,8 +19,10 @@
         As melhores<br />marcas num<br />só lugar
       </h1>
       <div class="reveal mt-10 flex flex-wrap items-center gap-4" style="--atraso:240ms">
-        {# O hero assenta sobre fotografia escura nos dois temas: o botão é
-           branco fixo, senão em modo noturno ficaria escuro sobre escuro. #}
+        {% comment %}
+          O hero assenta sobre fotografia escura nos dois temas: o botão é
+          branco fixo, senão em modo noturno ficaria escuro sobre escuro.
+        {% endcomment %}
         <a href="{% url 'catalogo:shop' %}"
            class="group inline-flex items-center gap-4 bg-white px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ink transition-colors hover:bg-brand hover:text-brand-foreground">
           Comprar Agora
@@ -82,8 +84,10 @@
              class="reveal group flex h-full flex-col justify-between border border-border bg-background p-6 transition-colors duration-500 hover:border-foreground md:p-8"
              style="--atraso:{{ forloop.counter0|mult:60 }}ms">
             <div class="min-w-0">
-              {# Sem logótipos de terceiros: um mosaico de nove logótipos de
-                 proveniências diferentes parece um marketplace. #}
+              {% comment %}
+                Sem logótipos de terceiros: um mosaico de nove logótipos de
+                proveniências diferentes parece um marketplace.
+              {% endcomment %}
               <p class="font-display text-2xl uppercase leading-none tracking-brand md:text-3xl">{{ m.nome }}</p>
               {% if m.assinatura %}
                 <p class="mt-3 line-clamp-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{{ m.assinatura }}</p>

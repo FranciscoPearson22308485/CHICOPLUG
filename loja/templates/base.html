@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    {# Corre antes da primeira pintura: aplica o tema guardado (ou o do sistema)
-       para ninguém ver um clarão branco ao entrar. #}
+    {% comment %}
+      Corre antes da primeira pintura: aplica o tema guardado (ou o do sistema)
+      para ninguém ver um clarão branco ao entrar.
+    {% endcomment %}
     <script>
       (function () {
         try {
