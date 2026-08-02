@@ -1,0 +1,13 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="mx-auto max-w-2xl">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+      {% csrf_token %}
+      {% for campo in form %}{% include "painel/_campo_formulario.html" %}{% endfor %}
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Guardar</button>
+        <a href="{% url 'painel:marcas' %}" class="border border-border px-8 py-4 text-[11px] uppercase tracking-[0.16em]">Cancelar</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

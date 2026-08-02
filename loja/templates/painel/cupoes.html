@@ -1,0 +1,38 @@
+{% extends "painel/base.html" %}
+{% block accao %}
+  <a href="{% url 'painel:cupao_novo' %}" class="border border-foreground bg-foreground px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-background transition-colors hover:border-brand hover:bg-brand hover:text-brand-foreground">Novo cupão</a>
+{% endblock %}
+{% block painel %}
+  <div class="overflow-x-auto border border-border bg-background">
+    <table class="w-full min-w-[720px] text-left text-sm">
+      <thead><tr class="border-b border-border">
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Código</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tipo</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Valor</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Utilizações</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Acções</th>
+      </tr></thead>
+      <tbody>
+        {% for c in cupoes %}
+          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+            <td class="px-5 py-4 font-semibold">{{ c.codigo }}</td>
+            <td class="px-5 py-4 text-muted-foreground">{{ c.get_tipo_display }}</td>
+            <td class="px-5 py-4">{% if c.tipo == "PERCENT" %}{{ c.valor }}%{% else %}{{ c.valor|kz }}{% endif %}</td>
+            <td class="px-5 py-4">{{ c.vezes_usado }}{% if c.max_utilizacoes %} / {{ c.max_utilizacoes }}{% endif %}</td>
+            <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if c.estado_efectivo == 'ACTIVO' %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">{{ c.estado_efectivo }}</span></td>
+            <td class="px-5 py-4"><div class="flex gap-4 text-[11px] uppercase tracking-[0.16em]">
+              <a href="{% url 'painel:cupao_editar' c.pk %}" class="link-underline font-semibold">Editar</a>
+              <form method="post" action="{% url 'painel:cupao_remover' c.pk %}" onsubmit="return confirm('Remover o cupão {{ c.codigo|escapejs }}?')">
+                {% csrf_token %}
+                <button type="submit" class="link-underline text-destructive">Remover</button>
+              </form>
+            </div></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="px-5 py-10 text-center text-sm text-muted-foreground">Ainda não há cupões.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

@@ -1,4 +1,7 @@
 {% extends "painel/base.html" %}
+{% block accao %}
+  <a href="{% url 'painel:marca_nova' %}" class="border border-foreground bg-foreground px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-background transition-colors hover:border-brand hover:bg-brand hover:text-brand-foreground">Nova marca</a>
+{% endblock %}
 {% block painel %}
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     {% for m in marcas %}
@@ -7,6 +10,13 @@
         <p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ m.total_pecas }} peças</p>
         {% if m.assinatura %}<p class="mt-3 text-sm text-muted-foreground">{{ m.assinatura }}</p>{% endif %}
         <p class="mt-4 text-[10px] uppercase tracking-[0.16em] {% if m.activa %}text-brand{% else %}text-muted-foreground{% endif %}">{% if m.destaque %}Homepage · {% endif %}{% if m.activa %}Activa{% else %}Inactiva{% endif %}</p>
+        <div class="mt-5 flex gap-4 border-t border-border pt-4 text-[11px] uppercase tracking-[0.16em]">
+          <a href="{% url 'painel:marca_editar' m.pk %}" class="link-underline font-semibold">Editar</a>
+          <form method="post" action="{% url 'painel:marca_remover' m.pk %}" onsubmit="return confirm('Remover a marca {{ m.nome|escapejs }}?')">
+            {% csrf_token %}
+            <button type="submit" class="link-underline text-destructive">Remover</button>
+          </form>
+        </div>
       </div>
     {% endfor %}
   </div>

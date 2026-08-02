@@ -1,4 +1,7 @@
 {% extends "painel/base.html" %}
+{% block accao %}
+  <a href="{% url 'painel:encomendas_exportar' %}" class="border border-border px-6 py-3 text-[11px] uppercase tracking-[0.2em]">Exportar CSV</a>
+{% endblock %}
 {% block painel %}
   <div class="mb-6 flex flex-wrap gap-2">
     <a href="{% url 'painel:encomendas' %}" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if not estado_activo %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">Todas</a>
@@ -7,13 +10,14 @@
     {% endfor %}
   </div>
   <div class="overflow-x-auto border border-border bg-background">
-    <table class="w-full min-w-[720px] text-left text-sm">
+    <table class="w-full min-w-[880px] text-left text-sm">
       <thead><tr class="border-b border-border">
         <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ref.</th>
         <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cliente</th>
         <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Destino</th>
         <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</th>
         <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Mudar para</th>
       </tr></thead>
       <tbody>
         {% for e in encomendas %}
@@ -23,6 +27,21 @@
             <td class="px-5 py-4 text-muted-foreground">{{ e.provincia }} / {{ e.municipio }}</td>
             <td class="px-5 py-4">{{ e.total|kz }}</td>
             <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if e.tom_estado == 'brand' %}bg-brand text-brand-foreground{% elif e.tom_estado == 'dark' %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">{{ e.get_estado_display }}</span></td>
+            <td class="px-5 py-4">
+              {% if e.transicoes_possiveis %}
+                <form method="post" action="{% url 'painel:encomenda_mudar_estado' e.referencia %}" class="flex gap-2">
+                  {% csrf_token %}
+                  <select name="estado" class="h-9 border border-border bg-transparent px-2 text-[11px] uppercase tracking-[0.12em] outline-none focus:border-foreground">
+                    {% for t in e.transicoes_possiveis %}
+                      <option value="{{ t.valor }}">{{ t.rotulo }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="border border-foreground bg-foreground px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-background hover:bg-brand hover:text-brand-foreground">Ir</button>
+                </form>
+              {% else %}
+                <span class="text-[11px] text-muted-foreground">—</span>
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
       </tbody>

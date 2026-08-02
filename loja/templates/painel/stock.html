@@ -1,27 +1,36 @@
 {% extends "painel/base.html" %}
 {% block painel %}
-  <div class="overflow-x-auto border border-border bg-background">
-    <table class="w-full min-w-[640px] text-left text-sm">
-      <thead><tr class="border-b border-border">
-        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peça</th>
-        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Variante</th>
-        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">SKU</th>
-        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Unidades</th>
-        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Alerta</th>
-      </tr></thead>
-      <tbody>
-        {% for v in alertas %}
-          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
-            <td class="px-5 py-4">{{ v.produto.marca.nome }} {{ v.produto.nome }}</td>
-            <td class="px-5 py-4 text-muted-foreground">{{ v.tamanho }} · {{ v.cor_nome }}</td>
-            <td class="px-5 py-4 text-[11px] text-muted-foreground">{{ v.sku }}</td>
-            <td class="px-5 py-4">{{ v.stock }}</td>
-            <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if v.stock == 0 %}bg-muted text-muted-foreground{% else %}bg-brand text-brand-foreground{% endif %}">{% if v.stock == 0 %}Sem stock{% else %}Crítico{% endif %}</span></td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="5" class="px-5 py-10 text-center text-sm text-muted-foreground">Nenhum alerta de stock.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <form method="post" action="{% url 'painel:stock_ajustar' %}">
+    {% csrf_token %}
+    <div class="overflow-x-auto border border-border bg-background">
+      <table class="w-full min-w-[640px] text-left text-sm">
+        <thead><tr class="border-b border-border">
+          <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peça</th>
+          <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Variante</th>
+          <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">SKU</th>
+          <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Unidades</th>
+          <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Alerta</th>
+        </tr></thead>
+        <tbody>
+          {% for v in alertas %}
+            <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+              <td class="px-5 py-4">{{ v.produto.marca.nome }} {{ v.produto.nome }}</td>
+              <td class="px-5 py-4 text-muted-foreground">{{ v.tamanho }} · {{ v.cor_nome }}</td>
+              <td class="px-5 py-4 text-[11px] text-muted-foreground">{{ v.sku }}</td>
+              <td class="px-5 py-4">
+                <input type="number" min="0" name="stock_{{ v.pk }}" value="{{ v.stock }}"
+                       class="h-9 w-20 border border-border bg-transparent px-2 text-sm outline-none focus:border-foreground" />
+              </td>
+              <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if v.stock == 0 %}bg-muted text-muted-foreground{% else %}bg-brand text-brand-foreground{% endif %}">{% if v.stock == 0 %}Sem stock{% else %}Crítico{% endif %}</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="px-5 py-10 text-center text-sm text-muted-foreground">Nenhum alerta de stock.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if alertas %}
+      <button type="submit" class="mt-6 bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Guardar alterações</button>
+    {% endif %}
+  </form>
 {% endblock %}

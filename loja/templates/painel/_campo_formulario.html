@@ -1,0 +1,10 @@
+{% if campo.field.widget.input_type == "checkbox" %}
+  <label class="flex items-center gap-3 text-[11px] uppercase tracking-[0.16em]">{{ campo }} {{ campo.label }}</label>
+{% else %}
+  <div class="space-y-2">
+    <label for="{{ campo.id_for_label }}" class="text-[11px] uppercase tracking-[0.16em]">{{ campo.label }}</label>
+    {{ campo }}
+    {% if campo.help_text %}<p class="text-[11px] text-muted-foreground">{{ campo.help_text }}</p>{% endif %}
+  </div>
+{% endif %}
+{% for erro in campo.errors %}<p class="text-[11px] uppercase tracking-[0.14em] text-destructive">{{ erro }}</p>{% endfor %}

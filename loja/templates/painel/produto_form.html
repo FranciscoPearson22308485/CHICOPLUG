@@ -1,0 +1,52 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <form method="post" enctype="multipart/form-data" class="space-y-10">
+    {% csrf_token %}
+
+    <div>
+      <p class="eyebrow mb-4">Dados da peça</p>
+      <div class="grid gap-6 border border-border bg-background p-6 sm:grid-cols-2">
+        {% for campo in form %}
+          <div class="{% if campo.field.widget.input_type == 'checkbox' %}sm:col-span-2{% endif %}">
+            {% include "painel/_campo_formulario.html" %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-4">Variantes (tamanho × cor)</p>
+      {{ variantes_formset.management_form }}
+      <div class="space-y-4">
+        {% for vform in variantes_formset %}
+          <div class="grid gap-3 border border-border bg-background p-4 sm:grid-cols-4 lg:grid-cols-7">
+            {{ vform.id }}
+            {% for campo in vform.visible_fields %}
+              {% include "painel/_campo_formulario.html" %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow mb-4">Imagens</p>
+      {{ imagens_formset.management_form }}
+      <div class="space-y-4">
+        {% for iform in imagens_formset %}
+          <div class="grid gap-3 border border-border bg-background p-4 sm:grid-cols-4">
+            {{ iform.id }}
+            {% for campo in iform.visible_fields %}
+              {% include "painel/_campo_formulario.html" %}
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Guardar</button>
+      <a href="{% url 'painel:produtos' %}" class="border border-border px-8 py-4 text-[11px] uppercase tracking-[0.16em]">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}
