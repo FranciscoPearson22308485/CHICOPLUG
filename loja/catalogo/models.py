@@ -1,7 +1,9 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q, Sum
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.text import slugify
 
 
@@ -233,6 +235,55 @@ class Produto(models.Model):
                 resultado.append({"nome": v.cor_nome, "hex": v.cor_hex})
         return resultado
 
+    # ── Avaliações ───────────────────────────────────────────────────────────
+
+    @cached_property
+    def _contagem_por_estrelas(self):
+        """
+        {5: 12, 4: 3, …} numa só consulta.
+
+        `cached_property` porque a ficha de produto pede a média, o total e a
+        distribuição — sem isto seriam três varrimentos da mesma tabela.
+        """
+        linhas = (
+            self.avaliacoes.publicadas()
+            .values("estrelas")
+            .annotate(total=models.Count("id"))
+        )
+        return {linha["estrelas"]: linha["total"] for linha in linhas}
+
+    @property
+    def total_avaliacoes(self):
+        return sum(self._contagem_por_estrelas.values())
+
+    @property
+    def media_avaliacoes(self):
+        """None quando ainda não há avaliações — 0,0 leria como péssima."""
+        total = self.total_avaliacoes
+        if not total:
+            return None
+        soma = sum(estrelas * n for estrelas, n in self._contagem_por_estrelas.items())
+        return round(soma / total, 1)
+
+    @property
+    def distribuicao_avaliacoes(self):
+        """De 5 a 1 estrelas, com percentagem — alimenta as barras do resumo."""
+        total = self.total_avaliacoes
+        return [
+            {
+                "estrelas": n,
+                "total": self._contagem_por_estrelas.get(n, 0),
+                "percentagem": round(self._contagem_por_estrelas.get(n, 0) / total * 100) if total else 0,
+            }
+            for n in range(5, 0, -1)
+        ]
+
+    @property
+    def media_em_estrelas(self):
+        """[(1, cheia?), …] para desenhar a média sem lógica no template."""
+        media = self.media_avaliacoes or 0
+        return [(n, n <= round(media)) for n in range(1, 6)]
+
     # ── Apresentação ─────────────────────────────────────────────────────────
 
     @property
@@ -359,6 +410,106 @@ class Variante(models.Model):
         if self.stock == 0:
             return "SEM_STOCK"
         return "CRITICO" if self.stock <= self.limiar_stock_baixo else "OK"
+
+
+class AvaliacaoQuerySet(models.QuerySet):
+    def publicadas(self):
+        return self.filter(publicada=True)
+
+    def completas(self):
+        """Pré-carrega autor e fotografias — sem isto, listar 20 avaliações
+        dispara uma consulta por autor e outra por fotografia."""
+        return self.select_related("utilizador").prefetch_related("fotografias")
+
+    def com_fotografias(self):
+        return self.filter(fotografias__isnull=False).distinct()
+
+
+class Avaliacao(models.Model):
+    """
+    Avaliação de uma peça por quem a comprou.
+
+    Só quem comprou pode avaliar: a verificação é feita em
+    `catalogo.services.pode_avaliar`, contra o histórico de encomendas. É essa
+    regra que dá valor à etiqueta "Compra verificada" — sem ela, a média seria
+    apenas opinião de quem passou pela página.
+    """
+
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name="avaliacoes")
+    utilizador = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="avaliacoes"
+    )
+
+    estrelas = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    comentario = models.TextField(blank=True)
+
+    # Guardado em vez de deduzido: se um dia o painel permitir publicar uma
+    # avaliação recolhida por outra via, a etiqueta continua a dizer a verdade.
+    compra_verificada = models.BooleanField(default=True)
+    # Moderação: uma avaliação despublicada deixa de contar para a média.
+    publicada = models.BooleanField(default=True)
+
+    criado_em = models.DateTimeField(auto_now_add=True)
+    actualizado_em = models.DateTimeField(auto_now=True)
+
+    objects = AvaliacaoQuerySet.as_manager()
+
+    class Meta:
+        db_table = "avaliacoes"
+        verbose_name_plural = "avaliações"
+        ordering = ["-criado_em"]
+        constraints = [
+            # Uma opinião por cliente e por peça: sem isto, um cliente podia
+            # inflacionar a média de uma peça sozinho.
+            models.UniqueConstraint(
+                fields=["produto", "utilizador"], name="avaliacao_unica_por_cliente"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["produto", "publicada"]),
+            models.Index(fields=["-criado_em"]),
+        ]
+
+    def __str__(self):
+        return f"{self.produto.nome} — {self.estrelas}★ por {self.utilizador.email}"
+
+    @property
+    def autor(self):
+        """Primeiro nome e inicial do apelido: identifica sem expor o nome todo."""
+        inicial = f" {self.utilizador.apelido[0]}." if self.utilizador.apelido else ""
+        return f"{self.utilizador.primeiro_nome}{inicial}"
+
+    @property
+    def intervalo_estrelas(self):
+        """[(1, cheia?), …] — o template não sabe contar sozinho."""
+        return [(n, n <= self.estrelas) for n in range(1, 6)]
+
+
+class FotoAvaliacao(models.Model):
+    """Fotografia enviada com uma avaliação. Mesma forma que `ImagemProduto`."""
+
+    avaliacao = models.ForeignKey(
+        Avaliacao, on_delete=models.CASCADE, related_name="fotografias"
+    )
+    ficheiro = models.ImageField(upload_to="avaliacoes/", blank=True, null=True)
+    url_externa = models.URLField(max_length=500, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "fotos_avaliacao"
+        ordering = ["id"]
+        verbose_name_plural = "fotografias de avaliação"
+
+    def __str__(self):
+        return f"Foto de {self.avaliacao_id}"
+
+    @property
+    def url_imagem(self):
+        if self.url_externa:
+            return self.url_externa
+        return self.ficheiro.url if self.ficheiro else ""
 
 
 class Favorito(models.Model):

@@ -56,6 +56,15 @@
         {% endif %}
       </div>
 
+      {% if produto.total_avaliacoes %}
+        <a href="#avaliacoes" class="mt-6 inline-flex items-center gap-3">
+          {% include "componentes/estrelas.html" with pares=produto.media_em_estrelas rotulo=produto.media_avaliacoes %}
+          <span class="link-underline text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            {{ produto.media_avaliacoes }} · {{ produto.total_avaliacoes }} avaliaç{{ produto.total_avaliacoes|pluralize:"ão,ões" }}
+          </span>
+        </a>
+      {% endif %}
+
       <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">{{ produto.descricao }}</p>
 
       <div class="mt-10">
@@ -125,6 +134,8 @@
       {% endif %}
     </div>
   </div>
+
+  {% include "componentes/avaliacoes.html" %}
 
   {% if relacionados %}
     <section class="shell mt-28 md:mt-40">

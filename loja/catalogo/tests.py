@@ -28,6 +28,7 @@ from django.conf import settings
 from django.template import TemplateSyntaxError
 from django.template.loader import get_template
 from django.test import TestCase
+from django.urls import reverse
 
 DIRECTORIO_TEMPLATES = Path(settings.BASE_DIR) / "templates"
 TAILWIND = Path(settings.BASE_DIR) / "node_modules" / ".bin" / "tailwindcss"
@@ -131,6 +132,210 @@ class CssCompiladoTests(unittest.TestCase):
                 recem_compilado.read_text(), CSS_COMPILADO.read_text(),
                 "static/css/loja.css está desactualizado face aos templates. Corre:  npm run css",
             )
+
+
+class BaseAvaliacoes(TestCase):
+    """Um cliente que comprou, outro que não, e uma peça para avaliar."""
+
+    def setUp(self):
+        from catalogo.models import Categoria, Marca, Produto, Variante
+        from contas.models import Utilizador
+        from encomendas.models import Encomenda, EstadoEncomenda, ItemEncomenda
+
+        self.marca = Marca.objects.create(nome="Marca Teste")
+        self.categoria = Categoria.objects.create(nome="Hoodies")
+        self.produto = Produto.objects.create(
+            nome="Hoodie Teste", descricao="Teste", preco=50000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        self.variante = Variante.objects.create(
+            produto=self.produto, tamanho="M", cor_nome="Preto", sku="CP-A-0001", stock=5,
+        )
+
+        self.comprador = Utilizador.objects.create_user(
+            email="comprou@teste.ao", password="Password1", primeiro_nome="Ana", apelido="Miguel"
+        )
+        self.curioso = Utilizador.objects.create_user(
+            email="nao@teste.ao", password="Password1", primeiro_nome="Rui", apelido="Costa"
+        )
+
+        encomenda = Encomenda.objects.create(
+            referencia="CP-5001", utilizador=self.comprador, nome_cliente="Ana Miguel",
+            email="comprou@teste.ao", telefone="+244900000000",
+            estado=EstadoEncomenda.ENTREGUE, subtotal=50000, total=50000,
+            provincia="Luanda", municipio="Talatona", rua="Rua Teste",
+        )
+        ItemEncomenda.objects.create(
+            encomenda=encomenda, variante=self.variante, marca="Marca Teste",
+            nome_produto="Hoodie Teste", slug_produto=self.produto.slug,
+            tamanho="M", cor_nome="Preto", sku="CP-A-0001",
+            preco_unitario=50000, quantidade=1, total_linha=50000,
+        )
+        self.encomenda = encomenda
+
+
+class PermissaoParaAvaliarTests(BaseAvaliacoes):
+    def test_quem_comprou_pode(self):
+        from catalogo import services
+
+        self.assertTrue(services.pode_avaliar(self.comprador, self.produto))
+
+    def test_quem_nao_comprou_nao_pode(self):
+        from catalogo import services
+
+        self.assertFalse(services.pode_avaliar(self.curioso, self.produto))
+
+    def test_anonimo_nao_pode(self):
+        from django.contrib.auth.models import AnonymousUser
+
+        from catalogo import services
+
+        self.assertFalse(services.pode_avaliar(AnonymousUser(), self.produto))
+
+    def test_encomenda_por_pagar_nao_conta(self):
+        """Uma encomenda ainda NOVA não é uma compra — não foi paga."""
+        from catalogo import services
+        from encomendas.models import EstadoEncomenda
+
+        self.encomenda.estado = EstadoEncomenda.NOVA
+        self.encomenda.save(update_fields=["estado"])
+        self.assertFalse(services.pode_avaliar(self.comprador, self.produto))
+
+    def test_encomenda_cancelada_nao_conta(self):
+        from catalogo import services
+        from encomendas.models import EstadoEncomenda
+
+        self.encomenda.estado = EstadoEncomenda.CANCELADA
+        self.encomenda.save(update_fields=["estado"])
+        self.assertFalse(services.pode_avaliar(self.comprador, self.produto))
+
+    def test_variante_removida_nao_apaga_a_prova(self):
+        """O instantâneo da linha sobrevive à remoção da variante do catálogo."""
+        from catalogo import services
+
+        self.variante.delete()
+        self.assertTrue(services.pode_avaliar(self.comprador, self.produto))
+
+
+class CriarAvaliacaoTests(BaseAvaliacoes):
+    def test_cria_com_compra_verificada(self):
+        from catalogo import services
+
+        a = services.criar_avaliacao(self.comprador, self.produto, 5, "Excelente.")
+        self.assertEqual(a.estrelas, 5)
+        self.assertTrue(a.compra_verificada)
+        self.assertTrue(a.publicada)
+
+    def test_recusa_quem_nao_comprou(self):
+        from catalogo import services
+        from encomendas.services import ErroDeNegocio
+
+        with self.assertRaises(ErroDeNegocio):
+            services.criar_avaliacao(self.curioso, self.produto, 5)
+
+    def test_recusa_segunda_avaliacao(self):
+        from catalogo import services
+        from encomendas.services import ErroDeNegocio
+
+        services.criar_avaliacao(self.comprador, self.produto, 4)
+        with self.assertRaises(ErroDeNegocio):
+            services.criar_avaliacao(self.comprador, self.produto, 1)
+
+    def test_recusa_classificacao_fora_do_intervalo(self):
+        from catalogo import services
+        from encomendas.services import ErroDeNegocio
+
+        for valor in (0, 6, -1, "abc", None):
+            with self.subTest(valor=valor):
+                with self.assertRaises(ErroDeNegocio):
+                    services.criar_avaliacao(self.comprador, self.produto, valor)
+
+
+class ResumoDeAvaliacoesTests(BaseAvaliacoes):
+    def _avaliar(self, utilizador, estrelas):
+        from catalogo.models import Avaliacao
+
+        return Avaliacao.objects.create(produto=self.produto, utilizador=utilizador, estrelas=estrelas)
+
+    def test_sem_avaliacoes_a_media_e_none(self):
+        # 0,0 leria como péssima; ausência de dados não é uma nota baixa.
+        self.assertIsNone(self.produto.media_avaliacoes)
+        self.assertEqual(self.produto.total_avaliacoes, 0)
+
+    def test_media_e_total(self):
+        self._avaliar(self.comprador, 5)
+        self._avaliar(self.curioso, 4)
+        self.produto.refresh_from_db()
+        self.assertEqual(self.produto.media_avaliacoes, 4.5)
+        self.assertEqual(self.produto.total_avaliacoes, 2)
+
+    def test_escondida_nao_conta_para_a_media(self):
+        self._avaliar(self.comprador, 5)
+        escondida = self._avaliar(self.curioso, 1)
+        escondida.publicada = False
+        escondida.save(update_fields=["publicada"])
+
+        self.produto.refresh_from_db()
+        self.assertEqual(self.produto.media_avaliacoes, 5.0)
+        self.assertEqual(self.produto.total_avaliacoes, 1)
+
+    def test_distribuicao_em_percentagem(self):
+        self._avaliar(self.comprador, 5)
+        self._avaliar(self.curioso, 5)
+        self.produto.refresh_from_db()
+
+        por_estrelas = {l["estrelas"]: l for l in self.produto.distribuicao_avaliacoes}
+        self.assertEqual(por_estrelas[5]["total"], 2)
+        self.assertEqual(por_estrelas[5]["percentagem"], 100)
+        self.assertEqual(por_estrelas[1]["percentagem"], 0)
+
+
+class AvaliacoesNaLojaTests(BaseAvaliacoes):
+    def test_formulario_so_aparece_a_quem_comprou(self):
+        url = self.produto.get_absolute_url()
+
+        self.client.login(username="comprou@teste.ao", password="Password1")
+        self.assertContains(self.client.get(url), "Publicar avaliação")
+
+        self.client.logout()
+        self.client.login(username="nao@teste.ao", password="Password1")
+        self.assertNotContains(self.client.get(url), "Publicar avaliação")
+
+    def test_publicar_pela_loja(self):
+        from catalogo.models import Avaliacao
+
+        self.client.login(username="comprou@teste.ao", password="Password1")
+        resposta = self.client.post(
+            reverse("catalogo:avaliar", args=[self.produto.slug]),
+            {"estrelas": "5", "comentario": "Serve na perfeição."},
+        )
+        self.assertEqual(resposta.status_code, 302)
+        self.assertTrue(Avaliacao.objects.filter(produto=self.produto, estrelas=5).exists())
+
+    def test_quem_nao_comprou_nao_consegue_publicar(self):
+        from catalogo.models import Avaliacao
+
+        self.client.login(username="nao@teste.ao", password="Password1")
+        self.client.post(
+            reverse("catalogo:avaliar", args=[self.produto.slug]),
+            {"estrelas": "5", "comentario": "Nunca comprei isto."},
+        )
+        self.assertEqual(Avaliacao.objects.count(), 0)
+
+    def test_anonimo_e_enviado_para_o_login(self):
+        resposta = self.client.post(
+            reverse("catalogo:avaliar", args=[self.produto.slug]), {"estrelas": "5"}
+        )
+        self.assertEqual(resposta.status_code, 302)
+        self.assertIn("/conta/entrar/", resposta["Location"])
+
+    def test_media_aparece_na_ficha(self):
+        from catalogo.models import Avaliacao
+
+        Avaliacao.objects.create(produto=self.produto, utilizador=self.comprador, estrelas=4)
+        resposta = self.client.get(self.produto.get_absolute_url())
+        self.assertContains(resposta, "Compra verificada")
+        self.assertContains(resposta, "4.0")
 
 
 class PaginasSemArtefactosTests(TestCase):

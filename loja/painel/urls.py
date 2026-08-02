@@ -28,6 +28,10 @@ urlpatterns = [
     path("cupoes/<int:pk>/editar/", views.cupao_editar, name="cupao_editar"),
     path("cupoes/<int:pk>/remover/", views.cupao_remover, name="cupao_remover"),
 
+    path("avaliacoes/", views.avaliacoes, name="avaliacoes"),
+    path("avaliacoes/<int:pk>/alternar/", views.avaliacao_alternar, name="avaliacao_alternar"),
+    path("avaliacoes/<int:pk>/remover/", views.avaliacao_remover, name="avaliacao_remover"),
+
     path("encomendas/", views.encomendas, name="encomendas"),
     path("encomendas/<str:referencia>/estado/", views.encomenda_mudar_estado, name="encomenda_mudar_estado"),
     path("encomendas/exportar.csv", views.encomendas_exportar, name="encomendas_exportar"),

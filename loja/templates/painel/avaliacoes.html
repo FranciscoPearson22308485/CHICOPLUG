@@ -1,0 +1,62 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="mb-6 flex flex-wrap gap-2">
+    <a href="{% url 'painel:avaliacoes' %}" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if not estado_activo %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">Todas</a>
+    <a href="?estado=publicadas" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if estado_activo == 'publicadas' %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">Publicadas</a>
+    <a href="?estado=escondidas" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if estado_activo == 'escondidas' %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">
+      Escondidas{% if total_escondidas %} ({{ total_escondidas }}){% endif %}
+    </a>
+  </div>
+
+  <div class="overflow-x-auto border border-border bg-background">
+    <table class="w-full min-w-[880px] text-left text-sm">
+      <thead><tr class="border-b border-border">
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peça</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cliente</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Classificação</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Comentário</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Data</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Acções</th>
+      </tr></thead>
+      <tbody>
+        {% for a in avaliacoes %}
+          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+            <td class="px-5 py-4">
+              <a href="{{ a.produto.get_absolute_url }}" class="link-underline">{{ a.produto.marca.nome }} {{ a.produto.nome }}</a>
+            </td>
+            <td class="px-5 py-4">
+              {{ a.autor }}
+              {% if a.compra_verificada %}<span class="mt-1 block text-[10px] uppercase tracking-[0.16em] text-brand">Compra verificada</span>{% endif %}
+            </td>
+            <td class="px-5 py-4 whitespace-nowrap">{{ a.estrelas }} / 5</td>
+            <td class="px-5 py-4 text-muted-foreground">
+              <span class="line-clamp-2 max-w-[26rem]">{{ a.comentario|default:"—" }}</span>
+              {% if a.fotografias.all %}
+                <span class="mt-1 block text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{{ a.fotografias.all|length }} fotografia{{ a.fotografias.all|length|pluralize }}</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-4 whitespace-nowrap text-muted-foreground">{{ a.criado_em|date:"d/m/Y" }}</td>
+            <td class="px-5 py-4">
+              <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if a.publicada %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">
+                {% if a.publicada %}Publicada{% else %}Escondida{% endif %}
+              </span>
+            </td>
+            <td class="px-5 py-4"><div class="flex gap-4 text-[11px] uppercase tracking-[0.16em]">
+              <form method="post" action="{% url 'painel:avaliacao_alternar' a.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="link-underline font-semibold">{% if a.publicada %}Esconder{% else %}Publicar{% endif %}</button>
+              </form>
+              <form method="post" action="{% url 'painel:avaliacao_remover' a.pk %}" onsubmit="return confirm('Remover esta avaliação? A acção não se desfaz.')">
+                {% csrf_token %}
+                <button type="submit" class="link-underline text-destructive">Remover</button>
+              </form>
+            </div></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="px-5 py-10 text-center text-sm text-muted-foreground">Ainda não há avaliações.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

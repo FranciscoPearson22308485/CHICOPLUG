@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from catalogo.models import Categoria, Marca, Produto, Variante
+from catalogo.models import Avaliacao, Categoria, Marca, Produto, Variante
 from contas.models import Utilizador
 from encomendas.models import Cupao, Encomenda, EstadoEncomenda
 from encomendas.pagamentos import estado_integracao
@@ -32,6 +32,7 @@ def _menu(seccao):
         ("painel:marcas", "Marcas", "marcas"),
         ("painel:categorias", "Categorias", "categorias"),
         ("painel:cupoes", "Cupões", "cupoes"),
+        ("painel:avaliacoes", "Avaliações", "avaliacoes"),
         ("painel:encomendas", "Encomendas", "encomendas"),
         ("painel:stock", "Stock", "stock"),
         ("painel:definicoes", "Configurações", "definicoes"),
@@ -291,6 +292,51 @@ def cupao_remover(request, pk):
     cupao.delete()
     messages.success(request, f'Cupão "{codigo}" removido.')
     return redirect("painel:cupoes")
+
+
+# ─── Avaliações ───────────────────────────────────────────────────────────────
+
+
+@so_admin
+def avaliacoes(request):
+    lista = Avaliacao.objects.completas().select_related("produto", "produto__marca")
+
+    # Por omissão mostramos tudo; o filtro serve para despachar a moderação.
+    estado = request.GET.get("estado")
+    if estado == "publicadas":
+        lista = lista.filter(publicada=True)
+    elif estado == "escondidas":
+        lista = lista.filter(publicada=False)
+
+    return render(request, "painel/avaliacoes.html", {
+        **_menu("avaliacoes"), "titulo_painel": "Avaliações",
+        "avaliacoes": lista[:200],
+        "estado_activo": estado,
+        "total_escondidas": Avaliacao.objects.filter(publicada=False).count(),
+    })
+
+
+@so_admin
+@require_POST
+def avaliacao_alternar(request, pk):
+    """Publica ou esconde. Uma avaliação escondida deixa de contar para a média."""
+    avaliacao = get_object_or_404(Avaliacao, pk=pk)
+    avaliacao.publicada = not avaliacao.publicada
+    avaliacao.save(update_fields=["publicada", "actualizado_em"])
+    messages.success(
+        request,
+        "Avaliação publicada." if avaliacao.publicada else "Avaliação escondida da loja.",
+    )
+    return redirect(request.POST.get("voltar_para") or "painel:avaliacoes")
+
+
+@so_admin
+@require_POST
+def avaliacao_remover(request, pk):
+    avaliacao = get_object_or_404(Avaliacao, pk=pk)
+    avaliacao.delete()
+    messages.success(request, "Avaliação removida.")
+    return redirect("painel:avaliacoes")
 
 
 # ─── Encomendas ───────────────────────────────────────────────────────────────

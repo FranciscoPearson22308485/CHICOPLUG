@@ -176,6 +176,60 @@ class ProdutoTransaccaoTests(ProdutoCRUDTests):
         self.assertEqual(self.variante.stock, 2)
 
 
+class ModeracaoAvaliacoesTests(BasePainel):
+    """
+    A moderação cria-se directamente, sem passar pelos services: o que está a
+    ser testado é o painel, não a regra de quem pode avaliar.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from catalogo.models import Avaliacao
+
+        self.cliente = Utilizador.objects.create_user(
+            email="cliente@teste.ao", password="Password1", primeiro_nome="Ana", apelido="Miguel"
+        )
+        self.avaliacao = Avaliacao.objects.create(
+            produto=self.produto, utilizador=self.cliente, estrelas=5, comentario="Muito boa."
+        )
+
+    def test_lista_abre(self):
+        resposta = self.client.get(reverse("painel:avaliacoes"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, "Muito boa.")
+
+    def test_esconder_e_repor(self):
+        url = reverse("painel:avaliacao_alternar", args=[self.avaliacao.pk])
+
+        self.client.post(url)
+        self.avaliacao.refresh_from_db()
+        self.assertFalse(self.avaliacao.publicada)
+
+        self.client.post(url)
+        self.avaliacao.refresh_from_db()
+        self.assertTrue(self.avaliacao.publicada)
+
+    def test_esconder_retira_da_media(self):
+        self.client.post(reverse("painel:avaliacao_alternar", args=[self.avaliacao.pk]))
+        self.produto.refresh_from_db()
+        self.assertIsNone(self.produto.media_avaliacoes)
+
+    def test_remover(self):
+        from catalogo.models import Avaliacao
+
+        self.client.post(reverse("painel:avaliacao_remover", args=[self.avaliacao.pk]))
+        self.assertFalse(Avaliacao.objects.filter(pk=self.avaliacao.pk).exists())
+
+    def test_cliente_nao_modera(self):
+        self.client.logout()
+        self.client.login(username="cliente@teste.ao", password="Password1")
+
+        resposta = self.client.post(reverse("painel:avaliacao_alternar", args=[self.avaliacao.pk]))
+        self.assertEqual(resposta.status_code, 302)
+        self.avaliacao.refresh_from_db()
+        self.assertTrue(self.avaliacao.publicada)
+
+
 class EntradasMalFormadasTests(BasePainel):
     """
     Os nomes dos campos e os valores vêm do cliente. Antes destas guardas, um
@@ -271,8 +325,9 @@ class PaginasRenderizamTests(BasePainel):
 
     SEM_ARGUMENTOS = [
         "painel:dashboard", "painel:produtos", "painel:marcas", "painel:categorias",
-        "painel:cupoes", "painel:encomendas", "painel:stock", "painel:definicoes",
-        "painel:marca_nova", "painel:categoria_nova", "painel:cupao_novo", "painel:produto_novo",
+        "painel:cupoes", "painel:avaliacoes", "painel:encomendas", "painel:stock",
+        "painel:definicoes", "painel:marca_nova", "painel:categoria_nova",
+        "painel:cupao_novo", "painel:produto_novo",
     ]
 
     def _com_argumentos(self):

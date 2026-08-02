@@ -1,10 +1,13 @@
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Count, Max, Min, Q
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from . import services
 from .models import Categoria, Marca, Produto, Subscritor, Variante
 
 TAMANHO_PAGINA = 24
@@ -204,11 +207,20 @@ def produto(request, slug):
     url_absoluto = f"{settings.SITE_URL}{peca.get_absolute_url()}"
     imagem = peca.imagem_principal or ""
 
+    ordenar_avaliacoes = request.GET.get("avaliacoes", "recentes")
+    if ordenar_avaliacoes not in services.ORDENACOES:
+        ordenar_avaliacoes = "recentes"
+
     contexto = {
         "produto": peca,
         "relacionados": relacionados,
         "cor_inicial": cor_inicial,
         "mapa_variantes": mapa_variantes,
+        "avaliacoes": services.avaliacoes_de(peca, ordenar_avaliacoes),
+        "ordenacoes_avaliacoes": services.ORDENACOES,
+        "ordenar_avaliacoes": ordenar_avaliacoes,
+        "pode_avaliar": services.pode_avaliar(request.user, peca),
+        "motivo_sem_avaliacao": services.motivo_para_nao_avaliar(request.user, peca),
         "dados_json": {
             "@context": "https://schema.org",
             "@type": "Product",
@@ -248,7 +260,38 @@ def produto(request, slug):
             ],
         },
     }
+
+    # Só declaramos a classificação agregada quando ela existe: anunciar uma
+    # média sem avaliações é enganador e os motores de busca penalizam-no.
+    if peca.total_avaliacoes:
+        contexto["dados_json"]["aggregateRating"] = {
+            "@type": "AggregateRating",
+            "ratingValue": peca.media_avaliacoes,
+            "reviewCount": peca.total_avaliacoes,
+            "bestRating": 5,
+            "worstRating": 1,
+        }
+
     return render(request, "catalogo/produto.html", contexto)
+
+
+@login_required
+@require_POST
+def avaliar(request, slug):
+    peca = get_object_or_404(Produto.objects.filter(activo=True), slug=slug)
+    try:
+        services.criar_avaliacao(
+            utilizador=request.user,
+            produto=peca,
+            estrelas=request.POST.get("estrelas"),
+            comentario=request.POST.get("comentario", ""),
+            fotografias=request.FILES.getlist("fotografias"),
+        )
+        messages.success(request, "Obrigado — a tua avaliação já está publicada.")
+    except services.ErroDeNegocio as erro:
+        messages.error(request, str(erro))
+
+    return redirect(f"{peca.get_absolute_url()}#avaliacoes")
 
 
 def marcas(request):

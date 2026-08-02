@@ -350,3 +350,42 @@
     transition: none;
   }
 }
+
+/*
+ * Selector de estrelas do formulário de avaliação.
+ *
+ * Os rádios estão em ordem inversa (5→1) e a linha é desenhada com
+ * `row-reverse`: o CSS só alcança irmãos *seguintes*, e é isso que permite
+ * pintar as estrelas à esquerda da escolhida com `~`, sem JavaScript nenhum.
+ * Continua a funcionar por teclado.
+ */
+.escolha-estrelas {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.escolha-estrelas input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.escolha-estrelas label {
+  cursor: pointer;
+  color: var(--muted-foreground);
+  transition: color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.escolha-estrelas input:checked ~ label,
+.escolha-estrelas label:hover,
+.escolha-estrelas label:hover ~ label {
+  color: var(--brand);
+}
+
+.escolha-estrelas input:focus-visible + label {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
