@@ -1,0 +1,11 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    {% for c in categorias %}
+      <div class="border border-border bg-background p-6">
+        <p class="text-sm font-semibold">{{ c.nome }}</p>
+        <p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ c.total_pecas }} peças</p>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

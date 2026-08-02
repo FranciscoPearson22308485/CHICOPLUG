@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}Moradas — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  {% include "contas/_abas.html" with activa="moradas" %}
+
+  <div class="mt-14 grid gap-6 md:grid-cols-3">
+    {% for m in moradas %}
+      <div class="flex h-full flex-col border border-border p-6">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+          <p class="truncate text-sm font-semibold">{{ m.etiqueta }}</p>
+          {% if m.principal %}<span class="inline-flex items-center bg-brand px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-foreground">Principal</span>{% endif %}
+        </div>
+        <div class="mt-5 space-y-1 text-sm text-muted-foreground">
+          <p>{{ m.destinatario }}</p><p>{{ m.rua }}</p><p>{{ m.municipio }}, {{ m.provincia }}</p><p>{{ m.telefone }}</p>
+        </div>
+        <form method="post" action="{% url 'contas:remover_morada' m.pk %}" class="mt-8">
+          {% csrf_token %}
+          <button type="submit" class="link-underline text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Remover</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+
+  <form method="post" class="mt-12 max-w-2xl space-y-5 border border-border p-8">
+    {% csrf_token %}
+    <p class="eyebrow">Nova morada</p>
+    <div class="grid gap-5 sm:grid-cols-2">
+      <input name="etiqueta" required placeholder="Casa, Trabalho…" aria-label="Nome da morada" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+      <input name="destinatario" required placeholder="Destinatário" aria-label="Destinatário" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+    </div>
+    <input name="telefone" required placeholder="+244 900 000 000" aria-label="Telefone" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+    <div class="grid gap-5 sm:grid-cols-2">
+      <select name="provincia" required data-provincia aria-label="Província" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground">
+        <option value="">Província</option>{% for p in provincias %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+      </select>
+      <select name="municipio" required data-municipio aria-label="Município" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground">
+        <option value="">Escolhe a província</option>
+      </select>
+    </div>
+    <input name="rua" required placeholder="Rua, nº, bairro" aria-label="Morada" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+    <textarea name="observacoes" rows="2" placeholder="Observações (opcional)" aria-label="Observações" class="w-full border border-border bg-transparent p-4 text-sm outline-none focus:border-foreground"></textarea>
+    <label class="flex items-center gap-3 text-sm"><input type="checkbox" name="principal" class="size-5 accent-foreground" /> Definir como morada principal</label>
+    <button type="submit" class="w-full bg-foreground py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Adicionar morada</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ municipios|json_script:"municipios" }}
+<script>
+  (function () {
+    var mapa = JSON.parse(document.getElementById("municipios").textContent);
+    var prov = document.querySelector("[data-provincia]"), mun = document.querySelector("[data-municipio]");
+    if (!prov || !mun) return;
+    prov.addEventListener("change", function () {
+      mun.replaceChildren();
+      var lista = mapa[prov.value] || [];
+      var vazio = document.createElement("option");
+      vazio.value = ""; vazio.textContent = lista.length ? "Seleciona" : "Escolhe a província";
+      mun.appendChild(vazio);
+      lista.forEach(function (m) { var o = document.createElement("option"); o.value = m; o.textContent = m; mun.appendChild(o); });
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}Repor password — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal mx-auto w-full max-w-md">
+    <p class="eyebrow">Recuperação</p>
+    <h1 class="mt-5 text-5xl sm:text-6xl">Repor password</h1>
+    <p class="mt-6 text-sm leading-relaxed text-muted-foreground">Indica o email da tua conta e enviamos-te um link para definires uma nova password.</p>
+    <div class="mt-12"><form method="post" class="space-y-6">
+      {% csrf_token %}
+      <div class="space-y-2">
+        <label for="id_email" class="text-[11px] uppercase tracking-[0.16em]">Email</label>
+        {{ form.email }}
+      </div>
+      <button type="submit" class="w-full bg-foreground py-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Enviar instruções</button>
+    </form></div>
+    <div class="mt-10 border-t border-border pt-6 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+      <p><a href="{% url 'contas:entrar' %}" class="link-underline font-semibold text-foreground">Voltar ao login</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {# Corre antes da primeira pintura: aplica o tema guardado (ou o do sistema)
+       para ninguém ver um clarão branco ao entrar. #}
+    <script>
+      (function () {
+        try {
+          var g = localStorage.getItem("cp-tema");
+          var escuro = g === "escuro" || ((g === "sistema" || !g) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", escuro);
+          document.documentElement.style.colorScheme = escuro ? "dark" : "light";
+        } catch (e) {}
+        document.documentElement.setAttribute("data-theme-ready", "");
+      })();
+    </script>
+
+    <title>{% block titulo %}CHICOPLUG — Streetwear Premium | Nike, Jordan, Corteiz e mais{% endblock %}</title>
+    <meta name="description" content="{% block descricao %}As melhores marcas de streetwear num só lugar. Nike, Jordan, Adidas, Corteiz, Represent e Essentials, com entrega em todo o Angola.{% endblock %}" />
+    <meta name="author" content="CHICOPLUG" />
+    <meta name="theme-color" content="#111111" />
+    <meta name="apple-mobile-web-app-title" content="CHICOPLUG" />
+
+    <meta property="og:site_name" content="CHICOPLUG" />
+    <meta property="og:title" content="{% block og_titulo %}CHICOPLUG — Streetwear Premium{% endblock %}" />
+    <meta property="og:description" content="{% block og_descricao %}As melhores marcas de streetwear num só lugar. Entrega em todo o Angola.{% endblock %}" />
+    <meta property="og:type" content="{% block og_tipo %}website{% endblock %}" />
+    <meta property="og:locale" content="pt_AO" />
+    <meta property="og:image" content="{% block og_imagem %}{% static 'icon-512.png' %}{% endblock %}" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@chicoplug" />
+    <meta name="twitter:title" content="{% block tw_titulo %}CHICOPLUG — Streetwear Premium{% endblock %}" />
+    <meta name="twitter:description" content="{% block tw_descricao %}As melhores marcas de streetwear num só lugar.{% endblock %}" />
+
+    {% block robots %}{% endblock %}
+    {% block canonico %}{% endblock %}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="{% static 'css/loja.css' %}" />
+
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml" />
+    <link rel="icon" href="{% static 'favicon.ico' %}" sizes="48x48" />
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}" sizes="180x180" />
+    <link rel="manifest" href="{% static 'site.webmanifest' %}" />
+
+    {% block dados_estruturados %}{% endblock %}
+  </head>
+
+  <body>
+    {% if not esconder_navegacao %}{% include "componentes/navbar.html" %}{% endif %}
+
+    <main class="min-h-screen">
+      {% include "componentes/mensagens.html" %}
+      {% block conteudo %}{% endblock %}
+    </main>
+
+    {% if not esconder_navegacao %}{% include "componentes/footer.html" %}{% endif %}
+
+    {# Recipiente das notificações; o JS injecta aqui. #}
+    <div id="avisos" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3" aria-live="polite"></div>
+
+    <script src="{% static 'js/loja.js' %}" defer></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

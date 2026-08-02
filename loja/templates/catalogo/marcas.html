@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Marcas — CHICOPLUG{% endblock %}
+{% block descricao %}Todas as marcas disponíveis na CHICOPLUG: Nike, Jordan, Adidas, Corteiz, Represent, Hellstar, Denim Tears, Essentials e Gallery Dept.{% endblock %}
+
+{% block conteudo %}
+<div class="pb-28 pt-16 md:pt-24">
+  <div class="shell">
+    <div class="reveal">
+      <p class="eyebrow">Selecção</p>
+      <h1 class="mt-5 text-6xl sm:text-7xl xl:text-8xl">Marcas</h1>
+      <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Trabalhamos apenas com produto original. Cada marca é escolhida pelo que traz ao
+        guarda-roupa, não pelo nome.
+      </p>
+    </div>
+  </div>
+
+  <div class="mt-20 space-y-20 md:space-y-32">
+    {% for m in marcas %}
+      <div class="shell reveal">
+        <a href="{{ m.get_absolute_url }}"
+           class="group grid items-center gap-8 md:grid-cols-2 md:gap-16 {% if forloop.counter0|divisibleby:2 %}{% else %}md:[&>*:first-child]:order-2{% endif %}">
+          <div class="overflow-hidden bg-surface">
+            {% if m.imagem %}
+              <img src="{{ m.imagem.url }}" alt="{{ m.nome }}" loading="lazy"
+                   class="aspect-[4/5] w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105" />
+            {% else %}
+              <div class="grid aspect-[4/5] w-full place-items-center bg-surface">
+                <span class="font-display text-4xl uppercase tracking-brand text-muted-foreground">{{ m.nome }}</span>
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <p class="eyebrow">{{ m.assinatura }}</p>
+            <h2 class="mt-6 text-4xl sm:text-5xl xl:text-6xl">{{ m.nome }}</h2>
+            <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">{{ m.descricao }}</p>
+            <p class="mt-10 text-[11px] font-semibold uppercase tracking-[0.2em]">
+              {{ m.total_pecas }} {% if m.total_pecas == 1 %}peça{% else %}peças{% endif %} — Ver marca
+            </p>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Nova password — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal mx-auto w-full max-w-md">
+    <p class="eyebrow">Recuperação</p>
+    <h1 class="mt-5 text-5xl sm:text-6xl">Nova password</h1>
+    <p class="mt-6 text-sm leading-relaxed text-muted-foreground">Define a nova password da tua conta.</p>
+    <div class="mt-12">{% if validlink %}
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="w-full bg-foreground py-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Guardar nova password</button>
+      </form>
+    {% else %}
+      <div class="border border-dashed border-border p-6 text-sm leading-relaxed text-muted-foreground">
+        Este link de reposição não é válido ou já foi usado. Pede um novo para continuares.
+      </div>
+    {% endif %}</div>
+    
+  </div>
+</div>
+{% endblock %}

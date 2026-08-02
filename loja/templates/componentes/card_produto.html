@@ -1,0 +1,51 @@
+{# Card de produto. Marca acima do nome — é o que se procura primeiro numa boutique multimarca. #}
+<article class="group relative">
+  <a href="{{ p.get_absolute_url }}" class="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+    <div class="relative overflow-hidden bg-surface">
+      {% if p.imagem_principal %}
+        <img src="{{ p.imagem_principal }}" alt="{{ p.marca.nome }} {{ p.nome }}" width="1000" height="1250"
+             loading="{% if prioridade %}eager{% else %}lazy{% endif %}"
+             class="aspect-[4/5] w-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]" />
+        {% if p.imagem_secundaria %}
+          <img src="{{ p.imagem_secundaria }}" alt="" aria-hidden="true" loading="lazy"
+               class="absolute inset-0 aspect-[4/5] w-full object-cover opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+        {% endif %}
+      {% else %}
+        <div class="aspect-[4/5] w-full bg-surface"></div>
+      {% endif %}
+
+      <div class="absolute left-3 top-3 flex flex-col items-start gap-2">
+        {% if p.etiqueta %}
+          <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if not p.tem_stock %}bg-muted text-muted-foreground{% else %}bg-foreground text-background{% endif %}">{{ p.etiqueta }}</span>
+        {% endif %}
+        {% if p.tem_stock and p.percentagem_desconto %}
+          <span class="inline-flex items-center bg-brand px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-foreground">−{{ p.percentagem_desconto }}%</span>
+        {% endif %}
+      </div>
+
+      <div class="pointer-events-none absolute inset-x-3 bottom-3 translate-y-3 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 max-md:hidden">
+        <span class="block bg-background px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.2em]">
+          {% if p.tem_stock %}Ver peça{% else %}Esgotado{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <div class="min-w-0">
+        <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ p.marca.nome }}</p>
+        <h3 class="mt-1.5 text-[13px] font-semibold tracking-normal normal-case sm:truncate">{{ p.nome }}</h3>
+        <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ p.categoria.nome }}</p>
+      </div>
+      <div class="shrink-0 sm:text-right">
+        <p class="text-[13px] font-semibold">{{ p.preco|kz }}</p>
+        {% if p.preco_anterior %}<p class="text-[11px] text-muted-foreground line-through">{{ p.preco_anterior|kz }}</p>{% endif %}
+      </div>
+    </div>
+  </a>
+
+  <button type="button" data-favorito="{{ p.pk }}"
+          aria-label="Adicionar aos favoritos" aria-pressed="false"
+          class="absolute right-3 top-3 grid size-9 place-items-center bg-background/85 opacity-0 transition-opacity duration-300 hover:bg-background group-hover:opacity-100 max-md:opacity-100">
+    <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>
+  </button>
+</article>

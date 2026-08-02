@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block dados_estruturados %}{% dados_estruturados dados_json %}{% endblock %}
+
+{% block conteudo %}
+  <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
+  <section class="relative h-[92svh] min-h-[560px] w-full overflow-hidden bg-ink">
+    <img src="{% static 'img/hero.jpg' %}" alt="Editorial de streetwear CHICOPLUG"
+         width="1600" height="1904" fetchpriority="high"
+         class="absolute inset-0 size-full object-cover object-[50%_35%] opacity-90" />
+    <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-ink/30"></div>
+
+    <div class="shell relative flex h-full flex-col justify-end pb-16 md:pb-24">
+      <p class="reveal text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
+        Streetwear premium — Luanda
+      </p>
+      <h1 class="reveal display-xl mt-6 max-w-[16ch] text-[13vw] text-white sm:text-[10vw] lg:text-[7.5vw]" style="--atraso:120ms">
+        As melhores<br />marcas num<br />só lugar
+      </h1>
+      <div class="reveal mt-10 flex flex-wrap items-center gap-4" style="--atraso:240ms">
+        {# O hero assenta sobre fotografia escura nos dois temas: o botão é
+           branco fixo, senão em modo noturno ficaria escuro sobre escuro. #}
+        <a href="{% url 'catalogo:shop' %}"
+           class="group inline-flex items-center gap-4 bg-white px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ink transition-colors hover:bg-brand hover:text-brand-foreground">
+          Comprar Agora
+          <svg class="size-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+        </a>
+        <a href="{% url 'catalogo:marcas' %}"
+           class="inline-flex items-center gap-4 border border-white/40 px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-white transition-colors hover:border-white hover:bg-white hover:text-ink">
+          Ver Marcas
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="overflow-hidden border-y border-border bg-ink py-3">
+    <div class="flex w-max animate-marquee">
+      {% for i in "12" %}
+        {% for texto in "Peças originais,Entregas em todo Angola,Multicaixa Express,As marcas mais procuradas"|split:"," %}
+          <span class="flex items-center gap-8 whitespace-nowrap px-8 text-[11px] font-semibold uppercase tracking-[0.28em] text-ink-foreground">
+            {{ texto }}<span class="size-1 bg-brand"></span>
+          </span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── NOVIDADES ────────────────────────────────────────────────────────── -->
+  <section class="shell py-24 md:py-32">
+    <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+      <div class="min-w-0">
+        <p class="eyebrow mb-4">Acabado de chegar</p>
+        <h2 class="text-3xl sm:text-4xl xl:text-5xl">Novidades</h2>
+      </div>
+      <a href="{% url 'catalogo:shop' %}" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Ver tudo</a>
+    </div>
+    <div class="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-8 xl:grid-cols-4">
+      {% for p in novidades %}
+        <div class="reveal" style="--atraso:{{ forloop.counter0|mult:90 }}ms">
+          {% include "componentes/card_produto.html" with p=p prioridade=forloop.first %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── MARCAS POPULARES ─────────────────────────────────────────────────── -->
+  <section class="bg-surface py-24 md:py-32">
+    <div class="shell">
+      <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+        <div class="min-w-0">
+          <p class="eyebrow mb-4">Selecção da casa</p>
+          <h2 class="text-3xl sm:text-4xl xl:text-5xl">Marcas Populares</h2>
+        </div>
+        <a href="{% url 'catalogo:marcas' %}" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Todas as marcas</a>
+      </div>
+
+      <div class="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4">
+        {% for m in marcas_destaque %}
+          <a href="{{ m.get_absolute_url }}"
+             class="reveal group flex h-full flex-col justify-between border border-border bg-background p-6 transition-colors duration-500 hover:border-foreground md:p-8"
+             style="--atraso:{{ forloop.counter0|mult:60 }}ms">
+            <div class="min-w-0">
+              {# Sem logótipos de terceiros: um mosaico de nove logótipos de
+                 proveniências diferentes parece um marketplace. #}
+              <p class="font-display text-2xl uppercase leading-none tracking-brand md:text-3xl">{{ m.nome }}</p>
+              {% if m.assinatura %}
+                <p class="mt-3 line-clamp-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{{ m.assinatura }}</p>
+              {% endif %}
+            </div>
+            <div class="mt-8 flex items-center justify-between">
+              <span class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {{ m.total_pecas }} {% if m.total_pecas == 1 %}peça{% else %}peças{% endif %}
+              </span>
+              <svg class="size-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── MAIS VENDIDOS ────────────────────────────────────────────────────── -->
+  <section class="shell py-24 md:py-32">
+    <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+      <div class="min-w-0">
+        <p class="eyebrow mb-4">Os mais procurados</p>
+        <h2 class="text-3xl sm:text-4xl xl:text-5xl">Mais Vendidos</h2>
+      </div>
+      <a href="{% url 'catalogo:shop' %}" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Ver tudo</a>
+    </div>
+    <div class="no-scrollbar mt-12 flex snap-x snap-mandatory gap-4 overflow-x-auto md:grid md:grid-cols-4 md:gap-8 md:overflow-visible">
+      {% for p in mais_vendidos %}
+        <div class="reveal min-w-[68%] snap-start md:min-w-0" style="--atraso:{{ forloop.counter0|mult:90 }}ms">
+          {% include "componentes/card_produto.html" with p=p %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── CATEGORIAS ───────────────────────────────────────────────────────── -->
+  <section class="shell pb-24 md:pb-32">
+    <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+      <div class="min-w-0">
+        <p class="eyebrow mb-4">Procura por tipo</p>
+        <h2 class="text-3xl sm:text-4xl xl:text-5xl">Categorias</h2>
+      </div>
+      <a href="{% url 'catalogo:shop' %}" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Shop</a>
+    </div>
+    <div class="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
+      {% for c in categorias %}
+        <a href="{% url 'catalogo:shop' %}?categoria={{ c.slug }}"
+           class="reveal group relative block overflow-hidden bg-surface" style="--atraso:{{ forloop.counter0|mult:70 }}ms">
+          {% with img=c.imagem_representativa %}
+            {% if img %}
+              <img src="{{ img }}" alt="{{ c.nome }}" loading="lazy"
+                   class="aspect-[3/4] w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105" />
+            {% else %}
+              <div class="aspect-[3/4] w-full bg-surface"></div>
+            {% endif %}
+          {% endwith %}
+          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/85 to-transparent p-5 pt-16">
+            <h3 class="text-lg text-white">{{ c.nome }}</h3>
+            <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/70">
+              {{ c.total_pecas }} {% if c.total_pecas == 1 %}peça{% else %}peças{% endif %}
+            </p>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── PROMOÇÕES ────────────────────────────────────────────────────────── -->
+  {% if promocoes %}
+    <section class="border-y border-border bg-surface py-24 md:py-32">
+      <div class="shell">
+        <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+          <div class="min-w-0">
+            <p class="eyebrow mb-4">Preços reduzidos</p>
+            <h2 class="text-3xl sm:text-4xl xl:text-5xl">Promoções</h2>
+          </div>
+          <a href="{% url 'catalogo:shop' %}?promocao=1" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Ver todas</a>
+        </div>
+        <div class="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-4 md:gap-x-8">
+          {% for p in promocoes %}
+            <div class="reveal" style="--atraso:{{ forloop.counter0|mult:80 }}ms">
+              {% include "componentes/card_produto.html" with p=p %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <!-- ── SOBRE A LOJA ─────────────────────────────────────────────────────── -->
+  <section class="border-b border-border bg-ink text-ink-foreground">
+    <div class="shell grid gap-16 py-24 md:grid-cols-2 md:py-32">
+      <div class="reveal">
+        <img src="{% static 'img/editorial-1.jpg' %}" alt="Editorial de rua CHICOPLUG" loading="lazy"
+             class="aspect-[4/3] w-full object-cover" />
+      </div>
+      <div class="reveal flex flex-col justify-center" style="--atraso:140ms">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.28em] text-ink-foreground/50">A loja</p>
+        <h2 class="mt-6 text-4xl sm:text-5xl">Selecção rigorosa,<br />origem garantida</h2>
+        <p class="mt-8 max-w-md text-sm leading-relaxed text-ink-foreground/60">
+          Escolhemos peça a peça o que vale a pena vestir. Trabalhamos apenas com produto
+          original, de marcas que definem o streetwear — e entregamos em todo o Angola.
+        </p>
+        <div class="mt-10">
+          <a href="{% url 'catalogo:sobre' %}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-foreground">Sobre a CHICOPLUG</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── INSTAGRAM ────────────────────────────────────────────────────────── -->
+  <section class="shell py-24 md:py-32">
+    <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+      <div class="min-w-0">
+        <p class="eyebrow mb-4">@chicoplug</p>
+        <h2 class="text-3xl sm:text-4xl xl:text-5xl">Nas ruas</h2>
+      </div>
+      <a href="https://instagram.com" target="_blank" rel="noreferrer" class="link-underline shrink-0 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em]">Seguir</a>
+    </div>
+    <div class="mt-12 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-4">
+      {% for img in "editorial-2.jpg,p1.jpg,editorial-1.jpg,p5.jpg"|split:"," %}
+        <a href="https://instagram.com" target="_blank" rel="noreferrer"
+           class="reveal group block overflow-hidden bg-surface" style="--atraso:{{ forloop.counter0|mult:80 }}ms">
+          <img src="{% static 'img/' %}{{ img }}" alt="Publicação Instagram CHICOPLUG" loading="lazy"
+               class="aspect-square w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── NEWSLETTER ───────────────────────────────────────────────────────── -->
+  <section class="border-t border-border bg-surface">
+    <div class="shell grid gap-10 py-20 md:grid-cols-2 md:items-center md:py-28">
+      <div class="reveal">
+        <p class="eyebrow">Lista de espera</p>
+        <h2 class="mt-6 text-4xl sm:text-5xl">Sabe primeiro<br />o que chega</h2>
+        <p class="mt-6 max-w-md text-sm leading-relaxed text-muted-foreground">
+          As peças mais procuradas esgotam em horas. Avisamos-te por email antes de entrarem na loja.
+        </p>
+      </div>
+      <div class="reveal" style="--atraso:120ms">
+        {% include "componentes/newsletter.html" with origem="home" %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

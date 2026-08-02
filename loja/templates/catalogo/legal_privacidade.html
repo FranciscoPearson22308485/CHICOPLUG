@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo_pagina }} — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal">
+    <p class="eyebrow">Legal</p>
+    <h1 class="mt-5 max-w-[16ch] text-5xl sm:text-6xl">{{ titulo_pagina }}</h1>
+  </div>
+  <div class="mt-16 max-w-2xl space-y-12">
+      <div class="reveal">
+        <h2 class="text-2xl">Dados recolhidos</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Recolhemos nome, email, telefone e morada de entrega — o mínimo necessário para processar a tua encomenda.</p>
+      </div>\n      <div class="reveal">
+        <h2 class="text-2xl">Utilização</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Os dados são usados exclusivamente para processar encomendas, prestar apoio ao cliente e, com consentimento, enviar comunicações sobre novidades e promoções.</p>
+      </div>\n      <div class="reveal">
+        <h2 class="text-2xl">Os teus direitos</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Podes pedir acesso, correcção ou eliminação dos teus dados através de ola@chicoplug.ao.</p>
+      </div>
+  </div>
+</div>
+{% endblock %}

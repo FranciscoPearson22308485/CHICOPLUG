@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titulo %}Sobre — CHICOPLUG{% endblock %}
+{% block descricao %}A CHICOPLUG é a boutique de streetwear premium de Luanda: as melhores marcas internacionais, seleccionadas peça a peça, com origem garantida.{% endblock %}
+{% load static %}
+
+{% block conteudo %}
+<div class="pb-28">
+  <section class="shell pt-16 md:pt-24">
+    <div class="reveal">
+      <p class="eyebrow">A loja</p>
+      <h1 class="mt-6 max-w-[18ch] text-6xl sm:text-7xl xl:text-[7rem]">As marcas certas, num só lugar</h1>
+    </div>
+  </section>
+
+  <div class="shell reveal mt-20">
+    <img src="{% static 'img/editorial-1.jpg' %}" alt="Loja e comunidade CHICOPLUG em Luanda" loading="lazy" class="aspect-[16/9] w-full object-cover" />
+  </div>
+
+  <section class="shell grid gap-16 py-24 md:grid-cols-2 md:py-32">
+    <div class="reveal"><h2 class="text-4xl sm:text-5xl">Começou por necessidade</h2></div>
+    <div class="reveal space-y-6 text-sm leading-relaxed text-muted-foreground" style="--atraso:120ms">
+      <p>Em Luanda, quem queria uma peça da Nike, da Corteiz ou da Represent tinha duas hipóteses: pagar portes internacionais e esperar semanas, ou arriscar numa réplica. A CHICOPLUG existe para acabar com essa escolha.</p>
+      <p>Curamos o catálogo peça a peça. Trabalhamos com fornecedores verificados e só colocamos à venda o que confirmamos ser original — do sneaker à t-shirt.</p>
+      <p>Não fabricamos roupa. O nosso trabalho é escolher bem, garantir a origem e pôr a peça à tua porta em todo o Angola.</p>
+    </div>
+  </section>
+
+  <section class="border-y border-border bg-surface">
+    <div class="shell grid gap-12 py-24 md:grid-cols-3 md:py-28">
+      <div class="reveal">
+        <p class="font-display text-5xl tracking-brand text-brand">01</p>
+        <h3 class="mt-6 text-2xl">Produto original</h3>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Trabalhamos apenas com fornecedores verificados. Cada peça chega com a garantia da marca.</p>
+      </div>
+      <div class="reveal" style="--atraso:120ms">
+        <p class="font-display text-5xl tracking-brand text-brand">02</p>
+        <h3 class="mt-6 text-2xl">Selecção criteriosa</h3>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Não vendemos tudo. Escolhemos o que vale a pena vestir e ignoramos o resto.</p>
+      </div>
+      <div class="reveal" style="--atraso:240ms">
+        <p class="font-display text-5xl tracking-brand text-brand">03</p>
+        <h3 class="mt-6 text-2xl">Entrega em todo o país</h3>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">De Luanda a Cabinda. Pagamento por Multicaixa Express e acompanhamento da encomenda.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="shell py-24 text-center md:py-32">
+    <div class="reveal mx-auto max-w-2xl">
+      <h2 class="text-4xl sm:text-5xl">Vê o que temos</h2>
+      <p class="mt-6 text-sm leading-relaxed text-muted-foreground">Novas peças todas as semanas. As mais procuradas esgotam depressa.</p>
+      <a href="{% url 'catalogo:shop' %}" class="mt-10 inline-block bg-foreground px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">Comprar Agora</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

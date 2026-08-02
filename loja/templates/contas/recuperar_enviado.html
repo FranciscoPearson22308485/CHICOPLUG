@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Verifica o email — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal mx-auto w-full max-w-md">
+    <p class="eyebrow">Recuperação</p>
+    <h1 class="mt-5 text-5xl sm:text-6xl">Verifica o email</h1>
+    <p class="mt-6 text-sm leading-relaxed text-muted-foreground">Se existir uma conta associada a este email, enviámos as instruções para repor a password. O link é válido durante algumas horas.</p>
+    <div class="mt-12"><div class="border border-border p-6 text-sm leading-relaxed text-muted-foreground">Verifica também a pasta de spam.</div></div>
+    <div class="mt-10 border-t border-border pt-6 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+      <p><a href="{% url 'contas:entrar' %}" class="link-underline font-semibold text-foreground">Entrar</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

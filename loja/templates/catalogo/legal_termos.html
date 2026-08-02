@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo_pagina }} — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal">
+    <p class="eyebrow">Legal</p>
+    <h1 class="mt-5 max-w-[16ch] text-5xl sm:text-6xl">{{ titulo_pagina }}</h1>
+  </div>
+  <div class="mt-16 max-w-2xl space-y-12">
+      <div class="reveal">
+        <h2 class="text-2xl">Compras e preços</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Todos os preços estão em Kwanzas e incluem impostos aplicáveis. O stock é limitado e pode esgotar durante o processo de compra.</p>
+      </div>\n      <div class="reveal">
+        <h2 class="text-2xl">Entregas</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Entregamos em todo o território angolano. Os prazos indicados são estimativas contadas a partir da confirmação do pagamento.</p>
+      </div>\n      <div class="reveal">
+        <h2 class="text-2xl">Responsabilidade</h2>
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Vendemos produto original de marcas terceiras. As garantias de fabrico são as da respectiva marca.</p>
+      </div>
+  </div>
+</div>
+{% endblock %}

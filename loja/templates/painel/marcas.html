@@ -1,0 +1,13 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    {% for m in marcas %}
+      <div class="border border-border bg-background p-6">
+        <p class="font-display text-xl uppercase tracking-brand">{{ m.nome }}</p>
+        <p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ m.total_pecas }} peças</p>
+        {% if m.assinatura %}<p class="mt-3 text-sm text-muted-foreground">{{ m.assinatura }}</p>{% endif %}
+        <p class="mt-4 text-[10px] uppercase tracking-[0.16em] {% if m.activa %}text-brand{% else %}text-muted-foreground{% endif %}">{% if m.destaque %}Homepage · {% endif %}{% if m.activa %}Activa{% else %}Inactiva{% endif %}</p>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

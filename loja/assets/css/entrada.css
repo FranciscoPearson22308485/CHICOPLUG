@@ -1,0 +1,352 @@
+@import "tailwindcss" source(none);
+@source "../../templates";
+@source "../js";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * CHICOPLUG — premium streetwear design system.
+ * Monochrome (branco / preto / cinzento) + detalhe azul claro.
+ */
+
+@theme {
+  --font-display: "Archivo", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --tracking-brand: -0.04em;
+  --animate-reveal-up: reveal-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-marquee: marquee 32s linear infinite;
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+}
+
+:root {
+  --radius: 0rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0 0);
+  /*
+   * Painel de contraste: as faixas invertidas do site (Marquee, bloco "A marca").
+   * Em tema claro é igual ao foreground, mantendo o desenho original intacto.
+   * Em tema escuro NÃO inverte para branco — se invertesse, uma faixa branca a
+   * toda a largura destruiria o ambiente escuro. Torna-se antes um painel
+   * elevado, que é como o desenho se lê realmente.
+   */
+  --ink: oklch(0.16 0 0);
+  --ink-foreground: oklch(0.99 0 0);
+  --surface: oklch(0.968 0 0);
+  --line: oklch(0.9 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0 0);
+  --primary: oklch(0.16 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.968 0 0);
+  --secondary-foreground: oklch(0.16 0 0);
+  --muted: oklch(0.968 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.955 0 0);
+  --accent-foreground: oklch(0.16 0 0);
+  --brand: oklch(0.79 0.09 232);
+  --brand-foreground: oklch(0.16 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.79 0.09 232);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+}
+
+/*
+ * Tema escuro — monocromático, como o claro.
+ *
+ * A paleta anterior era a predefinição do shadcn, com tinta azul (croma 0.042
+ * no matiz 264). O sistema da CHICOPLUG é rigorosamente neutro: todos os
+ * cinzentos têm croma ZERO, e a única cor do site é o azul da marca. Manter o
+ * azulado do shadcn trairia a identidade visual.
+ *
+ * Notas de contraste, verificadas em oklch (a lightness aproxima a percepção):
+ *   texto 0.97 sobre fundo 0.145  → muito acima de AAA
+ *   texto secundário 0.68 sobre fundo 0.145 → acima de AA para corpo de texto
+ *   azul da marca 0.82 sobre fundo 0.145 → confortável para etiquetas e realces
+ *
+ * O fundo não é preto puro: 0.145 evita o contraste extremo que cansa a vista
+ * em ecrãs OLED e deixa espaço para superfícies elevadas se distinguirem.
+ */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.97 0 0);
+
+  /* Painel de contraste: elevado em vez de invertido (ver comentário em :root). */
+  --ink: oklch(0.205 0 0);
+  --ink-foreground: oklch(0.97 0 0);
+
+  /* Equivalente escuro do cinzento-claro dos blocos e molduras de imagem. */
+  --surface: oklch(0.195 0 0);
+  --line: oklch(0.28 0 0);
+
+  --card: oklch(0.175 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.175 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.16 0 0);
+  --secondary: oklch(0.225 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.225 0 0);
+  --muted-foreground: oklch(0.68 0 0);
+  --accent: oklch(0.245 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+
+  /* Ligeiramente mais luminoso do que em tema claro, para se manter legível. */
+  --brand: oklch(0.82 0.1 232);
+  --brand-foreground: oklch(0.16 0 0);
+
+  --destructive: oklch(0.66 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.28 0 0);
+  --input: oklch(0.32 0 0);
+  --ring: oklch(0.82 0.1 232);
+
+  --chart-1: oklch(0.82 0.1 232);
+  --chart-2: oklch(0.7 0 0);
+  --chart-3: oklch(0.55 0 0);
+  --chart-4: oklch(0.42 0 0);
+  --chart-5: oklch(0.9 0 0);
+
+  --sidebar: oklch(0.175 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: oklch(0.16 0 0);
+  --sidebar-accent: oklch(0.245 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.28 0 0);
+  --sidebar-ring: oklch(0.82 0.1 232);
+}
+
+/*
+ * Evita o "flash" de tema errado.
+ *
+ * O SSR não sabe qual o tema do visitante, por isso o HTML chega sem classe. O
+ * script inline em __root.tsx aplica-a antes da primeira pintura e marca o
+ * documento com data-theme-ready; até lá, suprimimos as transições de cor para
+ * que a correcção não seja visível como um piscar.
+ */
+:root:not([data-theme-ready]) * {
+  transition: none !important;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-brand);
+    text-transform: uppercase;
+    font-weight: 800;
+    line-height: 0.92;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: var(--ink);
+  }
+}
+
+@utility display-xl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.045em;
+  line-height: 0.86;
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@utility shell {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 96rem;
+  padding-inline: 1.25rem;
+  @media (min-width: 768px) {
+    padding-inline: 2.5rem;
+  }
+  @media (min-width: 1280px) {
+    padding-inline: 4rem;
+  }
+}
+
+@utility link-underline {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    height: 1px;
+    width: 100%;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  &:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Animação de entrada por scroll.
+ *
+ * Substitui o componente <Reveal> do React: um elemento com `.reveal` começa
+ * deslocado e transparente, e o observador em JavaScript acrescenta `.visivel`
+ * quando entra no ecrã. O atraso escalonado vem de --atraso, definido no template.
+ */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--atraso, 0ms);
+}
+
+.reveal.visivel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Quem pede menos movimento ao sistema vê o conteúdo sem animação. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

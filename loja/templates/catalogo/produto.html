@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block titulo %}{{ produto.marca.nome }} {{ produto.nome }} — CHICOPLUG{% endblock %}
+{% block descricao %}{{ produto.meta_descricao|default:produto.descricao|truncatechars:155 }}{% endblock %}
+{% block og_tipo %}product{% endblock %}
+{% block og_imagem %}{{ produto.imagem_principal }}{% endblock %}
+{% block dados_estruturados %}{% dados_estruturados dados_json %}{% dados_estruturados migalhas_json %}{% endblock %}
+
+{% block conteudo %}
+<div class="pb-28">
+  <div class="shell pt-8">
+    <nav class="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+      <a href="{% url 'catalogo:home' %}" class="hover:text-foreground">Home</a><span>/</span>
+      <a href="{% url 'catalogo:shop' %}" class="hover:text-foreground">Shop</a><span>/</span>
+      <a href="{{ produto.marca.get_absolute_url }}" class="hover:text-foreground">{{ produto.marca.nome }}</a><span>/</span>
+      <span class="truncate text-foreground">{{ produto.nome }}</span>
+    </nav>
+  </div>
+
+  <div class="shell mt-8 grid gap-12 lg:grid-cols-[1.25fr_1fr] lg:gap-20"
+       data-variantes data-cor-inicial="{{ cor_inicial }}" data-stock-total="{{ produto.stock }}"
+       data-variantes='{{ mapa_variantes|json_script:"mapa" }}'>
+    {{ mapa_variantes|json_script:"mapa-variantes" }}
+
+    <div>
+      <div class="relative overflow-hidden bg-surface">
+        {% if produto.imagem_principal %}
+          <img src="{{ produto.imagem_principal }}" alt="{{ produto.marca.nome }} {{ produto.nome }}"
+               width="1000" height="1250" fetchpriority="high"
+               class="aspect-[4/5] w-full object-cover" data-imagem-principal />
+        {% endif %}
+        {% if produto.etiqueta %}
+          <div class="absolute left-4 top-4">
+            <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if not produto.tem_stock %}bg-muted text-muted-foreground{% else %}bg-brand text-brand-foreground{% endif %}">{{ produto.etiqueta }}</span>
+          </div>
+        {% endif %}
+      </div>
+      <div class="mt-4 grid grid-cols-4 gap-3 md:gap-4">
+        {% for img in produto.imagens.all %}
+          <button data-miniatura="{{ img.url_imagem }}" class="overflow-hidden bg-surface transition-opacity {% if forloop.first %}ring-1 ring-foreground{% else %}opacity-60 hover:opacity-100{% endif %}">
+            <img src="{{ img.url_imagem }}" alt="" loading="lazy" class="aspect-[4/5] w-full object-cover" />
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="lg:sticky lg:top-28 lg:self-start">
+      <a href="{{ produto.marca.get_absolute_url }}" class="link-underline font-display text-2xl uppercase leading-none tracking-brand">{{ produto.marca.nome }}</a>
+      <h1 class="mt-4 text-4xl normal-case tracking-tight sm:text-5xl">{{ produto.nome }}</h1>
+      <p class="mt-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{{ produto.categoria.nome }}</p>
+
+      <div class="mt-5 flex flex-wrap items-baseline gap-4">
+        <p class="text-xl font-semibold">{{ produto.preco|kz }}</p>
+        {% if produto.preco_anterior %}
+          <p class="text-sm text-muted-foreground line-through">{{ produto.preco_anterior|kz }}</p>
+          <span class="inline-flex items-center bg-brand px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-foreground">−{{ produto.percentagem_desconto }}%</span>
+        {% endif %}
+      </div>
+
+      <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">{{ produto.descricao }}</p>
+
+      <div class="mt-10">
+        <div class="flex items-center justify-between">
+          <p class="eyebrow">Cor</p>
+          <p class="text-[11px] text-muted-foreground" data-nome-cor>{{ cor_inicial }}</p>
+        </div>
+        <div class="mt-4 flex gap-3">
+          {% for c in produto.cores %}
+            <button type="button" data-cor="{{ c.nome }}" aria-label="{{ c.nome }}"
+                    class="size-8 border border-border transition-transform duration-300 hover:scale-110"
+                    style="background-color: {{ c.hex }}"></button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mt-10">
+        <p class="eyebrow">Tamanho</p>
+        <div class="mt-4 grid grid-cols-5 gap-2">
+          {% for t in produto.tamanhos %}
+            <button type="button" data-tamanho="{{ t }}"
+                    class="border border-border py-3 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300 hover:border-foreground">{{ t }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'encomendas:adicionar' %}" data-adicionar class="mt-10">
+        {% csrf_token %}
+        <input type="hidden" name="variante" data-campo-variante value="" />
+
+        <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
+          <div class="flex shrink-0 items-center border border-border">
+            <button type="button" data-qtd="-1" aria-label="Diminuir" class="grid size-12 place-items-center hover:bg-muted">−</button>
+            <input type="number" name="quantidade" data-quantidade value="1" min="1" max="20"
+                   class="w-12 border-0 bg-transparent text-center text-sm font-semibold outline-none" />
+            <button type="button" data-qtd="1" aria-label="Aumentar" class="grid size-12 place-items-center hover:bg-muted">+</button>
+          </div>
+          <p data-info-stock class="min-w-0 truncate text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {% if produto.tem_stock %}{{ produto.stock }} em stock{% else %}Sem stock{% endif %}
+          </p>
+        </div>
+
+        <div class="mt-8 flex gap-3">
+          <button type="submit" data-botao-adicionar {% if not produto.tem_stock %}disabled{% endif %}
+                  class="flex-1 bg-foreground py-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground">
+            {% if produto.tem_stock %}Adicionar ao carrinho{% else %}Esgotado{% endif %}
+          </button>
+          <button type="button" data-favorito="{{ produto.pk }}" aria-label="Favoritos"
+                  class="grid size-[60px] place-items-center border border-border transition-colors hover:border-foreground">
+            <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-8 space-y-3 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        <p>Entrega 24–72h em Luanda</p>
+        <p>Trocas em 7 dias</p>
+      </div>
+
+      {% if produto.lista_detalhes %}
+        <div class="mt-12 border-t border-border pt-6">
+          <p class="eyebrow mb-4">Detalhes</p>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            {% for d in produto.lista_detalhes %}<li>— {{ d }}</li>{% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if relacionados %}
+    <section class="shell mt-28 md:mt-40">
+      <div class="reveal grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6 border-b border-border pb-6">
+        <div class="min-w-0">
+          <p class="eyebrow mb-4">Também te pode interessar</p>
+          <h2 class="text-3xl sm:text-4xl xl:text-5xl">Produtos relacionados</h2>
+        </div>
+      </div>
+      <div class="mt-12 grid grid-cols-2 gap-x-4 gap-y-12 md:grid-cols-3 md:gap-x-8">
+        {% for p in relacionados %}
+          <div class="reveal" style="--atraso:{{ forloop.counter0|mult:80 }}ms">{% include "componentes/card_produto.html" with p=p %}</div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Liga o mapa de variantes (serializado com json_script, que escapa em
+  // segurança) ao contentor que o JavaScript principal observa.
+  (function () {
+    var alvo = document.querySelector("[data-variantes]");
+    var dados = document.getElementById("mapa-variantes");
+    if (alvo && dados) alvo.dataset.variantes = dados.textContent;
+
+    document.querySelectorAll("[data-miniatura]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var principal = document.querySelector("[data-imagem-principal]");
+        if (principal) principal.src = b.dataset.miniatura;
+        document.querySelectorAll("[data-miniatura]").forEach(function (o) {
+          o.classList.toggle("ring-1", o === b);
+          o.classList.toggle("ring-foreground", o === b);
+          o.classList.toggle("opacity-60", o !== b);
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% if messages %}
+  <div class="shell pt-6">
+    {% for m in messages %}
+      <div class="mb-3 border px-5 py-4 text-sm {% if m.tags == 'error' %}border-destructive text-destructive{% elif m.tags == 'success' %}border-brand{% else %}border-border{% endif %}">
+        {{ m }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

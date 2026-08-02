@@ -1,0 +1,29 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="overflow-x-auto border border-border bg-background">
+    <table class="w-full min-w-[720px] text-left text-sm">
+      <thead><tr class="border-b border-border">
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peça</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Marca</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Categoria</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Preço</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Stock</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+      </tr></thead>
+      <tbody>
+        {% for p in produtos %}
+          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+            <td class="px-5 py-4"><div class="flex items-center gap-4">
+              {% if p.imagem_principal %}<img src="{{ p.imagem_principal }}" alt="" class="size-12 shrink-0 bg-surface object-cover" />{% else %}<div class="size-12 shrink-0 bg-surface"></div>{% endif %}
+              <span class="truncate">{{ p.nome }}</span></div></td>
+            <td class="px-5 py-4 font-semibold">{{ p.marca.nome }}</td>
+            <td class="px-5 py-4 text-muted-foreground">{{ p.categoria.nome }}</td>
+            <td class="px-5 py-4">{{ p.preco|kz }}</td>
+            <td class="px-5 py-4">{{ p.stock }}</td>
+            <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if not p.activo or not p.tem_stock %}bg-muted text-muted-foreground{% else %}bg-foreground text-background{% endif %}">{% if not p.activo %}Inactivo{% elif not p.tem_stock %}Esgotado{% else %}Activo{% endif %}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

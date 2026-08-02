@@ -1,0 +1,12 @@
+<form data-newsletter data-origem="{{ origem|default:'footer' }}" class="w-full">
+  {% csrf_token %}
+  <div class="flex items-center {% if compacto %}border-b border-ink-foreground/25 py-3{% else %}border border-border px-5 py-4{% endif %} transition-colors">
+    <input type="email" name="email" required placeholder="o.teu@email.com" aria-label="Email para a newsletter"
+           class="min-w-0 flex-1 bg-transparent outline-none {% if compacto %}text-[11px] uppercase tracking-[0.16em] text-ink-foreground placeholder:text-ink-foreground/40{% else %}text-sm placeholder:text-muted-foreground{% endif %}" />
+    <button type="submit" aria-label="Subscrever" class="ml-4 shrink-0 transition-transform duration-300 hover:translate-x-1">
+      <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+    </button>
+  </div>
+  <p data-newsletter-resposta class="mt-3 hidden text-[11px] uppercase tracking-[0.14em]"></p>
+  {% if not compacto %}<p class="mt-4 text-[11px] leading-relaxed text-muted-foreground">Só novidades e lançamentos. Podes sair quando quiseres.</p>{% endif %}
+</form>

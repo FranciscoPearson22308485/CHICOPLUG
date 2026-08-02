@@ -1,0 +1,31 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="mb-6 flex flex-wrap gap-2">
+    <a href="{% url 'painel:encomendas' %}" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if not estado_activo %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">Todas</a>
+    {% for valor, rotulo in estados %}
+      <a href="?estado={{ valor }}" class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if estado_activo == valor %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">{{ rotulo }}</a>
+    {% endfor %}
+  </div>
+  <div class="overflow-x-auto border border-border bg-background">
+    <table class="w-full min-w-[720px] text-left text-sm">
+      <thead><tr class="border-b border-border">
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ref.</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cliente</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Destino</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+      </tr></thead>
+      <tbody>
+        {% for e in encomendas %}
+          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+            <td class="px-5 py-4">{{ e.referencia }}</td>
+            <td class="px-5 py-4">{{ e.nome_cliente }}</td>
+            <td class="px-5 py-4 text-muted-foreground">{{ e.provincia }} / {{ e.municipio }}</td>
+            <td class="px-5 py-4">{{ e.total|kz }}</td>
+            <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if e.tom_estado == 'brand' %}bg-brand text-brand-foreground{% elif e.tom_estado == 'dark' %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">{{ e.get_estado_display }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

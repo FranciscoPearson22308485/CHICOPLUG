@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block titulo %}Shop — CHICOPLUG Streetwear Premium{% endblock %}
+{% block descricao %}T-shirts, hoodies, jeans, sneakers, calças, casacos, bonés e acessórios das melhores marcas.{% endblock %}
+
+{% block conteudo %}
+<div class="pb-28 pt-14 md:pt-20">
+  <div class="shell">
+    <div class="reveal">
+      <p class="eyebrow">{% if pesquisa %}Resultados da pesquisa{% else %}Todas as peças{% endif %}</p>
+      <h1 class="mt-5 text-6xl sm:text-7xl xl:text-8xl">Shop</h1>
+      {% if pesquisa %}
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <span class="inline-flex items-center gap-3 border border-foreground px-4 py-2 text-[11px] uppercase tracking-[0.16em]">
+            {{ pesquisa }}
+            <a href="{% url_com pesquisa='' %}" aria-label="Limpar pesquisa" class="transition-opacity hover:opacity-60">✕</a>
+          </span>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="mt-14 grid gap-3 border-y border-border py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+      <div class="flex min-w-0 items-center gap-4">
+        <button data-abrir-filtros class="inline-flex shrink-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] lg:hidden">
+          Filtros{% if filtros_activos %} ({{ filtros_activos }}){% endif %}
+        </button>
+        <p class="truncate text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{{ total }} peças</p>
+      </div>
+      <div class="no-scrollbar -mx-1 flex items-center gap-5 overflow-x-auto px-1 sm:mx-0 sm:shrink-0 sm:px-0">
+        {% for valor, rotulo in ordenacoes %}
+          <a href="{% url_com ordenar=valor %}"
+             class="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors {% if ordenar == valor %}text-foreground{% else %}text-muted-foreground hover:text-foreground{% endif %}">{{ rotulo }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mt-12 grid gap-12 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
+      <aside data-filtros class="hidden lg:block">
+        <div class="sticky top-28 max-h-[calc(100svh-9rem)] space-y-10 overflow-y-auto pr-2">
+          {% if facetas.marcas %}
+            <div>
+              <p class="eyebrow mb-4">Marca</p>
+              <div class="flex flex-wrap gap-2">
+                {% for m in facetas.marcas %}
+                  <a href="{% alternar_na_query 'marca' m.slug %}"
+                     class="border px-3 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 {% if m.slug in marcas_sel %}border-foreground bg-foreground text-background{% else %}border-border text-muted-foreground hover:border-foreground hover:text-foreground{% endif %}">{{ m.nome }}</a>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <div>
+            <p class="eyebrow mb-4">Categoria</p>
+            <div class="flex flex-wrap gap-2">
+              {% for c in facetas.categorias %}
+                <a href="{% alternar_na_query 'categoria' c.slug %}"
+                   class="border px-3 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 {% if c.slug in categorias_sel %}border-foreground bg-foreground text-background{% else %}border-border text-muted-foreground hover:border-foreground hover:text-foreground{% endif %}">{{ c.nome }}</a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <p class="eyebrow mb-4">Tamanho</p>
+            <div class="flex flex-wrap gap-2">
+              {% for t in facetas.tamanhos %}
+                <a href="{% alternar_na_query 'tamanho' t %}"
+                   class="border px-3 py-2 text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 {% if t in tamanhos_sel %}border-foreground bg-foreground text-background{% else %}border-border text-muted-foreground hover:border-foreground hover:text-foreground{% endif %}">{{ t }}</a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div>
+            <p class="eyebrow mb-4">Cor</p>
+            <div class="flex flex-wrap gap-3">
+              {% for c in facetas.cores %}
+                <a href="{% alternar_na_query 'cor' c.nome %}" title="{{ c.nome }}" aria-label="{{ c.nome }}"
+                   class="size-7 border transition-transform duration-300 hover:scale-110 {% if c.nome in cores_sel %}border-foreground ring-1 ring-foreground ring-offset-2 ring-offset-background{% else %}border-border{% endif %}"
+                   style="background-color: {{ c.hex }}"></a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <form method="get" class="space-y-3">
+            {% for m in marcas_sel %}<input type="hidden" name="marca" value="{{ m }}" />{% endfor %}
+            {% for c in categorias_sel %}<input type="hidden" name="categoria" value="{{ c }}" />{% endfor %}
+            {% if pesquisa %}<input type="hidden" name="pesquisa" value="{{ pesquisa }}" />{% endif %}
+            <p class="eyebrow">Preço até {{ preco_max|kz }}</p>
+            <input type="range" name="preco_max" min="{{ facetas.preco_min }}" max="{{ facetas.preco_max }}"
+                   step="2000" value="{{ preco_max }}" class="w-full accent-foreground"
+                   oninput="this.form.querySelector('[data-valor-preco]').textContent = new Intl.NumberFormat('pt-AO').format(this.value) + ' Kz'" />
+            <p class="text-[11px] text-muted-foreground"><span data-valor-preco>{{ preco_max|kz }}</span></p>
+            <button type="submit" class="w-full border border-border py-2 text-[11px] font-semibold uppercase tracking-[0.16em] hover:border-foreground">Aplicar preço</button>
+          </form>
+
+          <div>
+            <p class="eyebrow mb-4">Disponibilidade</p>
+            <div class="flex flex-wrap gap-2">
+              <a href="{% url_com stock=so_stock|yesno:',1' %}"
+                 class="border px-3 py-2 text-[11px] uppercase tracking-[0.16em] {% if so_stock %}border-foreground bg-foreground text-background{% else %}border-border text-muted-foreground hover:border-foreground{% endif %}">Em stock</a>
+              <a href="{% url_com promocao=so_promo|yesno:',1' %}"
+                 class="border px-3 py-2 text-[11px] uppercase tracking-[0.16em] {% if so_promo %}border-foreground bg-foreground text-background{% else %}border-border text-muted-foreground hover:border-foreground{% endif %}">Em promoção</a>
+            </div>
+          </div>
+
+          {% if filtros_activos %}
+            <a href="{% url 'catalogo:shop' %}" class="link-underline block text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Limpar filtros ({{ filtros_activos }})</a>
+          {% endif %}
+        </div>
+      </aside>
+
+      <div>
+        {% if produtos %}
+          <div class="grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-3 md:gap-x-8">
+            {% for p in produtos %}
+              <div class="reveal" style="--atraso:{{ forloop.counter0|mult:60 }}ms">
+                {% include "componentes/card_produto.html" with p=p prioridade=forloop.first %}
+              </div>
+            {% endfor %}
+          </div>
+
+          {% if pagina.has_other_pages %}
+            <div class="mt-16 flex items-center justify-center gap-6 border-t border-border pt-8 text-[11px] font-semibold uppercase tracking-[0.18em]">
+              {% if pagina.has_previous %}<a href="{% url_com pagina=pagina.previous_page_number %}" class="link-underline">Anterior</a>{% endif %}
+              <span class="text-muted-foreground">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+              {% if pagina.has_next %}<a href="{% url_com pagina=pagina.next_page_number %}" class="link-underline">Seguinte</a>{% endif %}
+            </div>
+          {% endif %}
+        {% else %}
+          {% include "componentes/vazio.html" with titulo="Nada encontrado" descricao="Nenhuma peça corresponde a estes filtros. Ajusta a selecção e tenta de novo." url_accao="/shop/" texto_accao="Limpar filtros" %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block titulo %}Pagamento {{ encomenda.referencia }} — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="mx-auto max-w-xl text-center" data-pagamento data-referencia="{{ encomenda.referencia }}">
+    <p class="eyebrow">Encomenda {{ encomenda.referencia }}</p>
+    <h1 class="mt-5 text-4xl sm:text-5xl" data-titulo-pagamento>A aguardar confirmação</h1>
+
+    <div class="mt-10 border border-dashed border-brand p-6 text-left" data-painel-estado>
+      <p class="text-sm font-semibold">Confirma o pagamento na app Multicaixa Express</p>
+      <p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Total: {{ encomenda.total|kz }}</p>
+      {% if encomenda.pagamento_actual %}
+        <p class="mt-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Ref. {{ encomenda.pagamento_actual.referencia }}</p>
+      {% endif %}
+    </div>
+
+    {% if debug %}
+      <div class="mt-6 border border-dashed border-border p-4">
+        <p class="mb-3 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Simulador (apenas desenvolvimento)</p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button data-simular="PAGO" class="border border-border px-4 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-foreground">Simular PAGO</button>
+          <button data-simular="FALHADO" class="border border-border px-4 py-2 text-[10px] uppercase tracking-[0.16em] hover:border-foreground">Simular FALHADO</button>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="mt-12 flex flex-wrap justify-center gap-3">
+      <a href="{% url 'encomendas:minhas' %}" class="bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-background">Ver encomendas</a>
+      <a href="{% url 'catalogo:shop' %}" class="border border-border px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.2em] hover:border-foreground">Continuar a comprar</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // O Multicaixa Express é assíncrono: o resultado chega ao servidor por
+  // callback e o browser não é notificado. Perguntamos até haver desfecho.
+  (function () {
+    var raiz = document.querySelector("[data-pagamento]");
+    if (!raiz) return;
+    var ref = raiz.dataset.referencia;
+    var titulo = raiz.querySelector("[data-titulo-pagamento]");
+    var painel = raiz.querySelector("[data-painel-estado]");
+    var timer;
+
+    function csrf() {
+      var m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+      return m ? decodeURIComponent(m[1]) : "";
+    }
+
+    async function verificar() {
+      try {
+        var r = await fetch("/pagamento/" + ref + "/estado/");
+        var d = await r.json();
+        if (d.estado_pagamento === "PAGO") {
+          clearInterval(timer);
+          titulo.textContent = "Pagamento confirmado";
+          painel.className = "mt-10 border border-brand p-6 text-left";
+          painel.innerHTML = "";
+          var p = document.createElement("p");
+          p.className = "text-sm font-semibold";
+          p.textContent = "Recebemos o teu pagamento. Vais receber a confirmação por email.";
+          painel.appendChild(p);
+        } else if (d.estado_pagamento === "FALHADO" || d.estado_pagamento === "CANCELADO") {
+          clearInterval(timer);
+          titulo.textContent = "Pagamento não concluído";
+          painel.className = "mt-10 border border-destructive p-6 text-left";
+          painel.textContent = d.motivo || "A confirmação não chegou a tempo.";
+        }
+      } catch (e) {}
+    }
+
+    timer = setInterval(verificar, 3000);
+    window.addEventListener("beforeunload", function () { clearInterval(timer); });
+
+    raiz.querySelectorAll("[data-simular]").forEach(function (b) {
+      b.addEventListener("click", async function () {
+        var dados = new FormData();
+        dados.append("estado", b.dataset.simular);
+        await fetch("/pagamento/" + ref + "/simular/", {
+          method: "POST", headers: { "X-CSRFToken": csrf() }, body: dados,
+        });
+        verificar();
+      });
+    });
+  })();
+</script>
+{% endblock %}

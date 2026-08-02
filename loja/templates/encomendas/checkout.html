@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block titulo %}Checkout — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-14 md:pt-20">
+  <div class="reveal"><p class="eyebrow">Passo final</p><h1 class="mt-5 text-5xl sm:text-6xl xl:text-7xl">Checkout</h1></div>
+
+  <div class="mt-16 grid gap-16 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-24">
+    <form method="post" class="space-y-12">
+      {% csrf_token %}
+      <input type="hidden" name="accao" value="finalizar" />
+      {% if cupao %}<input type="hidden" name="cupao" value="{{ cupao.codigo }}" />{% endif %}
+
+      <fieldset class="space-y-6">
+        <legend class="eyebrow mb-6">Dados de contacto</legend>
+        <div class="space-y-2">
+          <label for="nome" class="text-[11px] uppercase tracking-[0.16em]">Nome completo</label>
+          <input id="nome" name="nome" required value="{% if user.is_authenticated %}{{ user.nome_completo }}{% endif %}" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+        </div>
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div class="space-y-2">
+            <label for="telefone" class="text-[11px] uppercase tracking-[0.16em]">Telefone</label>
+            <input id="telefone" name="telefone" type="tel" required placeholder="+244 900 000 000" value="{{ user.telefone|default:'' }}" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+          </div>
+          <div class="space-y-2">
+            <label for="email" class="text-[11px] uppercase tracking-[0.16em]">Email</label>
+            <input id="email" name="email" type="email" required value="{{ user.email|default:'' }}" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="space-y-6">
+        <legend class="eyebrow mb-6">Entrega</legend>
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div class="space-y-2">
+            <label for="provincia" class="text-[11px] uppercase tracking-[0.16em]">Província</label>
+            <select id="provincia" name="provincia" required data-provincia class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground">
+              <option value="">Seleciona</option>
+              {% for p in provincias %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label for="municipio" class="text-[11px] uppercase tracking-[0.16em]">Município</label>
+            <select id="municipio" name="municipio" required data-municipio class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground">
+              <option value="">Escolhe a província</option>
+            </select>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label for="rua" class="text-[11px] uppercase tracking-[0.16em]">Morada</label>
+          <input id="rua" name="rua" required placeholder="Rua, nº, bairro, ponto de referência" class="h-12 w-full border border-border bg-transparent px-4 text-sm outline-none focus:border-foreground" />
+        </div>
+        <div class="space-y-2">
+          <label for="observacoes" class="text-[11px] uppercase tracking-[0.16em]">Observações</label>
+          <textarea id="observacoes" name="observacoes" rows="4" placeholder="Indicações para a entrega (opcional)" class="w-full border border-border bg-transparent p-4 text-sm outline-none focus:border-foreground"></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="eyebrow mb-6">Método de pagamento</legend>
+        <div class="border border-foreground p-6">
+          <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold">Multicaixa Express</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Confirmação na app do teu banco</p>
+            </div>
+            <span class="size-3 shrink-0 bg-brand"></span>
+          </div>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="w-full bg-foreground py-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">
+        Pagar {{ total_final|kz }}
+      </button>
+    </form>
+
+    <aside class="lg:sticky lg:top-28 lg:self-start">
+      <div class="border border-border p-8">
+        <h2 class="text-2xl">A tua encomenda</h2>
+        <ul class="mt-8 space-y-6">
+          {% for linha in carrinho_actual.linhas %}
+            <li class="grid grid-cols-[64px_minmax(0,1fr)_auto] gap-4">
+              {% if linha.variante.produto.imagem_principal %}<img src="{{ linha.variante.produto.imagem_principal }}" alt="" loading="lazy" class="aspect-[4/5] w-16 bg-surface object-cover" />{% else %}<div class="aspect-[4/5] w-16 bg-surface"></div>{% endif %}
+              <div class="min-w-0">
+                <p class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{{ linha.variante.produto.marca.nome }}</p>
+                <p class="truncate text-[13px] font-semibold">{{ linha.variante.produto.nome }}</p>
+                <p class="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{{ linha.variante.cor_nome }} · {{ linha.variante.tamanho }} · {{ linha.quantidade }}x</p>
+              </div>
+              <p class="shrink-0 text-[13px]">{{ linha.total_linha|kz }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <form method="get" class="mt-8 flex gap-3 border-t border-border pt-6">
+          <input name="cupao" value="{{ cupao.codigo|default:'' }}" placeholder="Código promocional" aria-label="Cupão" class="h-12 min-w-0 flex-1 border border-border bg-transparent px-4 text-sm uppercase outline-none focus:border-foreground" />
+          <button type="submit" class="shrink-0 border border-border px-6 text-[11px] font-semibold uppercase tracking-[0.18em] hover:border-foreground">Aplicar</button>
+        </form>
+        {% if erro_cupao %}<p class="mt-3 text-[11px] uppercase tracking-[0.14em] text-destructive">{{ erro_cupao }}</p>{% endif %}
+        {% if cupao %}<p class="mt-3 text-[11px] uppercase tracking-[0.16em] text-brand">{{ cupao.codigo }} — desconto de {{ desconto|kz }}</p>{% endif %}
+
+        <dl class="mt-8 space-y-4 border-t border-border pt-6 text-sm">
+          <div class="flex justify-between"><dt class="text-muted-foreground">Subtotal</dt><dd>{{ carrinho_actual.subtotal|kz }}</dd></div>
+          {% if desconto %}<div class="flex justify-between text-brand"><dt>Desconto</dt><dd>−{{ desconto|kz }}</dd></div>{% endif %}
+          <div class="flex justify-between"><dt class="text-muted-foreground">Envio</dt><dd>{% if carrinho_actual.envio %}{{ carrinho_actual.envio|kz }}{% else %}Grátis{% endif %}</dd></div>
+          <div class="flex justify-between border-t border-border pt-4 text-base font-semibold"><dt>Total</dt><dd>{{ total_final|kz }}</dd></div>
+        </dl>
+
+        <a href="{% url 'encomendas:carrinho' %}" class="link-underline mt-8 inline-block text-[11px] font-semibold uppercase tracking-[0.2em]">Voltar ao carrinho</a>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ municipios|json_script:"municipios" }}
+<script>
+  // Trocar de província tem de repor o município: manter "Lobito" depois de
+  // mudar para Huíla enviaria a encomenda para lado nenhum.
+  (function () {
+    var mapa = JSON.parse(document.getElementById("municipios").textContent);
+    var prov = document.querySelector("[data-provincia]");
+    var mun = document.querySelector("[data-municipio]");
+    if (!prov || !mun) return;
+
+    prov.addEventListener("change", function () {
+      mun.replaceChildren();
+      var lista = mapa[prov.value] || [];
+      var vazio = document.createElement("option");
+      vazio.value = "";
+      vazio.textContent = lista.length ? "Seleciona" : "Escolhe a província";
+      mun.appendChild(vazio);
+      lista.forEach(function (m) {
+        var o = document.createElement("option");
+        o.value = m; o.textContent = m;
+        mun.appendChild(o);
+      });
+    });
+  })();
+</script>
+{% endblock %}

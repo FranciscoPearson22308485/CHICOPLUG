@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo_painel|default:"Painel" }} — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
+
+{% block conteudo %}
+<div class="flex min-h-screen w-full bg-surface">
+  <aside class="hidden w-64 shrink-0 border-r border-border bg-background lg:block">
+    <div class="flex h-16 items-center border-b border-border px-6">
+      <a href="{% url 'catalogo:home' %}" class="font-display text-lg uppercase tracking-brand">CHICO<span class="text-brand">PLUG</span></a>
+    </div>
+    <nav class="flex flex-col gap-1 p-4">
+      {% for url, rotulo, chave in menu_painel %}
+        <a href="{{ url }}" class="flex items-center gap-3 px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors {% if seccao == chave %}bg-foreground text-background{% else %}text-muted-foreground hover:bg-muted hover:text-foreground{% endif %}">{{ rotulo }}</a>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-background px-5 py-4 lg:px-10">
+      <p class="truncate text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Painel de gestão</p>
+      <div class="flex shrink-0 items-center gap-4">
+        <button data-tema aria-label="Alternar tema" class="grid size-9 place-items-center">
+          <svg data-icone-lua class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg data-icone-sol class="hidden size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2"/></svg>
+        </button>
+        <a href="{% url 'catalogo:home' %}" class="link-underline text-[11px] uppercase tracking-[0.18em]">Ver loja</a>
+        <div class="grid size-9 place-items-center bg-foreground text-[11px] font-semibold text-background" title="{{ user.email }}">{{ user.iniciais }}</div>
+      </div>
+    </header>
+
+    <div class="min-w-0 flex-1 p-5 lg:p-10">
+      <div class="space-y-10">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+          <h1 class="min-w-0 truncate text-3xl sm:text-4xl">{{ titulo_painel }}</h1>
+          {% block accao %}{% endblock %}
+        </div>
+        {% block painel %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{# Navbar da loja. As classes são exactamente as do desenho original. #}
+<header
+  id="navbar"
+  class="sticky top-0 z-50 border-b border-transparent bg-background transition-colors duration-500"
+  data-navbar
+>
+  <div class="shell grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:h-20">
+    <!-- Menu mobile -->
+    <div class="flex items-center gap-2 md:hidden">
+      <button aria-label="Abrir menu" data-abrir-menu class="grid size-9 place-items-center">
+        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Navegação desktop -->
+    <nav class="hidden items-center gap-8 md:flex">
+      <a href="{% url 'catalogo:shop' %}" data-mega="1" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] {% if request.resolver_match.url_name == 'shop' %}text-foreground{% else %}text-muted-foreground hover:text-foreground{% endif %}">Shop</a>
+      <a href="{% url 'catalogo:marcas' %}" data-mega="1" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] {% if 'marca' in request.resolver_match.url_name %}text-foreground{% else %}text-muted-foreground hover:text-foreground{% endif %}">Marcas</a>
+      <a href="{% url 'catalogo:sobre' %}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Sobre</a>
+      <a href="{% url 'catalogo:contacto' %}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Contacto</a>
+    </nav>
+
+    <a href="{% url 'catalogo:home' %}" class="justify-self-center font-display text-xl uppercase leading-none tracking-brand md:text-2xl">
+      CHICO<span class="text-brand">PLUG</span>
+    </a>
+
+    <div class="flex items-center gap-1 justify-self-end md:gap-3">
+      <button data-tema aria-label="Alternar tema" class="grid size-9 place-items-center">
+        <svg data-icone-lua class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg data-icone-sol class="hidden size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+
+      <button data-abrir-pesquisa aria-label="Pesquisar" class="grid size-9 place-items-center">
+        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+      </button>
+
+      <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}"
+         aria-label="{% if user.is_authenticated %}A minha conta{% else %}Entrar{% endif %}"
+         class="relative hidden size-9 place-items-center md:grid">
+        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        {% if user.is_authenticated %}<span class="absolute bottom-1 right-1 size-1.5 rounded-full bg-brand"></span>{% endif %}
+      </a>
+
+      <a href="{% url 'encomendas:carrinho' %}" aria-label="Carrinho" class="relative grid size-9 place-items-center">
+        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path stroke-linecap="round" d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+        <span data-contador-carrinho
+              class="absolute -right-0.5 -top-0.5 {% if not carrinho_total_pecas %}hidden {% endif %}grid size-4 place-items-center bg-brand text-[9px] font-bold text-brand-foreground">{{ carrinho_total_pecas }}</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Painel de pesquisa -->
+  <div data-painel-pesquisa class="hidden border-t border-border">
+    <form action="{% url 'catalogo:shop' %}" method="get" class="shell flex items-center gap-4 py-5">
+      <svg class="size-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+      <input type="search" name="pesquisa" autocomplete="off" data-campo-pesquisa
+             placeholder="Procurar marcas, peças, categorias…" aria-label="Pesquisar no catálogo"
+             class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+      <button type="submit" class="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Procurar</button>
+    </form>
+    <div data-sugestoes class="shell hidden pb-6"></div>
+  </div>
+
+  <!-- Mega menu -->
+  <div data-mega-menu class="hidden overflow-hidden border-t border-border md:block">
+    <div class="shell grid grid-cols-12 gap-10 py-12">
+      <div class="col-span-3">
+        <p class="eyebrow mb-6">Categorias</p>
+        <ul class="space-y-3">
+          {% for c in nav_categorias %}
+            <li><a href="{% url 'catalogo:shop' %}?categoria={{ c.slug }}" class="link-underline text-sm">{{ c.nome }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="col-span-3">
+        <p class="eyebrow mb-6">Marcas</p>
+        <ul class="space-y-3">
+          {% for m in nav_marcas|slice:":8" %}
+            <li><a href="{{ m.get_absolute_url }}" class="link-underline text-sm">{{ m.nome }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="col-span-6 grid grid-cols-2 gap-6">
+        {% for m in nav_marcas|slice:":2" %}
+          <a href="{{ m.get_absolute_url }}" class="group relative overflow-hidden bg-surface">
+            {% if m.imagem %}
+              <img src="{{ m.imagem.url }}" alt="{{ m.nome }}" loading="lazy"
+                   class="aspect-[16/9] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+            {% else %}
+              <div class="aspect-[16/9] w-full bg-surface"></div>
+            {% endif %}
+            <span class="absolute bottom-4 left-4 bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em]">{{ m.nome }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Gaveta mobile -->
+<div data-menu-mobile class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-ink/60" data-fechar-menu></div>
+  <nav class="absolute inset-y-0 left-0 w-[86vw] max-w-sm overflow-y-auto border-r border-border bg-background">
+    <div class="flex h-16 items-center justify-between border-b border-border px-5">
+      <span class="font-display text-lg tracking-brand">CHICOPLUG</span>
+      <button aria-label="Fechar" data-fechar-menu>
+        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex flex-col px-5 py-8">
+      <a href="{% url 'catalogo:shop' %}" class="border-b border-border py-5 font-display text-3xl uppercase tracking-brand">Shop</a>
+      <a href="{% url 'catalogo:marcas' %}" class="border-b border-border py-5 font-display text-3xl uppercase tracking-brand">Marcas</a>
+      <a href="{% url 'catalogo:sobre' %}" class="border-b border-border py-5 font-display text-3xl uppercase tracking-brand">Sobre</a>
+      <a href="{% url 'catalogo:contacto' %}" class="border-b border-border py-5 font-display text-3xl uppercase tracking-brand">Contacto</a>
+    </div>
+    <div class="px-5 pb-10">
+      <p class="eyebrow mb-4">Categorias</p>
+      <div class="flex flex-wrap gap-2">
+        {% for c in nav_categorias %}
+          <a href="{% url 'catalogo:shop' %}?categoria={{ c.slug }}" class="border border-border px-3 py-2 text-[11px] uppercase tracking-[0.16em]">{{ c.nome }}</a>
+        {% endfor %}
+      </div>
+      <div class="mt-10 flex flex-col gap-3 text-[11px] uppercase tracking-[0.2em]">
+        <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}">
+          {% if user.is_authenticated %}Área do cliente{% else %}Entrar / Registar{% endif %}
+        </a>
+        <a href="{% url 'catalogo:faq' %}">FAQ</a>
+        {% if user.is_authenticated and user.e_admin %}<a href="{% url 'painel:dashboard' %}">Painel</a>{% endif %}
+      </div>
+    </div>
+  </nav>
+</div>

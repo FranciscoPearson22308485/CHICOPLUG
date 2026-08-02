@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Contacto — CHICOPLUG{% endblock %}
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <div class="reveal"><p class="eyebrow">Fala connosco</p><h1 class="mt-5 text-6xl sm:text-7xl">Contacto</h1></div>
+  <div class="mt-16 grid gap-16 lg:grid-cols-2 lg:gap-24">
+    <div class="reveal space-y-8 text-sm leading-relaxed text-muted-foreground">
+      <div><p class="eyebrow mb-3">Email</p><p class="text-foreground">ola@chicoplug.ao</p></div>
+      <div><p class="eyebrow mb-3">Telefone</p><p class="text-foreground">+244 900 000 000</p></div>
+      <div><p class="eyebrow mb-3">Onde estamos</p><p class="text-foreground">Luanda · Angola</p></div>
+      <div><p class="eyebrow mb-3">Horário</p><p class="text-foreground">Segunda a sábado, 9h–18h</p></div>
+    </div>
+    <div class="reveal border border-border p-8" style="--atraso:120ms">
+      <h2 class="text-2xl">Precisas de ajuda com uma encomenda?</h2>
+      <p class="mt-4 text-sm leading-relaxed text-muted-foreground">Tens o histórico completo e o estado de cada entrega na tua área de cliente.</p>
+      <a href="{% url 'contas:perfil' %}" class="mt-8 inline-block bg-foreground px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-background">Área do cliente</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

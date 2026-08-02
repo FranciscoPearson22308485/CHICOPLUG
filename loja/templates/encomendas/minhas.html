@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}As minhas encomendas — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  {% include "contas/_abas.html" with activa="encomendas" %}
+  {% if encomendas %}
+    <div class="mt-14 border-t border-border">
+      {% for e in encomendas %}
+        <div class="border-b border-border py-6">
+          <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-6">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold">{{ e.referencia }}</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {{ e.criado_em|date:"d M Y" }} · {{ e.total_pecas }} {% if e.total_pecas == 1 %}peça{% else %}peças{% endif %}
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-6">
+              <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if e.tom_estado == 'brand' %}bg-brand text-brand-foreground{% elif e.tom_estado == 'dark' %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">{{ e.get_estado_display }}</span>
+              <p class="text-sm font-semibold">{{ e.total|kz }}</p>
+              <a href="{{ e.get_absolute_url }}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.16em]">Detalhes</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="mt-14">{% include "componentes/vazio.html" with titulo="Sem encomendas" descricao="Ainda não fizeste nenhuma compra. Quando fizeres, o histórico aparece aqui." url_accao="/shop/" texto_accao="Ver shop" %}</div>
+  {% endif %}
+</div>
+{% endblock %}

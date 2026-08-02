@@ -1,0 +1,26 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="grid gap-4 xl:grid-cols-2">
+    <div class="border border-border bg-background p-6">
+      <p class="text-sm font-semibold">Pagamentos</p>
+      <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        Provedor: {{ integracao.provedor }} · {% if integracao.configurado %}configurado{% else %}por configurar{% endif %}
+      </p>
+      {% if not integracao.configurado %}
+        <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+          A correr com o simulador local. As encomendas e os estados de pagamento funcionam ponta a ponta, mas nenhum dinheiro é movimentado.
+        </p>
+      {% endif %}
+      {% if integracao.em_falta %}
+        <p class="mt-4 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Variáveis em falta</p>
+        <ul class="mt-2 space-y-1">{% for chave in integracao.em_falta %}<li class="font-mono text-[11px]">{{ chave }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+    <div class="border border-border bg-background p-6">
+      <p class="text-sm font-semibold">Envio de emails</p>
+      <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+        Sem SMTP configurado, os emails (recuperação de password, confirmações) são escritos na consola em vez de enviados. Define EMAIL_HOST no ambiente para activar.
+      </p>
+    </div>
+  </div>
+{% endblock %}

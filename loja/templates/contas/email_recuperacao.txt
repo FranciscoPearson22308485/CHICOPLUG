@@ -1,0 +1,10 @@
+Olá,
+
+Recebemos um pedido para repor a password da tua conta CHICOPLUG.
+
+Segue este link para definir uma nova password:
+{{ protocol }}://{{ domain }}{% url 'contas:password_reset_confirm' uidb64=uid token=token %}
+
+Se não foste tu, ignora esta mensagem — a tua password continua inalterada.
+
+CHICOPLUG · Luanda

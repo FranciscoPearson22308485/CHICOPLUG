@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block titulo %}{{ marca.nome }} — CHICOPLUG{% endblock %}
+{% block descricao %}{{ marca.descricao|truncatechars:155 }}{% endblock %}
+{% block dados_estruturados %}{% dados_estruturados dados_json %}{% endblock %}
+
+{% block conteudo %}
+<div class="pb-28">
+  <section class="relative h-[70svh] min-h-[420px] overflow-hidden bg-ink">
+    {% if marca.imagem %}
+      <img src="{{ marca.imagem.url }}" alt="{{ marca.nome }}" class="absolute inset-0 size-full object-cover opacity-85" />
+    {% endif %}
+    <div class="absolute inset-0 bg-gradient-to-t from-ink/85 to-transparent"></div>
+    <div class="shell relative flex h-full flex-col justify-end pb-14">
+      <p class="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">{{ marca.assinatura }}</p>
+      <h1 class="display-xl mt-6 text-[13vw] text-white lg:text-[7vw]">{{ marca.nome }}</h1>
+    </div>
+  </section>
+
+  <div class="shell">
+    <div class="reveal mx-auto max-w-2xl py-20 text-center md:py-28">
+      <p class="text-base leading-relaxed text-muted-foreground">{{ marca.descricao }}</p>
+    </div>
+
+    {% if produtos %}
+      <div class="mb-12 flex items-center justify-between border-b border-border pb-6">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          {{ produtos|length }} {% if produtos|length == 1 %}peça{% else %}peças{% endif %}
+        </p>
+        <a href="{% url 'catalogo:shop' %}?marca={{ marca.slug }}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em]">Filtrar no shop</a>
+      </div>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-3 md:gap-x-8">
+        {% for p in produtos %}
+          <div class="reveal" style="--atraso:{{ forloop.counter0|mult:70 }}ms">{% include "componentes/card_produto.html" with p=p %}</div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% include "componentes/vazio.html" with titulo="Sem peças disponíveis" descricao="Esta marca está esgotada de momento. Inscreve-te na newsletter para saberes quando repuser." url_accao="/shop/" texto_accao="Ver shop" %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

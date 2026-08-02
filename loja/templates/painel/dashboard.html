@@ -1,0 +1,59 @@
+{% extends "painel/base.html" %}
+{% block painel %}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {% for rotulo, valor, nota in cartoes %}
+      <div class="border border-border bg-background p-6">
+        <p class="eyebrow">{{ rotulo }}</p>
+        <p class="mt-4 font-display text-3xl tracking-brand">{{ valor }}</p>
+        {% if nota %}<p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ nota }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <div>
+      <p class="eyebrow mb-4">Encomendas recentes</p>
+      {% if recentes %}
+        <div class="overflow-x-auto border border-border bg-background">
+          <table class="w-full min-w-[560px] text-left text-sm">
+            <thead><tr class="border-b border-border">
+              <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Ref.</th>
+              <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Cliente</th>
+              <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Total</th>
+              <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Estado</th>
+            </tr></thead>
+            <tbody>
+              {% for e in recentes %}
+                <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+                  <td class="px-5 py-4">{{ e.referencia }}</td>
+                  <td class="px-5 py-4">{{ e.nome_cliente }}</td>
+                  <td class="px-5 py-4">{{ e.total|kz }}</td>
+                  <td class="px-5 py-4"><span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if e.tom_estado == 'brand' %}bg-brand text-brand-foreground{% elif e.tom_estado == 'dark' %}bg-foreground text-background{% else %}bg-muted text-muted-foreground{% endif %}">{{ e.get_estado_display }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="border border-border bg-background px-5 py-10 text-center text-sm text-muted-foreground">Ainda não há encomendas.</div>
+      {% endif %}
+    </div>
+
+    <div>
+      <p class="eyebrow mb-4">Stock crítico</p>
+      <div class="space-y-3">
+        {% for v in alertas %}
+          <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border border-border bg-background px-5 py-4">
+            <div class="min-w-0">
+              <p class="truncate text-sm">{{ v.produto.marca.nome }} {{ v.produto.nome }}</p>
+              <p class="mt-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{{ v.tamanho }} · {{ v.cor_nome }}</p>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if v.stock == 0 %}bg-muted text-muted-foreground{% else %}bg-brand text-brand-foreground{% endif %}">{{ v.stock }} un.</span>
+          </div>
+        {% empty %}
+          <div class="border border-border bg-background px-5 py-10 text-center text-sm text-muted-foreground">Nenhum alerta de stock.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

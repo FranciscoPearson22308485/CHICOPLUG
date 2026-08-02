@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}{{ encomenda.referencia }} — CHICOPLUG{% endblock %}
+{% block robots %}<meta name="robots" content="noindex" />{% endblock %}
+
+{% block conteudo %}
+<div class="shell pb-28 pt-16 md:pt-24">
+  <p class="eyebrow">Encomenda</p>
+  <h1 class="mt-5 text-5xl sm:text-6xl">{{ encomenda.referencia }}</h1>
+
+  <div class="mt-14 grid gap-16 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+    <div>
+      <p class="eyebrow mb-6">Peças</p>
+      <ul class="space-y-4 border-t border-border pt-6">
+        {% for item in encomenda.itens.all %}
+          <li class="grid grid-cols-[56px_minmax(0,1fr)_auto] gap-4">
+            {% if item.url_imagem %}<img src="{{ item.url_imagem }}" alt="" loading="lazy" class="aspect-[4/5] w-14 bg-surface object-cover" />{% else %}<div class="aspect-[4/5] w-14 bg-surface"></div>{% endif %}
+            <div class="min-w-0">
+              <p class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{{ item.marca }}</p>
+              <p class="truncate text-[13px] font-semibold">{{ item.nome_produto }}</p>
+              <p class="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{{ item.cor_nome }} · {{ item.tamanho }} · {{ item.quantidade }}x</p>
+            </div>
+            <p class="shrink-0 text-[13px]">{{ item.total_linha|kz }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <p class="eyebrow mb-4 mt-12">Histórico</p>
+      <ul class="space-y-2 border-t border-border pt-6 text-sm text-muted-foreground">
+        {% for ev in encomenda.eventos.all %}
+          <li class="flex gap-3">
+            <span class="shrink-0 text-[11px] uppercase tracking-[0.14em]">{{ ev.criado_em|date:"d/m/Y H:i" }}</span>
+            <span>{{ ev.nota|default:ev.get_estado_novo_display }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <aside>
+      <div class="border border-border p-8">
+        <dl class="space-y-3 text-sm">
+          <div class="flex justify-between"><dt class="text-muted-foreground">Subtotal</dt><dd>{{ encomenda.subtotal|kz }}</dd></div>
+          {% if encomenda.desconto %}<div class="flex justify-between text-brand"><dt>Desconto</dt><dd>−{{ encomenda.desconto|kz }}</dd></div>{% endif %}
+          <div class="flex justify-between"><dt class="text-muted-foreground">Envio</dt><dd>{% if encomenda.envio %}{{ encomenda.envio|kz }}{% else %}Grátis{% endif %}</dd></div>
+          <div class="flex justify-between border-t border-border pt-3 font-semibold"><dt>Total</dt><dd>{{ encomenda.total|kz }}</dd></div>
+        </dl>
+        <p class="mt-8 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {{ encomenda.rua }}, {{ encomenda.municipio }}, {{ encomenda.provincia }}
+        </p>
+        {% if encomenda.cancelavel_pelo_cliente %}
+          <form method="post" action="{% url 'encomendas:cancelar' encomenda.referencia %}" class="mt-8">
+            {% csrf_token %}
+            <button type="submit" class="link-underline text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground">Cancelar encomenda</button>
+          </form>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
