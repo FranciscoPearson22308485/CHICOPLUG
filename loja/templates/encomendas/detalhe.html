@@ -24,15 +24,9 @@
         {% endfor %}
       </ul>
 
-      <p class="eyebrow mb-4 mt-12">Histórico</p>
-      <ul class="space-y-2 border-t border-border pt-6 text-sm text-muted-foreground">
-        {% for ev in encomenda.eventos.all %}
-          <li class="flex gap-3">
-            <span class="shrink-0 text-[11px] uppercase tracking-[0.14em]">{{ ev.criado_em|date:"d/m/Y H:i" }}</span>
-            <span>{{ ev.nota|default:ev.get_estado_novo_display }}</span>
-          </li>
-        {% endfor %}
-      </ul>
+      <div class="mt-12">
+        {% include "componentes/tracking.html" with encomenda=encomenda %}
+      </div>
     </div>
 
     <aside>

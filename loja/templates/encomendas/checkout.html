@@ -46,6 +46,7 @@
               <option value="">Escolhe a província</option>
             </select>
           </div>
+          <p data-prazo-entrega hidden class="text-[11px] uppercase tracking-[0.16em] text-brand sm:col-span-2"></p>
         </div>
         <div class="space-y-2">
           <label for="rua" class="text-[11px] uppercase tracking-[0.16em]">Morada</label>
@@ -115,6 +116,7 @@
 
 {% block scripts %}
 {{ municipios|json_script:"municipios" }}
+{{ prazos_entrega|json_script:"prazos" }}
 <script>
   // Trocar de província tem de repor o município: manter "Lobito" depois de
   // mudar para Huíla enviaria a encomenda para lado nenhum.
@@ -124,7 +126,21 @@
     var mun = document.querySelector("[data-municipio]");
     if (!prov || !mun) return;
 
+    // O prazo depende da província: dar o mesmo a Luanda e ao Namibe seria
+    // prometer o que não se cumpre.
+    var prazos = JSON.parse(document.getElementById("prazos").textContent);
+    var aviso = document.querySelector("[data-prazo-entrega]");
+
+    function mostrarPrazo() {
+      if (!aviso) return;
+      var texto = prazos[prov.value];
+      aviso.textContent = texto ? "Entrega prevista: " + texto + "." : "";
+      aviso.hidden = !texto;
+    }
+    mostrarPrazo();
+
     prov.addEventListener("change", function () {
+      mostrarPrazo();
       mun.replaceChildren();
       var lista = mapa[prov.value] || [];
       var vazio = document.createElement("option");

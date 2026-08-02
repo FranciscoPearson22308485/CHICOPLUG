@@ -212,6 +212,28 @@ def novidades(request):
     )
 
 
+def _previsao_para(request):
+    """
+    Prazo a mostrar na ficha de produto.
+
+    Usa a província da morada principal de quem tem sessão iniciada; para quem
+    não tem, mostra Luanda — é onde a loja está e de onde vem a maior parte das
+    encomendas. O template diz sempre a que província o prazo se refere, para
+    o número não ser lido como promessa universal.
+    """
+    from encomendas.services import previsao_de_entrega
+
+    provincia = "Luanda"
+    if request.user.is_authenticated:
+        morada = request.user.moradas.filter(principal=True).first()
+        if morada and morada.provincia:
+            provincia = morada.provincia
+
+    previsao = previsao_de_entrega(provincia)
+    previsao["provincia"] = provincia
+    return previsao
+
+
 def produto(request, slug):
     peca = get_object_or_404(
         Produto.objects.completos().filter(activo=True), slug=slug
@@ -261,6 +283,7 @@ def produto(request, slug):
         "pode_avaliar": services.pode_avaliar(request.user, peca),
         "motivo_sem_avaliacao": services.motivo_para_nao_avaliar(request.user, peca),
         "url_absoluto": url_absoluto,
+        "previsao_entrega": _previsao_para(request),
         "dados_json": {
             "@context": "https://schema.org",
             "@type": "Product",

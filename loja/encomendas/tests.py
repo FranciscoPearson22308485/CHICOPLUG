@@ -248,6 +248,107 @@ class CicloDeVidaTests(BaseLoja):
         self.assertEqual(encomenda.eventos.count(), 3)
 
 
+class PrevisaoDeEntregaTests(TestCase):
+    """
+    A loja está em Luanda: dar o mesmo prazo a Luanda e ao Namibe seria
+    prometer o que não se cumpre.
+    """
+
+    def test_luanda_e_mais_rapida(self):
+        from .services import previsao_de_entrega
+
+        luanda = previsao_de_entrega("Luanda")
+        namibe = previsao_de_entrega("Namibe")
+        self.assertLess(luanda["maximo"], namibe["minimo"])
+
+    def test_provincia_desconhecida_usa_o_prazo_padrao(self):
+        from .services import PRAZO_PADRAO, previsao_de_entrega
+
+        previsao = previsao_de_entrega("Terra do Nunca")
+        self.assertEqual((previsao["minimo"], previsao["maximo"]), PRAZO_PADRAO)
+
+    def test_texto_legivel(self):
+        from .services import previsao_de_entrega
+
+        self.assertEqual(previsao_de_entrega("Luanda")["texto"], "1–3 dias úteis")
+
+    def test_sem_data_de_partida_nao_inventa_datas(self):
+        from .services import previsao_de_entrega
+
+        previsao = previsao_de_entrega("Luanda")
+        self.assertIsNone(previsao["de"])
+        self.assertIsNone(previsao["ate"])
+
+    def test_salta_fins_de_semana(self):
+        from .services import previsao_de_entrega
+
+        # Sexta-feira, 7 de Agosto de 2026.
+        sexta = timezone.datetime(2026, 8, 7, 10, 0, tzinfo=timezone.get_current_timezone())
+        previsao = previsao_de_entrega("Luanda", desde=sexta)
+        # Um dia útil depois de sexta é segunda, não sábado.
+        self.assertEqual(previsao["de"].weekday(), 0)
+
+
+class LinhaDoTempoTests(BaseLoja):
+    def _encomenda(self):
+        self.adicionar(quantidade=1)
+        self.client.post(reverse("encomendas:checkout"), CheckoutTests.DADOS)
+        from .models import Encomenda
+
+        return Encomenda.objects.first()
+
+    def test_mostra_o_percurso_completo(self):
+        encomenda = self._encomenda()
+        linha = encomenda.linha_do_tempo
+        self.assertEqual(len(linha), 5)
+        self.assertEqual(linha[0]["estado"], EstadoEncomenda.NOVA)
+        self.assertEqual(linha[-1]["estado"], EstadoEncomenda.ENTREGUE)
+
+    def test_passos_futuros_ficam_sem_data(self):
+        encomenda = self._encomenda()
+        por_cumprir = [p for p in encomenda.linha_do_tempo if not p["concluido"]]
+        self.assertTrue(por_cumprir)
+        # Uma data futura inventada seria uma promessa que a loja não controla.
+        for passo in por_cumprir:
+            self.assertIsNone(passo["quando"])
+
+    def test_marca_o_estado_actual(self):
+        encomenda = self._encomenda()
+        actuais = [p for p in encomenda.linha_do_tempo if p["actual"]]
+        self.assertEqual(len(actuais), 1)
+        self.assertEqual(actuais[0]["estado"], EstadoEncomenda.NOVA)
+
+    def test_cancelada_termina_no_cancelamento(self):
+        encomenda = self._encomenda()
+        mudar_estado(encomenda, EstadoEncomenda.CANCELADA)
+        encomenda.refresh_from_db()
+
+        linha = encomenda.linha_do_tempo
+        self.assertEqual(linha[-1]["estado"], EstadoEncomenda.CANCELADA)
+        # Não anuncia "Entregue" numa encomenda que foi cancelada.
+        self.assertNotIn(EstadoEncomenda.ENTREGUE, [p["estado"] for p in linha])
+
+    def test_entregue_nao_mostra_previsao(self):
+        encomenda = self._encomenda()
+        for estado in ("CONFIRMADA", "EM_PREPARACAO", "ENVIADA", "ENTREGUE"):
+            mudar_estado(encomenda, estado)
+            encomenda.refresh_from_db()
+        self.assertIsNone(encomenda.previsao_entrega)
+
+    def test_aparece_no_detalhe_da_encomenda(self):
+        encomenda = self._encomenda()
+        utilizador = Utilizador.objects.create_user(
+            email="dono@teste.ao", password="Password1", primeiro_nome="A", apelido="B"
+        )
+        encomenda.utilizador = utilizador
+        encomenda.save(update_fields=["utilizador"])
+
+        self.client.login(username="dono@teste.ao", password="Password1")
+        resposta = self.client.get(reverse("encomendas:detalhe", args=[encomenda.referencia]))
+        self.assertContains(resposta, "Acompanhamento")
+        self.assertContains(resposta, "Entrega prevista")
+
+
 class AcessoTests(BaseLoja):
     def test_painel_exige_administrador(self):
         resposta = self.client.get(reverse("painel:dashboard"))

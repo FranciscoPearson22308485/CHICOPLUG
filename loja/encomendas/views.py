@@ -114,6 +114,9 @@ def checkout(request):
             "total_final": actual.subtotal - desconto + actual.envio,
             "provincias": PROVINCIAS,
             "municipios": MUNICIPIOS,
+            "prazos_entrega": {
+                p: services.previsao_de_entrega(p)["texto"] for p in PROVINCIAS
+            },
         },
     )
 

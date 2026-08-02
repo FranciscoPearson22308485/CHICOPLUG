@@ -352,6 +352,57 @@ def aplicar_resultado_pagamento(pagamento, estado, referencia_provedor=None, mot
     return pagamento
 
 
+# ─── Prazos de entrega ────────────────────────────────────────────────────────
+#
+# A loja está em Luanda, por isso é aí que entrega mais depressa. Os prazos são
+# em dias úteis e por província — dar o mesmo prazo a Luanda e ao Lubango seria
+# prometer o que não se cumpre.
+PRAZOS_ENTREGA = {
+    "Luanda": (1, 3),
+    "Benguela": (3, 5),
+    "Cabinda": (4, 7),
+    "Huambo": (4, 6),
+    "Huíla": (4, 7),
+    "Malanje": (4, 6),
+    "Namibe": (5, 8),
+    "Uíge": (4, 7),
+}
+PRAZO_PADRAO = (4, 8)
+
+
+def _somar_dias_uteis(inicio, dias):
+    """Avança `dias` dias úteis, saltando sábados e domingos."""
+    data = inicio
+    restantes = dias
+    while restantes > 0:
+        data += timezone.timedelta(days=1)
+        if data.weekday() < 5:
+            restantes -= 1
+    return data
+
+
+def previsao_de_entrega(provincia, desde=None):
+    """
+    Janela de entrega estimada para uma província.
+
+    Devolve os limites em dias úteis e, quando lhe damos uma data de partida,
+    também as datas concretas. É uma estimativa da loja, não um compromisso da
+    transportadora — o texto apresentado di-lo com "prevista".
+    """
+    minimo, maximo = PRAZOS_ENTREGA.get(provincia, PRAZO_PADRAO)
+    previsao = {
+        "minimo": minimo,
+        "maximo": maximo,
+        "texto": f"{minimo}–{maximo} dias úteis",
+        "de": None,
+        "ate": None,
+    }
+    if desde:
+        previsao["de"] = _somar_dias_uteis(desde, minimo)
+        previsao["ate"] = _somar_dias_uteis(desde, maximo)
+    return previsao
+
+
 def alertas_de_stock(limite=200):
     """Variantes no limiar ou abaixo — alimenta o painel e o dashboard."""
     variantes = (

@@ -1,0 +1,51 @@
+{% comment %}
+  Linha do tempo da encomenda. Recebe `encomenda`.
+
+  Os passos por cumprir aparecem a cinzento e sem data: inventar uma data
+  futura seria prometer o que a loja não controla.
+{% endcomment %}
+<div class="border border-border p-6 md:p-8">
+  <div class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 border-b border-border pb-5">
+    <div class="min-w-0">
+      <p class="eyebrow">Acompanhamento</p>
+      <p class="mt-2 text-sm font-semibold">{{ encomenda.get_estado_display }}</p>
+    </div>
+    {% if encomenda.previsao_entrega %}
+      <div class="shrink-0 text-right">
+        <p class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Entrega prevista</p>
+        <p class="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-brand">
+          {{ encomenda.previsao_entrega.de|date:"d/m" }}–{{ encomenda.previsao_entrega.ate|date:"d/m" }}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <ol class="mt-6 space-y-0">
+    {% for passo in encomenda.linha_do_tempo %}
+      <li class="grid grid-cols-[auto_minmax(0,1fr)] gap-4">
+        {# Coluna do marcador, com a linha vertical a unir os passos. #}
+        <div class="flex flex-col items-center">
+          <span class="mt-1 size-2.5 shrink-0 {% if passo.estado == 'CANCELADA' %}bg-muted-foreground{% elif passo.concluido %}bg-brand{% else %}border border-border bg-transparent{% endif %}"></span>
+          {% if not forloop.last %}
+            <span class="w-px flex-1 {% if passo.concluido %}bg-brand{% else %}bg-border{% endif %}"></span>
+          {% endif %}
+        </div>
+
+        <div class="{% if not forloop.last %}pb-7{% endif %} min-w-0">
+          <p class="text-sm font-semibold {% if not passo.concluido %}text-muted-foreground{% endif %}">
+            {{ passo.rotulo }}
+            {% if passo.actual %}<span class="ml-2 inline-flex items-center bg-foreground px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-background">Agora</span>{% endif %}
+          </p>
+          {% if passo.quando %}
+            <p class="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              {{ passo.quando|date:"d/m/Y" }} · {{ passo.quando|date:"H:i" }}
+            </p>
+          {% endif %}
+          {% if passo.nota %}
+            <p class="mt-1.5 text-[13px] text-muted-foreground">{{ passo.nota }}</p>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+</div>

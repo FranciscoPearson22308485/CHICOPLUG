@@ -214,6 +214,17 @@ TRANSICOES = {
     EstadoEncomenda.CANCELADA: [],
 }
 
+# Percurso normal de uma encomenda, usado para desenhar a linha do tempo com
+# os passos que ainda faltam — sem eles, o cliente vê só o que já aconteceu e
+# não sabe quantas etapas ainda existem.
+PERCURSO_NORMAL = [
+    EstadoEncomenda.NOVA,
+    EstadoEncomenda.CONFIRMADA,
+    EstadoEncomenda.EM_PREPARACAO,
+    EstadoEncomenda.ENVIADA,
+    EstadoEncomenda.ENTREGUE,
+]
+
 # Estados em que o stock ainda está reservado e deve voltar ao inventário.
 REPOR_STOCK_AO_CANCELAR = {
     EstadoEncomenda.NOVA,
@@ -319,6 +330,51 @@ class Encomenda(models.Model):
     @property
     def pagamento_actual(self):
         return self.pagamentos.order_by("-criado_em").first()
+
+    # ── Acompanhamento ───────────────────────────────────────────────────────
+
+    @property
+    def linha_do_tempo(self):
+        """
+        Percurso da encomenda, com o que já aconteceu e o que ainda falta.
+
+        Mostrar só os eventos passados deixaria o cliente sem saber quantas
+        etapas restam. Os passos futuros aparecem por cumprir, com a data em
+        branco — nunca com uma data inventada.
+        """
+        eventos = {ev.estado_novo: ev for ev in self.eventos.all()}
+        cancelada = self.estado == EstadoEncomenda.CANCELADA
+
+        # Numa encomenda cancelada, o percurso pára onde parou e o último passo
+        # passa a ser o cancelamento.
+        if cancelada:
+            percorridos = [e for e in PERCURSO_NORMAL if e in eventos]
+            passos = percorridos + [EstadoEncomenda.CANCELADA]
+        else:
+            passos = PERCURSO_NORMAL
+
+        linha = []
+        for estado in passos:
+            evento = eventos.get(estado)
+            linha.append({
+                "estado": estado,
+                "rotulo": EstadoEncomenda(estado).label,
+                "evento": evento,
+                "quando": evento.criado_em if evento else None,
+                "nota": evento.nota if evento else "",
+                "concluido": evento is not None,
+                "actual": estado == self.estado,
+            })
+        return linha
+
+    @property
+    def previsao_entrega(self):
+        """Janela de entrega estimada, ou None quando já não se aplica."""
+        from .services import previsao_de_entrega
+
+        if self.estado in (EstadoEncomenda.ENTREGUE, EstadoEncomenda.CANCELADA):
+            return None
+        return previsao_de_entrega(self.provincia, desde=self.criado_em)
 
 
 class ItemEncomenda(models.Model):
