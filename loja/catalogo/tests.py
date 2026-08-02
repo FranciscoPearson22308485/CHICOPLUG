@@ -476,6 +476,96 @@ class PromocoesENovidadesTests(BaseAvaliacoes):
         self.assertContains(resposta, "Casaco Saldos")
 
 
+class HistoricoDePrecosTests(BaseAvaliacoes):
+    """
+    O histórico é escrito pelo próprio `Produto.save()`: não depende de quem
+    edita se lembrar de o registar, nem de passar pelo painel.
+    """
+
+    def test_nao_regista_na_criacao(self):
+        from catalogo.models import HistoricoPreco, Produto
+
+        Produto.objects.create(
+            nome="Peça Nova", descricao="x", preco=30000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        self.assertEqual(HistoricoPreco.objects.count(), 0)
+
+    def test_regista_a_descida(self):
+        from catalogo.models import HistoricoPreco
+
+        self.produto.preco = 40000
+        self.produto.save()
+
+        registo = HistoricoPreco.objects.get()
+        self.assertEqual(registo.preco_anterior, 50000)
+        self.assertEqual(registo.preco_novo, 40000)
+        self.assertTrue(registo.desceu)
+        self.assertEqual(registo.variacao, 10000)
+        self.assertEqual(registo.percentagem, 20)
+
+    def test_regista_a_subida(self):
+        from catalogo.models import HistoricoPreco
+
+        self.produto.preco = 60000
+        self.produto.save()
+        self.assertFalse(HistoricoPreco.objects.get().desceu)
+
+    def test_nao_regista_quando_o_preco_nao_muda(self):
+        from catalogo.models import HistoricoPreco
+
+        self.produto.nome = "Outro Nome"
+        self.produto.save()
+        self.assertEqual(HistoricoPreco.objects.count(), 0)
+
+    def test_guarda_cada_alteracao(self):
+        from catalogo.models import HistoricoPreco
+
+        for novo in (45000, 42000, 39000):
+            self.produto.preco = novo
+            self.produto.save()
+
+        self.assertEqual(HistoricoPreco.objects.count(), 3)
+        # Ordenação decrescente: o mais recente primeiro.
+        self.assertEqual(self.produto.ultima_alteracao_de_preco.preco_novo, 39000)
+
+    def test_valor_poupado(self):
+        from catalogo.models import Produto
+
+        peca = Produto.objects.create(
+            nome="Com Desconto", descricao="x", preco=40000, preco_anterior=60000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        self.assertEqual(peca.valor_poupado, 20000)
+        self.assertEqual(peca.percentagem_desconto, 33)
+
+    def test_sem_desconto_nao_ha_valor_poupado(self):
+        self.assertIsNone(self.produto.valor_poupado)
+
+    def test_preco_anterior_mais_baixo_nao_conta_como_poupanca(self):
+        """Um "preço anterior" inferior ao actual não é desconto nenhum."""
+        from catalogo.models import Produto
+
+        peca = Produto.objects.create(
+            nome="Subiu", descricao="x", preco=60000, preco_anterior=40000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        self.assertIsNone(peca.valor_poupado)
+
+    def test_poupanca_aparece_na_ficha(self):
+        from catalogo.models import Produto, Variante
+
+        peca = Produto.objects.create(
+            nome="Com Desconto", descricao="x", preco=40000, preco_anterior=60000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        Variante.objects.create(
+            produto=peca, tamanho="M", cor_nome="Preto", sku="CP-D-0001", stock=2
+        )
+        resposta = self.client.get(peca.get_absolute_url())
+        self.assertContains(resposta, "Poupas")
+
+
 class PaginasSemArtefactosTests(TestCase):
     """
     Percorre as páginas públicas e garante que nada de sintaxe de template

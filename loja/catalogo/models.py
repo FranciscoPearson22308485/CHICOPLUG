@@ -197,7 +197,22 @@ class Produto(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(f"{self.marca.nome} {self.nome}")[:180]
+
+        # Lê o preço em vigor antes de o substituir. Uma consulta por gravação
+        # de produto é barata — só acontece no painel — e é o que permite ter
+        # um histórico fiável sem depender de quem edita se lembrar de o criar.
+        preco_em_vigor = None
+        if self.pk:
+            preco_em_vigor = (
+                Produto.objects.filter(pk=self.pk).values_list("preco", flat=True).first()
+            )
+
         super().save(*args, **kwargs)
+
+        if preco_em_vigor is not None and preco_em_vigor != self.preco:
+            HistoricoPreco.objects.create(
+                produto=self, preco_anterior=preco_em_vigor, preco_novo=self.preco
+            )
 
     def get_absolute_url(self):
         return reverse("catalogo:produto", args=[self.slug])
@@ -308,6 +323,17 @@ class Produto(models.Model):
         return round((self.preco_anterior - self.preco) / self.preco_anterior * 100)
 
     @property
+    def valor_poupado(self):
+        """Quanto o cliente poupa em Kwanzas — mais concreto do que a percentagem."""
+        if not self.preco_anterior or self.preco_anterior <= self.preco:
+            return None
+        return self.preco_anterior - self.preco
+
+    @property
+    def ultima_alteracao_de_preco(self):
+        return self.historico_precos.first()
+
+    @property
     def etiqueta(self):
         """
         Distintivo apresentado no card.
@@ -410,6 +436,46 @@ class Variante(models.Model):
         if self.stock == 0:
             return "SEM_STOCK"
         return "CRITICO" if self.stock <= self.limiar_stock_baixo else "OK"
+
+
+class HistoricoPreco(models.Model):
+    """
+    Registo de cada alteração de preço de uma peça.
+
+    Escrito automaticamente por `Produto.save()`. Serve dois fins: mostrar ao
+    cliente quanto poupa face ao preço praticado antes, e dar ao painel a
+    prova de que o desconto anunciado é real — sem isto, "−30%" seria apenas
+    um número escrito à mão no campo `preco_anterior`.
+    """
+
+    produto = models.ForeignKey(Produto, on_delete=models.CASCADE, related_name="historico_precos")
+    preco_anterior = models.PositiveIntegerField("preço anterior (Kz)")
+    preco_novo = models.PositiveIntegerField("preço novo (Kz)")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "historico_precos"
+        verbose_name_plural = "histórico de preços"
+        ordering = ["-criado_em"]
+        indexes = [models.Index(fields=["produto", "-criado_em"])]
+
+    def __str__(self):
+        return f"{self.produto.nome}: {self.preco_anterior} → {self.preco_novo}"
+
+    @property
+    def desceu(self):
+        return self.preco_novo < self.preco_anterior
+
+    @property
+    def variacao(self):
+        """Diferença absoluta em Kwanzas."""
+        return abs(self.preco_novo - self.preco_anterior)
+
+    @property
+    def percentagem(self):
+        if not self.preco_anterior:
+            return 0
+        return round(abs(self.preco_novo - self.preco_anterior) / self.preco_anterior * 100)
 
 
 class AvaliacaoQuerySet(models.QuerySet):

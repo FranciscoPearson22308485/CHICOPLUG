@@ -56,6 +56,12 @@
         {% endif %}
       </div>
 
+      {% if produto.valor_poupado %}
+        <p class="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+          Poupas {{ produto.valor_poupado|kz }}
+        </p>
+      {% endif %}
+
       {% if produto.total_avaliacoes %}
         <a href="#avaliacoes" class="mt-6 inline-flex items-center gap-3">
           {% include "componentes/estrelas.html" with pares=produto.media_em_estrelas rotulo=produto.media_avaliacoes %}
