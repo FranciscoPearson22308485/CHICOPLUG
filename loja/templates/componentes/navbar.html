@@ -62,9 +62,11 @@
   </div>
 
   <!-- Mega menu -->
-  {# Sem md:block: o gatilho (data-mega) já só existe dentro do <nav> md:flex, e
-     "hidden md:block" tornaria este menu visível em qualquer ecrã de desktop
-     desde o primeiro render — o md:block ganha sempre ao hidden na cascata. #}
+  {% comment %}
+    Sem md:block: o gatilho (data-mega) já só existe dentro do <nav> md:flex, e
+    "hidden md:block" tornaria este menu visível em qualquer ecrã de desktop
+    desde o primeiro render — o md:block ganha sempre ao hidden na cascata.
+  {% endcomment %}
   <div data-mega-menu class="hidden overflow-hidden border-t border-border">
     <div class="shell grid grid-cols-12 gap-10 py-12">
       <div class="col-span-3">

@@ -84,23 +84,35 @@ def produtos(request):
     })
 
 
+class _FormsetInvalido(Exception):
+    """Sinal interno para desfazer a transacção quando uma variante não valida."""
+
+
 def _produto_form(request, produto):
     if request.method == "POST":
         form = ProdutoForm(request.POST, instance=produto)
         if form.is_valid():
-            with transaction.atomic():
-                objecto = form.save()
-                variantes_formset = VarianteFormSet(request.POST, instance=objecto, prefix="variantes")
-                imagens_formset = ImagemFormSet(request.POST, request.FILES, instance=objecto, prefix="imagens")
-                if variantes_formset.is_valid() and imagens_formset.is_valid():
+            # Os formsets inline precisam de um produto com chave primária para
+            # validarem, mas gravar antes de os validar deixaria um produto meio
+            # criado — e voltar a submeter criaria um segundo. Gravamos dentro da
+            # transacção e desfazemo-la se alguma linha não passar.
+            try:
+                with transaction.atomic():
+                    objecto = form.save()
+                    variantes_formset = VarianteFormSet(request.POST, instance=objecto, prefix="variantes")
+                    imagens_formset = ImagemFormSet(
+                        request.POST, request.FILES, instance=objecto, prefix="imagens"
+                    )
+                    if not (variantes_formset.is_valid() and imagens_formset.is_valid()):
+                        raise _FormsetInvalido
+
                     variantes_formset.save()
                     imagens_formset.save()
                     messages.success(request, f'Produto "{objecto.nome}" guardado.')
                     return redirect("painel:produtos")
-            # O produto já ficou gravado (a transacção acima só cobre o passo em
-            # que falhou); manter esse progresso é melhor do que obrigar a
-            # reescrever o formulário inteiro por causa de um erro numa variante.
-            produto = objecto
+            except _FormsetInvalido:
+                # Nada ficou gravado; os formsets já trazem os erros para o ecrã.
+                messages.error(request, "Corrige os erros assinalados antes de guardar.")
         else:
             variantes_formset = VarianteFormSet(request.POST, instance=produto, prefix="variantes")
             imagens_formset = ImagemFormSet(request.POST, request.FILES, instance=produto, prefix="imagens")
@@ -303,6 +315,13 @@ def encomendas(request):
 def encomenda_mudar_estado(request, referencia):
     encomenda = get_object_or_404(Encomenda, referencia=referencia)
     novo_estado = request.POST.get("estado", "")
+
+    # Um estado fora das escolhas rebentaria dentro de mudar_estado, ao compor a
+    # mensagem de erro com EstadoEncomenda(novo_estado).
+    if novo_estado not in EstadoEncomenda.values:
+        messages.error(request, "Estado desconhecido.")
+        return redirect("painel:encomendas")
+
     try:
         mudar_estado_encomenda(encomenda, novo_estado, autor=request.user, nota="Alterado no painel.")
         messages.success(request, f"Encomenda {referencia}: estado actualizado.")
@@ -343,13 +362,22 @@ def stock_ajustar(request):
     for chave, valor in request.POST.items():
         if not chave.startswith("stock_"):
             continue
+
+        # O identificador vem do nome do campo, por isso é entrada do cliente:
+        # sem este teste, `stock_abc` faria a consulta rebentar.
+        identificador = chave.removeprefix("stock_")
+        if not identificador.isdigit():
+            continue
+
         try:
             novo_stock = int(valor)
         except ValueError:
             continue
         if novo_stock < 0:
             continue
-        actualizados += Variante.objects.filter(pk=chave.removeprefix("stock_")).update(stock=novo_stock)
+
+        actualizados += Variante.objects.filter(pk=identificador).update(stock=novo_stock)
+
     messages.success(request, f"Stock actualizado em {actualizados} variante(s).")
     return redirect("painel:stock")
 

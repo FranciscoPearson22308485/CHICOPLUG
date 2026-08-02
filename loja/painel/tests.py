@@ -136,6 +136,77 @@ class ProdutoCRUDTests(BasePainel):
         self.assertIn(b"Hoodie Teste", resposta.content)
 
 
+class ProdutoTransaccaoTests(ProdutoCRUDTests):
+    """
+    Uma variante inválida não pode deixar o produto meio criado: o formulário
+    volta a aparecer e submetê-lo de novo criaria um segundo produto.
+    """
+
+    def test_variante_invalida_nao_cria_produto(self):
+        dados = self._dados_produto(nome="Peça Com Variante Má", **{
+            "variantes-TOTAL_FORMS": "1", "variantes-INITIAL_FORMS": "0",
+            "variantes-MIN_NUM_FORMS": "0", "variantes-MAX_NUM_FORMS": "1000",
+            "variantes-0-tamanho": "M", "variantes-0-cor_nome": "Preto",
+            "variantes-0-cor_hex": "#111111",
+            "variantes-0-sku": "",  # obrigatório — invalida a linha
+            "variantes-0-stock": "5", "variantes-0-limiar_stock_baixo": "6",
+            "variantes-0-preco_proprio": "",
+        })
+        resposta = self.client.post(reverse("painel:produto_novo"), dados)
+
+        # Volta ao formulário (não redirecciona) e nada foi gravado.
+        self.assertEqual(resposta.status_code, 200)
+        self.assertFalse(Produto.objects.filter(nome="Peça Com Variante Má").exists())
+
+    def test_variante_invalida_nao_altera_produto_existente(self):
+        dados = self._dados_produto(nome="Nome Que Nao Deve Passar", **{
+            "variantes-TOTAL_FORMS": "1", "variantes-INITIAL_FORMS": "1",
+            "variantes-MIN_NUM_FORMS": "0", "variantes-MAX_NUM_FORMS": "1000",
+            "variantes-0-id": self.variante.pk,
+            "variantes-0-tamanho": "M", "variantes-0-cor_nome": "Preto",
+            "variantes-0-cor_hex": "#111111", "variantes-0-sku": "",
+            "variantes-0-stock": "99", "variantes-0-limiar_stock_baixo": "6",
+            "variantes-0-preco_proprio": "",
+        })
+        self.client.post(reverse("painel:produto_editar", args=[self.produto.pk]), dados)
+
+        self.produto.refresh_from_db()
+        self.variante.refresh_from_db()
+        self.assertEqual(self.produto.nome, "Hoodie Teste")
+        self.assertEqual(self.variante.stock, 2)
+
+
+class EntradasMalFormadasTests(BasePainel):
+    """
+    Os nomes dos campos e os valores vêm do cliente. Antes destas guardas, um
+    POST forjado a partir do painel devolvia 500 em vez de uma mensagem.
+    """
+
+    def test_ajuste_de_stock_com_id_nao_numerico(self):
+        resposta = self.client.post(reverse("painel:stock_ajustar"), {
+            "stock_abc": "5",
+            f"stock_{self.variante.pk}": "7",
+        })
+        self.assertEqual(resposta.status_code, 302)
+        self.variante.refresh_from_db()
+        # A linha válida passa; a forjada é simplesmente ignorada.
+        self.assertEqual(self.variante.stock, 7)
+
+    def test_estado_de_encomenda_desconhecido(self):
+        encomenda = Encomenda.objects.create(
+            referencia="CP-9003", nome_cliente="Cliente Teste", email="c@teste.ao",
+            telefone="+244900000000", subtotal=50000, total=50000,
+            provincia="Luanda", municipio="Talatona", rua="Rua Teste",
+        )
+        resposta = self.client.post(
+            reverse("painel:encomenda_mudar_estado", args=[encomenda.referencia]),
+            {"estado": "LIXO"},
+        )
+        self.assertEqual(resposta.status_code, 302)
+        encomenda.refresh_from_db()
+        self.assertEqual(encomenda.estado, EstadoEncomenda.NOVA)
+
+
 class EncomendaEstadoTests(BasePainel):
     def test_mudar_estado(self):
         encomenda = Encomenda.objects.create(
@@ -198,22 +269,38 @@ class AcessoTests(BasePainel):
 class PaginasRenderizamTests(BasePainel):
     """Um smoke test por página nova — apanha erros de template que os testes de POST não veem."""
 
-    def test_listas(self):
-        for nome in ("painel:cupoes", "painel:stock", "painel:encomendas"):
-            with self.subTest(nome):
-                self.assertEqual(self.client.get(reverse(nome)).status_code, 200)
+    SEM_ARGUMENTOS = [
+        "painel:dashboard", "painel:produtos", "painel:marcas", "painel:categorias",
+        "painel:cupoes", "painel:encomendas", "painel:stock", "painel:definicoes",
+        "painel:marca_nova", "painel:categoria_nova", "painel:cupao_novo", "painel:produto_novo",
+    ]
 
-    def test_formularios_de_criacao(self):
-        for nome in ("painel:marca_nova", "painel:categoria_nova", "painel:cupao_novo", "painel:produto_novo"):
-            with self.subTest(nome):
-                self.assertEqual(self.client.get(reverse(nome)).status_code, 200)
-
-    def test_formularios_de_edicao(self):
-        casos = [
+    def _com_argumentos(self):
+        return [
             ("painel:marca_editar", self.marca.pk),
             ("painel:categoria_editar", self.categoria.pk),
             ("painel:produto_editar", self.produto.pk),
         ]
-        for nome, pk in casos:
+
+    def test_todas_as_paginas_devolvem_200(self):
+        for nome in self.SEM_ARGUMENTOS:
+            with self.subTest(nome):
+                self.assertEqual(self.client.get(reverse(nome)).status_code, 200)
+
+        for nome, pk in self._com_argumentos():
             with self.subTest(nome):
                 self.assertEqual(self.client.get(reverse(nome, args=[pk])).status_code, 200)
+
+    def test_sem_sintaxe_de_template_visivel(self):
+        """
+        O painel é o código mais recente, logo o mais provável de trazer um
+        comentário ou uma tag mal fechada até ao HTML servido.
+        """
+        alvos = [reverse(n) for n in self.SEM_ARGUMENTOS]
+        alvos += [reverse(n, args=[pk]) for n, pk in self._com_argumentos()]
+
+        for url in alvos:
+            with self.subTest(url):
+                corpo = self.client.get(url).content.decode("utf-8", errors="replace")
+                for marca in ("{#", "#}", "{%", "{{"):
+                    self.assertNotIn(marca, corpo, f"{marca!r} visível em {url}")
