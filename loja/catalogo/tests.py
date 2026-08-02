@@ -426,6 +426,56 @@ class PartilhaTests(BaseAvaliacoes):
         self.assertContains(resposta, "data-partilha-nativa hidden")
 
 
+class PromocoesENovidadesTests(BaseAvaliacoes):
+    """
+    As três listagens partilham a mesma view e o mesmo template; o que muda é
+    o conjunto de partida. Estes testes fixam essa diferença.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from catalogo.models import Produto, Variante
+
+        # Uma peça com preço anterior (em promoção) e outra sem.
+        self.em_promocao = Produto.objects.create(
+            nome="Casaco Saldos", descricao="Teste", preco=40000, preco_anterior=60000,
+            marca=self.marca, categoria=self.categoria,
+        )
+        Variante.objects.create(
+            produto=self.em_promocao, tamanho="M", cor_nome="Preto", sku="CP-P-0001", stock=3,
+        )
+
+    def test_promocoes_mostra_so_quem_tem_desconto(self):
+        resposta = self.client.get(reverse("catalogo:promocoes"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, "Casaco Saldos")
+        self.assertNotContains(resposta, "Hoodie Teste")
+
+    def test_promocoes_tem_titulo_proprio(self):
+        resposta = self.client.get(reverse("catalogo:promocoes"))
+        self.assertContains(resposta, "Promoções")
+        self.assertContains(resposta, "Preços reduzidos")
+
+    def test_novidades_mostra_tudo_por_data(self):
+        resposta = self.client.get(reverse("catalogo:novidades"))
+        self.assertEqual(resposta.status_code, 200)
+        # A mais recente foi criada em setUp depois da outra.
+        corpo = resposta.content.decode()
+        self.assertLess(corpo.index("Casaco Saldos"), corpo.index("Hoodie Teste"))
+
+    def test_shop_continua_a_mostrar_tudo(self):
+        """A parametrização não pode ter alterado o comportamento do Shop."""
+        resposta = self.client.get(reverse("catalogo:shop"))
+        self.assertContains(resposta, "Casaco Saldos")
+        self.assertContains(resposta, "Hoodie Teste")
+        self.assertContains(resposta, "Shop")
+
+    def test_filtros_continuam_a_funcionar_nas_paginas_novas(self):
+        resposta = self.client.get(reverse("catalogo:promocoes"), {"ordenar": "preco-asc"})
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, "Casaco Saldos")
+
+
 class PaginasSemArtefactosTests(TestCase):
     """
     Percorre as páginas públicas e garante que nada de sintaxe de template
@@ -436,6 +486,7 @@ class PaginasSemArtefactosTests(TestCase):
         "/", "/shop/", "/marcas/", "/sobre/", "/contacto/", "/faq/",
         "/termos/", "/politica-de-privacidade/", "/politica-de-trocas/",
         "/carrinho/", "/conta/entrar/", "/conta/registar/", "/galeria/",
+        "/promocoes/", "/novidades/",
     ]
 
     def test_sem_sintaxe_de_template_visivel(self):

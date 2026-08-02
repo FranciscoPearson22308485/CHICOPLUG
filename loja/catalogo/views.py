@@ -97,10 +97,17 @@ def _facetas():
     }
 
 
-def shop(request):
-    """Catálogo com os seis filtros, ordenação e paginação."""
+def shop(request, base=None, extra=None):
+    """
+    Catálogo com os seis filtros, ordenação e paginação.
+
+    `base` e `extra` existem para as Promoções e as Novidades reutilizarem
+    exactamente esta listagem — mesmos filtros, mesma ordenação, mesmo
+    desenho — mudando só o conjunto de partida e os textos do cabeçalho.
+    Ambos têm valor por omissão, por isso o Shop continua a ser `shop(request)`.
+    """
     facetas = _facetas()
-    produtos = Produto.objects.activos().completos()
+    produtos = base if base is not None else Produto.objects.activos().completos()
 
     pesquisa = request.GET.get("pesquisa", "").strip()
     marcas_sel = request.GET.getlist("marca")
@@ -170,7 +177,39 @@ def shop(request):
         "ordenar": ordenar,
         "filtros_activos": filtros_activos,
     }
+    contexto.update(extra or {})
     return render(request, "catalogo/shop.html", contexto)
+
+
+def promocoes(request):
+    """Só as peças com preço anterior — as que estão mesmo mais baratas."""
+    return shop(
+        request,
+        base=Produto.objects.em_promocao().completos(),
+        extra={
+            "titulo_pagina": "Promoções",
+            "eyebrow_pagina": "Preços reduzidos",
+            "intro_pagina": "Peças com desconto real sobre o preço anterior. "
+                            "Enquanto houver stock.",
+            "descricao_pagina": "Streetwear premium em promoção na CHICOPLUG: "
+                                "Nike, Jordan, Adidas, Corteiz e mais, com desconto real.",
+        },
+    )
+
+
+def novidades(request):
+    """As últimas entradas — por data de criação, não por marcação manual."""
+    return shop(
+        request,
+        base=Produto.objects.activos().completos().order_by("-criado_em"),
+        extra={
+            "titulo_pagina": "Novidades",
+            "eyebrow_pagina": "Últimas entradas",
+            "intro_pagina": "As peças que chegaram há menos tempo à loja.",
+            "descricao_pagina": "As novidades da CHICOPLUG: as últimas peças de "
+                                "streetwear premium a entrar na loja.",
+        },
+    )
 
 
 def produto(request, slug):

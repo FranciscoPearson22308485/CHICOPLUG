@@ -1,13 +1,21 @@
 {% extends "base.html" %}
-{% block titulo %}Shop — CHICOPLUG Streetwear Premium{% endblock %}
-{% block descricao %}T-shirts, hoodies, jeans, sneakers, calças, casacos, bonés e acessórios das melhores marcas.{% endblock %}
+{% comment %}
+  Serve o Shop, as Promoções e as Novidades: as três são a mesma listagem com
+  os mesmos filtros, e só mudam o título e a base de produtos. Duplicar o
+  template triplicaria a manutenção dos filtros por nada.
+{% endcomment %}
+{% block titulo %}{{ titulo_pagina|default:"Shop" }} — CHICOPLUG Streetwear Premium{% endblock %}
+{% block descricao %}{{ descricao_pagina|default:"T-shirts, hoodies, jeans, sneakers, calças, casacos, bonés e acessórios das melhores marcas." }}{% endblock %}
 
 {% block conteudo %}
 <div class="pb-28 pt-14 md:pt-20">
   <div class="shell">
     <div class="reveal">
-      <p class="eyebrow">{% if pesquisa %}Resultados da pesquisa{% else %}Todas as peças{% endif %}</p>
-      <h1 class="mt-5 text-6xl sm:text-7xl xl:text-8xl">Shop</h1>
+      <p class="eyebrow">{% if pesquisa %}Resultados da pesquisa{% else %}{{ eyebrow_pagina|default:"Todas as peças" }}{% endif %}</p>
+      <h1 class="mt-5 text-6xl sm:text-7xl xl:text-8xl">{{ titulo_pagina|default:"Shop" }}</h1>
+      {% if intro_pagina %}
+        <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">{{ intro_pagina }}</p>
+      {% endif %}
       {% if pesquisa %}
         <div class="mt-8 flex flex-wrap items-center gap-4">
           <span class="inline-flex items-center gap-3 border border-foreground px-4 py-2 text-[11px] uppercase tracking-[0.16em]">
