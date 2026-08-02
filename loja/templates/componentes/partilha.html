@@ -1,0 +1,55 @@
+{% comment %}
+  Botões de partilha. Recebe `url` (absoluta) e `titulo`.
+
+  O Instagram não tem URL de partilha para a web — não existe equivalente ao
+  wa.me do WhatsApp. Em vez de um botão decorativo que abriria o instagram.com
+  sem levar nada, usamos a Web Share API: no telemóvel abre a folha nativa do
+  sistema, onde o Instagram aparece a sério. Esse botão só é mostrado pelo
+  JavaScript quando o navegador o suporta.
+{% endcomment %}
+<div class="mt-10 border-t border-border pt-6" data-partilha data-url="{{ url }}" data-titulo="{{ titulo }}">
+  <p class="eyebrow mb-4">Partilhar</p>
+  <div class="flex flex-wrap items-center gap-2">
+
+    <a href="https://wa.me/?text={{ titulo|urlencode }}%20{{ url|urlencode }}"
+       target="_blank" rel="noopener noreferrer"
+       class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.6.1l-.9 1c-.2.2-.3.2-.6.1a8 8 0 0 1-3.9-3.4c-.2-.3 0-.5.1-.6l.5-.6c.1-.2.2-.3.3-.5v-.5l-.9-2.1c-.2-.6-.5-.5-.7-.5h-.5c-.2 0-.5.1-.7.4a3 3 0 0 0-1 2.2 5.3 5.3 0 0 0 1.1 2.8 12 12 0 0 0 4.6 4c2.2.9 2.2.6 2.6.5a2.7 2.7 0 0 0 1.8-1.2c.2-.5.2-.9.2-1s-.2-.2-.4-.3M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2"/></svg>
+      WhatsApp
+    </a>
+
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url|urlencode }}"
+       target="_blank" rel="noopener noreferrer"
+       class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1 0 2.1.2 2.1.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.6V12h2.7l-.4 2.9h-2.3v7A10 10 0 0 0 22 12"/></svg>
+      Facebook
+    </a>
+
+    <a href="https://t.me/share/url?url={{ url|urlencode }}&text={{ titulo|urlencode }}"
+       target="_blank" rel="noopener noreferrer"
+       class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m4.6 6.9-1.6 7.5c-.1.5-.4.7-.9.4l-2.4-1.8-1.2 1.1c-.1.1-.2.3-.5.3l.2-2.5 4.5-4c.2-.2 0-.3-.3-.1L8.9 13l-2.4-.7c-.5-.2-.5-.5.1-.8l9.3-3.6c.4-.2.8.1.7.9"/></svg>
+      Telegram
+    </a>
+
+    <a href="https://twitter.com/intent/tweet?url={{ url|urlencode }}&text={{ titulo|urlencode }}"
+       target="_blank" rel="noopener noreferrer"
+       class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.2 2H21l-6.4 7.4L22 22h-6l-4.7-6.2L5.9 22H3l6.9-7.9L2.3 2h6.1l4.3 5.7zm-1 18.3h1.6L7.9 3.6H6.2z"/></svg>
+      X
+    </a>
+
+    {# Só aparece quando o navegador suporta a folha de partilha nativa. #}
+    <button type="button" data-partilha-nativa hidden
+            class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+      Mais
+    </button>
+
+    <button type="button" data-copiar-ligacao
+            class="inline-flex items-center gap-2 border border-border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-colors hover:border-foreground">
+      <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+      <span data-rotulo-copiar>Copiar link</span>
+    </button>
+  </div>
+</div>

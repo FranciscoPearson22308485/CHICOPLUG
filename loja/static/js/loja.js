@@ -484,6 +484,49 @@
     actualizar();
   }
 
+  // ── Partilha ──────────────────────────────────────────────────────────────
+
+  function iniciarPartilha() {
+    const caixa = $("[data-partilha]");
+    if (!caixa) return;
+
+    const url = caixa.dataset.url || window.location.href;
+    const titulo = caixa.dataset.titulo || document.title;
+
+    // O botão nativo só existe se o navegador o souber abrir — mostrá-lo sempre
+    // daria um botão morto no computador. É por aqui que se chega ao Instagram,
+    // que não tem URL de partilha para a web.
+    const nativo = $("[data-partilha-nativa]", caixa);
+    if (nativo && navigator.share) {
+      nativo.hidden = false;
+      nativo.addEventListener("click", () => {
+        navigator.share({ title: titulo, url }).catch(() => {
+          /* o utilizador fechou a folha de partilha */
+        });
+      });
+    }
+
+    const copiar = $("[data-copiar-ligacao]", caixa);
+    if (!copiar) return;
+
+    const rotulo = $("[data-rotulo-copiar]", copiar);
+    copiar.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        if (rotulo) {
+          const original = rotulo.textContent;
+          rotulo.textContent = "Copiado";
+          setTimeout(() => (rotulo.textContent = original), 2000);
+        }
+        avisar("Ligação copiada.");
+      } catch (e) {
+        // Sem permissão de área de transferência (http sem TLS, por exemplo):
+        // mostrar o endereço é melhor do que falhar em silêncio.
+        avisar("Copia o endereço da barra do navegador.", "erro");
+      }
+    });
+  }
+
   // ── Arranque ──────────────────────────────────────────────────────────────
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -494,5 +537,6 @@
     iniciarFavoritos();
     iniciarNewsletter();
     iniciarVariantes();
+    iniciarPartilha();
   });
 })();

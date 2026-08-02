@@ -221,6 +221,7 @@ def produto(request, slug):
         "ordenar_avaliacoes": ordenar_avaliacoes,
         "pode_avaliar": services.pode_avaliar(request.user, peca),
         "motivo_sem_avaliacao": services.motivo_para_nao_avaliar(request.user, peca),
+        "url_absoluto": url_absoluto,
         "dados_json": {
             "@context": "https://schema.org",
             "@type": "Product",

@@ -402,6 +402,30 @@ class GaleriaDeClientesTests(BaseAvaliacoes):
         self.assertContains(resposta, "Talatona")
 
 
+class PartilhaTests(BaseAvaliacoes):
+    def test_botoes_apontam_para_a_peca(self):
+        from django.conf import settings
+
+        resposta = self.client.get(self.produto.get_absolute_url())
+        corpo = resposta.content.decode()
+
+        # O endereço partilhado tem de ser absoluto: um caminho relativo
+        # partilhado no WhatsApp não abre em lado nenhum.
+        self.assertIn(settings.SITE_URL, corpo)
+        for destino in ("wa.me", "facebook.com/sharer", "t.me/share", "twitter.com/intent"):
+            with self.subTest(destino):
+                self.assertIn(destino, corpo)
+
+    def test_botao_de_copiar_existe(self):
+        resposta = self.client.get(self.produto.get_absolute_url())
+        self.assertContains(resposta, "data-copiar-ligacao")
+
+    def test_partilha_nativa_comeca_escondida(self):
+        """Só o JavaScript a mostra, e apenas onde `navigator.share` existe."""
+        resposta = self.client.get(self.produto.get_absolute_url())
+        self.assertContains(resposta, "data-partilha-nativa hidden")
+
+
 class PaginasSemArtefactosTests(TestCase):
     """
     Percorre as páginas públicas e garante que nada de sintaxe de template

@@ -124,6 +124,8 @@
         <p>Trocas em 7 dias</p>
       </div>
 
+      {% include "componentes/partilha.html" with url=url_absoluto titulo=produto %}
+
       {% if produto.lista_detalhes %}
         <div class="mt-12 border-t border-border pt-6">
           <p class="eyebrow mb-4">Detalhes</p>
