@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Galeria dos clientes — CHICOPLUG{% endblock %}
+{% block descricao %}As peças da CHICOPLUG vestidas por quem as comprou, em Luanda e em todo o Angola.{% endblock %}
+
+{% block conteudo %}
+<div class="pb-28 pt-16 md:pt-24">
+  <div class="shell">
+    <div class="reveal">
+      <p class="eyebrow">Na rua</p>
+      <h1 class="mt-5 text-6xl sm:text-7xl xl:text-8xl">Galeria</h1>
+      <p class="mt-8 max-w-md text-sm leading-relaxed text-muted-foreground">
+        As peças vestidas por quem as comprou. Cada fotografia vem de uma avaliação
+        de compra verificada — nada aqui é encenado.
+      </p>
+    </div>
+  </div>
+
+  {% if fotografias %}
+    <div class="shell mt-20">
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
+        {% for foto in fotografias %}
+          <figure class="reveal group" style="--atraso:{{ forloop.counter0|mult:40 }}ms">
+            <a href="{{ foto.avaliacao.produto.get_absolute_url }}" class="block overflow-hidden bg-surface">
+              <img src="{{ foto.url_imagem }}"
+                   alt="{{ foto.avaliacao.produto.marca.nome }} {{ foto.avaliacao.produto.nome }} por {{ foto.avaliacao.autor }}"
+                   loading="lazy"
+                   class="aspect-square w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105" />
+            </a>
+            <figcaption class="mt-4 space-y-1">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                {{ foto.avaliacao.autor }}{% if foto.cidade %} <span class="font-normal text-muted-foreground">· {{ foto.cidade }}</span>{% endif %}
+              </p>
+              <a href="{{ foto.avaliacao.produto.get_absolute_url }}" class="link-underline block truncate text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                {{ foto.avaliacao.produto.marca.nome }} {{ foto.avaliacao.produto.nome }}
+              </a>
+              <p class="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{{ foto.criado_em|date:"d/m/Y" }}</p>
+            </figcaption>
+          </figure>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="shell mt-20">
+      <div class="border border-border px-6 py-20 text-center">
+        <p class="text-sm text-muted-foreground">
+          Ainda não há fotografias de clientes. Elas aparecem aqui assim que alguém
+          juntar uma imagem à avaliação de uma peça que comprou.
+        </p>
+        <a href="{% url 'catalogo:shop' %}"
+           class="mt-8 inline-block bg-foreground px-10 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-background transition-colors hover:bg-brand hover:text-brand-foreground">
+          Ver a loja
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

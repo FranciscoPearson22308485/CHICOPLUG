@@ -124,3 +124,53 @@ def avaliacoes_de(produto, ordenar="recentes"):
     if ordenar == "fotos":
         return lista.com_fotografias().order_by("-criado_em")
     return lista.order_by("-criado_em")
+
+
+# ─── Galeria dos clientes ─────────────────────────────────────────────────────
+
+
+def _cidades_por_cliente(ids_utilizadores):
+    """
+    {id_utilizador: município da encomenda mais recente}.
+
+    Uma consulta para todos, em vez de uma por fotografia. A ordenação
+    ascendente é deliberada: ao construir o dicionário, a última escrita de
+    cada cliente fica a ser a encomenda mais recente.
+    """
+    if not ids_utilizadores:
+        return {}
+
+    from encomendas.models import Encomenda
+
+    return dict(
+        Encomenda.objects.filter(utilizador_id__in=ids_utilizadores)
+        .exclude(municipio="")
+        .order_by("utilizador_id", "criado_em")
+        .values_list("utilizador_id", "municipio")
+    )
+
+
+def galeria_de_clientes(limite=60, produto=None):
+    """
+    Fotografias reais enviadas pelos clientes com as suas avaliações.
+
+    Não há um segundo sistema de upload: a galeria é a vista agregada das
+    fotografias das avaliações. Esconder uma avaliação no painel retira-a
+    daqui também, sem moderação separada.
+    """
+    fotos = (
+        FotoAvaliacao.objects.filter(avaliacao__publicada=True)
+        .select_related("avaliacao", "avaliacao__produto", "avaliacao__produto__marca", "avaliacao__utilizador")
+        .order_by("-criado_em")
+    )
+    if produto is not None:
+        fotos = fotos.filter(avaliacao__produto=produto)
+
+    fotos = [f for f in fotos[:limite] if f.url_imagem]
+
+    cidades = _cidades_por_cliente({f.avaliacao.utilizador_id for f in fotos})
+    for foto in fotos:
+        # Anexado à instância para o template não disparar consultas.
+        foto.cidade = cidades.get(foto.avaliacao.utilizador_id, "")
+
+    return fotos

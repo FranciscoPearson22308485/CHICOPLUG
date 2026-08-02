@@ -338,6 +338,70 @@ class AvaliacoesNaLojaTests(BaseAvaliacoes):
         self.assertContains(resposta, "4.0")
 
 
+class GaleriaDeClientesTests(BaseAvaliacoes):
+    """
+    A galeria é a vista agregada das fotografias das avaliações — não há um
+    segundo sistema de upload nem uma segunda moderação.
+    """
+
+    def _com_foto(self, utilizador, estrelas=5):
+        from catalogo.models import Avaliacao, FotoAvaliacao
+
+        avaliacao = Avaliacao.objects.create(
+            produto=self.produto, utilizador=utilizador, estrelas=estrelas
+        )
+        FotoAvaliacao.objects.create(
+            avaliacao=avaliacao, url_externa="https://exemplo.test/foto.jpg"
+        )
+        return avaliacao
+
+    def test_vazia_sem_fotografias(self):
+        from catalogo import services
+
+        self.assertEqual(services.galeria_de_clientes(), [])
+
+    def test_mostra_fotografia_publicada(self):
+        from catalogo import services
+
+        self._com_foto(self.comprador)
+        fotos = services.galeria_de_clientes()
+        self.assertEqual(len(fotos), 1)
+        self.assertEqual(fotos[0].avaliacao.produto, self.produto)
+
+    def test_esconder_avaliacao_retira_da_galeria(self):
+        from catalogo import services
+
+        avaliacao = self._com_foto(self.comprador)
+        avaliacao.publicada = False
+        avaliacao.save(update_fields=["publicada"])
+
+        self.assertEqual(services.galeria_de_clientes(), [])
+
+    def test_cidade_vem_da_encomenda_do_cliente(self):
+        from catalogo import services
+
+        self._com_foto(self.comprador)
+        # A encomenda criada em setUp é de Talatona.
+        self.assertEqual(services.galeria_de_clientes()[0].cidade, "Talatona")
+
+    def test_cliente_sem_encomenda_fica_sem_cidade(self):
+        from catalogo import services
+
+        self._com_foto(self.curioso)
+        self.assertEqual(services.galeria_de_clientes()[0].cidade, "")
+
+    def test_pagina_abre(self):
+        resposta = self.client.get(reverse("catalogo:galeria"))
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, "Ainda não há fotografias")
+
+    def test_pagina_mostra_a_fotografia(self):
+        self._com_foto(self.comprador)
+        resposta = self.client.get(reverse("catalogo:galeria"))
+        self.assertContains(resposta, "https://exemplo.test/foto.jpg")
+        self.assertContains(resposta, "Talatona")
+
+
 class PaginasSemArtefactosTests(TestCase):
     """
     Percorre as páginas públicas e garante que nada de sintaxe de template
@@ -347,7 +411,7 @@ class PaginasSemArtefactosTests(TestCase):
     URLS = [
         "/", "/shop/", "/marcas/", "/sobre/", "/contacto/", "/faq/",
         "/termos/", "/politica-de-privacidade/", "/politica-de-trocas/",
-        "/carrinho/", "/conta/entrar/", "/conta/registar/",
+        "/carrinho/", "/conta/entrar/", "/conta/registar/", "/galeria/",
     ]
 
     def test_sem_sintaxe_de_template_visivel(self):

@@ -294,6 +294,11 @@ def avaliar(request, slug):
     return redirect(f"{peca.get_absolute_url()}#avaliacoes")
 
 
+def galeria(request):
+    """Fotografias reais dos clientes, vindas das avaliações publicadas."""
+    return render(request, "catalogo/galeria.html", {"fotografias": services.galeria_de_clientes()})
+
+
 def marcas(request):
     return render(
         request,
