@@ -15,12 +15,16 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import F
+from django.utils import timezone
 from django.utils.text import slugify
 
 from catalogo.models import (
+    Avaliacao,
     Categoria,
     Definicao,
     Favorito,
+    FotoAvaliacao,
     ImagemProduto,
     Marca,
     Produto,
@@ -32,10 +36,13 @@ from encomendas.models import (
     Carrinho,
     Cupao,
     Encomenda,
+    EstadoEncomenda,
+    EstadoPagamento,
     EventoEncomenda,
     ItemCarrinho,
     ItemEncomenda,
     Pagamento,
+    calcular_envio,
 )
 
 PRETO = ("Preto", "#111111")
@@ -182,6 +189,29 @@ def distribuir(total, baldes):
     return [base + (1 if i < resto else 0) for i in range(baldes)]
 
 
+# Clientes de demonstração. Espalhados por várias províncias para a galeria e
+# os relatórios por cidade terem alguma coisa que mostrar.
+CLIENTES_DEMO = [
+    ("Ana", "Miguel", "ana.miguel@exemplo.ao", "Luanda", "Talatona"),
+    ("Nuno", "Bengui", "nuno.bengui@exemplo.ao", "Luanda", "Viana"),
+    ("Márcia", "Kiala", "marcia.kiala@exemplo.ao", "Benguela", "Lobito"),
+    ("Edson", "Cabral", "edson.cabral@exemplo.ao", "Huíla", "Lubango"),
+    ("Telma", "Ndala", "telma.ndala@exemplo.ao", "Luanda", "Belas"),
+]
+
+# (estrelas, comentário, leva fotografia?)
+AVALIACOES_DEMO = [
+    (5, "Chegou em três dias a Luanda. O tecido é bem mais pesado do que esperava — vale o preço.", True),
+    (5, "Original, sem dúvida. Já é a segunda peça que compro aqui e a qualidade mantém-se.", True),
+    (4, "Muito boa peça. Só tirei uma estrela porque veste um pouco largo, encomendem um tamanho abaixo.", False),
+    (5, "Exactamente igual às fotografias. A costura é impecável.", True),
+    (4, "Gostei bastante. A entrega demorou um dia mais do que o previsto, mas nada de grave.", False),
+    (3, "A peça é boa mas a cor é um pouco mais escura do que aparece no site.", False),
+    (5, "O melhor sítio para comprar streetwear em Angola. Atendimento rápido e peça genuína.", True),
+    (4, "Confortável e bem cortada. Recomendo.", False),
+]
+
+
 class Command(BaseCommand):
     help = "Semeia a loja com o catálogo multimarca de demonstração."
 
@@ -203,6 +233,7 @@ class Command(BaseCommand):
             marcas = self._marcas(copiar_imagens)
             self._produtos(categorias, marcas, copiar_imagens)
             self._contas()
+            self._encomendas_e_avaliacoes()
             self._cupoes()
             self._definicoes()
 
@@ -212,6 +243,10 @@ class Command(BaseCommand):
         self.stdout.write(
             f"  {len(MARCAS)} marcas · {len(CATEGORIAS)} categorias · "
             f"{len(PRODUTOS)} produtos ({promos} em promoção)"
+        )
+        self.stdout.write(
+            f"  {getattr(self, 'total_encomendas', 0)} encomendas entregues · "
+            f"{getattr(self, 'total_avaliacoes', 0)} avaliações"
         )
         self.stdout.write("  Admin:   admin@chicoplug.ao / ChicoPlug!2026")
         self.stdout.write("  Cliente: cliente@chicoplug.ao / Cliente!2026")
@@ -223,6 +258,7 @@ class Command(BaseCommand):
         for modelo in (
             EventoEncomenda, Pagamento, ItemEncomenda, Encomenda,
             ItemCarrinho, Carrinho, Favorito, Morada,
+            FotoAvaliacao, Avaliacao,
             ImagemProduto, Variante, Produto, Marca, Categoria,
             Cupao, Subscritor, Utilizador, Definicao,
         ):
@@ -345,6 +381,131 @@ class Command(BaseCommand):
             rua="Rua Amílcar Cabral, 42",
             principal=True,
         )
+
+    def _encomendas_e_avaliacoes(self):
+        """
+        Histórico de compras entregues e as avaliações que delas resultam.
+
+        Sem isto a loja fica sem nada que dependa de uma compra: ninguém pode
+        avaliar, a galeria fica vazia e os relatórios não têm receita. As
+        encomendas ficam ENTREGUE e com o trilho de eventos completo, para o
+        painel e o histórico do cliente mostrarem um percurso real.
+        """
+        self.stdout.write("→ Encomendas entregues e avaliações…")
+
+        produtos = list(Produto.objects.filter(activo=True).order_by("id"))
+        if not produtos:
+            return
+
+        agora = timezone.now()
+        referencia = 2041
+        indice_comentario = 0
+        total_avaliacoes = 0
+
+        for posicao, (nome, apelido, email, provincia, municipio) in enumerate(CLIENTES_DEMO):
+            cliente = Utilizador.objects.create_user(
+                email=email, password="Cliente!2026",
+                primeiro_nome=nome, apelido=apelido,
+                telefone=f"+2449001112{posicao:02d}",
+            )
+            Morada.objects.create(
+                utilizador=cliente, etiqueta="Casa", destinatario=f"{nome} {apelido}",
+                telefone=f"+2449001112{posicao:02d}", provincia=provincia,
+                municipio=municipio, rua=f"Rua {posicao + 1}, nº {10 + posicao}", principal=True,
+            )
+
+            # Cada cliente compra duas peças, escolhidas de forma espaçada para
+            # as avaliações não caírem todas no mesmo produto.
+            escolhidos = [
+                produtos[(posicao * 3) % len(produtos)],
+                produtos[(posicao * 3 + 1) % len(produtos)],
+            ]
+            variantes = [p.variantes.filter(activa=True).first() for p in escolhidos]
+            variantes = [v for v in variantes if v]
+            if not variantes:
+                continue
+
+            subtotal = sum(v.preco for v in variantes)
+            envio = calcular_envio(subtotal)
+            criada_em = agora - timezone.timedelta(days=25 - posicao * 4)
+
+            encomenda = Encomenda.objects.create(
+                referencia=f"CP-{referencia}", utilizador=cliente,
+                nome_cliente=f"{nome} {apelido}", email=email,
+                telefone=f"+2449001112{posicao:02d}",
+                estado=EstadoEncomenda.ENTREGUE,
+                subtotal=subtotal, envio=envio, total=subtotal + envio,
+                provincia=provincia, municipio=municipio,
+                rua=f"Rua {posicao + 1}, nº {10 + posicao}",
+            )
+            # auto_now_add ignora o valor passado ao criar; corrigimos depois
+            # para o histórico não ficar todo com a data de hoje.
+            Encomenda.objects.filter(pk=encomenda.pk).update(criado_em=criada_em)
+            referencia += 1
+
+            for variante in variantes:
+                ItemEncomenda.objects.create(
+                    encomenda=encomenda, variante=variante,
+                    marca=variante.produto.marca.nome, nome_produto=variante.produto.nome,
+                    slug_produto=variante.produto.slug,
+                    url_imagem=variante.produto.imagem_principal or "",
+                    tamanho=variante.tamanho, cor_nome=variante.cor_nome, sku=variante.sku,
+                    preco_unitario=variante.preco, quantidade=1, total_linha=variante.preco,
+                )
+                # Mantém o stock coerente com o que foi vendido.
+                Variante.objects.filter(pk=variante.pk).update(stock=F("stock") - 1)
+
+            Pagamento.objects.create(
+                encomenda=encomenda, provedor="simulador", estado=EstadoPagamento.PAGO,
+                montante=encomenda.total, referencia=f"CPP-DEMO{referencia:04d}",
+                pago_em=criada_em,
+            )
+
+            # Trilho completo, para o tracking do cliente ter o que mostrar.
+            percurso = [
+                ("", EstadoEncomenda.NOVA, "Encomenda criada."),
+                (EstadoEncomenda.NOVA, EstadoEncomenda.CONFIRMADA, "Pagamento confirmado (simulador)."),
+                (EstadoEncomenda.CONFIRMADA, EstadoEncomenda.EM_PREPARACAO, "A preparar a encomenda."),
+                (EstadoEncomenda.EM_PREPARACAO, EstadoEncomenda.ENVIADA, "Entregue à transportadora."),
+                (EstadoEncomenda.ENVIADA, EstadoEncomenda.ENTREGUE, "Entregue ao cliente."),
+            ]
+            for passo, (anterior, novo, nota) in enumerate(percurso):
+                evento = EventoEncomenda.objects.create(
+                    encomenda=encomenda, estado_anterior=anterior, estado_novo=novo, nota=nota,
+                )
+                EventoEncomenda.objects.filter(pk=evento.pk).update(
+                    criado_em=criada_em + timezone.timedelta(days=passo)
+                )
+
+            # E a avaliação que resulta da compra.
+            for variante in variantes:
+                estrelas, comentario, com_foto = AVALIACOES_DEMO[indice_comentario % len(AVALIACOES_DEMO)]
+                indice_comentario += 1
+
+                avaliacao = Avaliacao.objects.create(
+                    produto=variante.produto, utilizador=cliente,
+                    estrelas=estrelas, comentario=comentario, compra_verificada=True,
+                )
+                Avaliacao.objects.filter(pk=avaliacao.pk).update(
+                    criado_em=criada_em + timezone.timedelta(days=6)
+                )
+                total_avaliacoes += 1
+
+                # A fotografia do cliente reutiliza a imagem da peça: é a única
+                # fotografia real disponível no repositório.
+                if com_foto:
+                    imagem = variante.produto.imagens.first()
+                    if imagem and imagem.ficheiro:
+                        imagem.ficheiro.open("rb")
+                        conteudo = imagem.ficheiro.read()
+                        imagem.ficheiro.close()
+                        foto = FotoAvaliacao(avaliacao=avaliacao)
+                        foto.ficheiro.save(
+                            f"avaliacao-{avaliacao.pk}.jpg", ContentFile(conteudo), save=True
+                        )
+
+        self.total_encomendas = len(CLIENTES_DEMO)
+        self.total_avaliacoes = total_avaliacoes
 
     def _cupoes(self):
         self.stdout.write("→ Cupões…")
