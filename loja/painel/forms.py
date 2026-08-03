@@ -60,7 +60,8 @@ class ProdutoForm(_FormularioBase):
         model = Produto
         fields = [
             "nome", "marca", "categoria", "descricao", "detalhes",
-            "preco", "preco_anterior", "distintivo", "novidade", "mais_vendido", "activo",
+            "preco", "preco_anterior", "preco_custo",
+            "distintivo", "novidade", "mais_vendido", "activo",
             "meta_titulo", "meta_descricao",
         ]
 

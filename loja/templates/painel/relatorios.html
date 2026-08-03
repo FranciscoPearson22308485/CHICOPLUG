@@ -1,0 +1,84 @@
+{% extends "painel/base.html" %}
+{% block accao %}
+  <a href="{% url 'painel:relatorios_exportar' %}?corte={{ corte }}&periodo={{ periodo }}"
+     class="border border-border px-6 py-3 text-[11px] uppercase tracking-[0.2em]">Exportar CSV</a>
+{% endblock %}
+{% block painel %}
+
+  <div class="space-y-3">
+    <div class="flex flex-wrap gap-2">
+      {% for chave, rotulo in cortes.items %}
+        <a href="?corte={{ chave }}&periodo={{ periodo }}"
+           class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if corte == chave %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">{{ rotulo }}</a>
+      {% endfor %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% for chave, rotulo in periodos.items %}
+        <a href="?corte={{ corte }}&periodo={{ chave }}"
+           class="border px-4 py-2 text-[11px] uppercase tracking-[0.16em] {% if periodo == chave %}border-foreground bg-foreground text-background{% else %}border-border{% endif %}">{{ rotulo }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="border border-border bg-background p-6">
+      <p class="eyebrow">Receita</p>
+      <p class="mt-3 font-display text-2xl tracking-brand">{{ totais.receita|kz }}</p>
+    </div>
+    <div class="border border-border bg-background p-6">
+      <p class="eyebrow">Lucro</p>
+      <p class="mt-3 font-display text-2xl tracking-brand">{% if financeiro.lucro is not None %}{{ financeiro.lucro|kz }}{% else %}—{% endif %}</p>
+      {% if financeiro.margem is not None %}
+        <p class="mt-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Margem {{ financeiro.margem }}%</p>
+      {% endif %}
+    </div>
+    <div class="border border-border bg-background p-6">
+      <p class="eyebrow">Peças</p>
+      <p class="mt-3 font-display text-2xl tracking-brand">{{ totais.unidades|default:"—" }}</p>
+    </div>
+    <div class="border border-border bg-background p-6">
+      <p class="eyebrow">Linhas</p>
+      <p class="mt-3 font-display text-2xl tracking-brand">{{ linhas|length }}</p>
+    </div>
+  </div>
+
+  {% if financeiro.cobertura_custo and financeiro.cobertura_custo < 100 %}
+    <p class="border border-border bg-background px-5 py-4 text-[11px] leading-relaxed text-muted-foreground">
+      O lucro foi calculado sobre <span class="font-semibold text-foreground">{{ financeiro.cobertura_custo }}%</span>
+      da facturação — a restante é de peças sem preço de custo registado. Preenche o custo
+      na ficha do produto para a margem cobrir tudo.
+    </p>
+  {% endif %}
+
+  <div class="overflow-x-auto border border-border bg-background">
+    <table class="w-full min-w-[720px] text-left text-sm">
+      <thead><tr class="border-b border-border">
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ rotulo_corte }}</th>
+        <th class="px-5 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Receita</th>
+        <th class="px-5 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peças</th>
+        <th class="px-5 py-4 text-right text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Encomendas</th>
+        <th class="px-5 py-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Peso</th>
+      </tr></thead>
+      <tbody>
+        {% for linha in linhas %}
+          <tr class="border-b border-border/60 last:border-0 hover:bg-muted/50">
+            <td class="px-5 py-4">
+              {% for campo in colunas %}{{ linha|indice:campo }}{% if not forloop.last %} · {% endif %}{% endfor %}
+            </td>
+            <td class="px-5 py-4 text-right tabular-nums">{{ linha.receita|kz }}</td>
+            <td class="px-5 py-4 text-right tabular-nums text-muted-foreground">{{ linha.unidades|default:"—" }}</td>
+            <td class="px-5 py-4 text-right tabular-nums text-muted-foreground">{{ linha.encomendas|default:"—" }}</td>
+            <td class="px-5 py-4">
+              <div class="flex items-center gap-3">
+                <span class="h-1 w-24 bg-muted"><span class="block h-full bg-brand" style="width: {{ linha.percentagem }}%"></span></span>
+                <span class="text-[10px] tabular-nums text-muted-foreground">{{ linha.percentagem }}%</span>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="px-5 py-10 text-center text-sm text-muted-foreground">Sem vendas no período escolhido.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

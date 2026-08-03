@@ -278,6 +278,111 @@ class ReposicaoPeloPainelTests(BasePainel):
         self.assertContains(resposta, "ana@teste.ao")
 
 
+class RelatoriosTests(BasePainel):
+    """
+    As agregações são o coração do dashboard: um número errado aqui leva a
+    decisões de compra erradas.
+    """
+
+    def setUp(self):
+        super().setUp()
+        from encomendas.models import Encomenda, EstadoEncomenda, ItemEncomenda
+
+        self.produto.preco_custo = 20000
+        self.produto.save()
+
+        def encomenda(referencia, estado, total):
+            e = Encomenda.objects.create(
+                referencia=referencia, nome_cliente="Ana", email="ana@teste.ao",
+                telefone="+244900000000", estado=estado, subtotal=total, total=total,
+                provincia="Luanda", municipio="Talatona", rua="Rua Teste",
+            )
+            ItemEncomenda.objects.create(
+                encomenda=e, variante=self.variante, marca="Marca Teste",
+                nome_produto="Hoodie Teste", slug_produto=self.produto.slug,
+                tamanho="M", cor_nome="Preto", sku="CP-T-0001",
+                preco_unitario=total, quantidade=1, total_linha=total,
+            )
+            return e
+
+        encomenda("CP-7001", EstadoEncomenda.ENTREGUE, 50000)
+        encomenda("CP-7002", EstadoEncomenda.CONFIRMADA, 30000)
+        self.cancelada = encomenda("CP-7003", EstadoEncomenda.CANCELADA, 99000)
+
+    def test_canceladas_nao_contam_como_receita(self):
+        from painel import relatorios
+
+        # 50000 + 30000; a cancelada de 99000 fica de fora.
+        self.assertEqual(relatorios.resumo()["receita"], 80000)
+
+    def test_lucro_usa_o_preco_de_custo(self):
+        from painel import relatorios
+
+        dados = relatorios.margem()
+        # Receita 80000, custo 2 × 20000.
+        self.assertEqual(dados["lucro"], 40000)
+        self.assertEqual(dados["margem"], 50.0)
+
+    def test_sem_custo_nao_inventa_margem(self):
+        from painel import relatorios
+
+        self.produto.preco_custo = None
+        self.produto.save()
+        self.assertIsNone(relatorios.margem()["lucro"])
+
+    def test_metricas_que_dependem_de_visitas_ficam_none(self):
+        from painel import relatorios
+
+        dados = relatorios.resumo()
+        # Zero seria uma mentira; None faz o ecrã explicar a ausência.
+        self.assertIsNone(dados["taxa_conversao"])
+        self.assertIsNone(dados["produto_mais_visto"])
+
+    def test_corte_por_marca(self):
+        from painel import relatorios
+
+        linhas = relatorios.por_marca()
+        self.assertEqual(linhas[0]["marca"], "Marca Teste")
+        self.assertEqual(linhas[0]["receita"], 80000)
+
+    def test_serie_diaria_inclui_dias_sem_vendas(self):
+        from painel import relatorios
+
+        serie = relatorios.por_dia(30)
+        # Saltar os dias a zero faria o gráfico mentir sobre a cadência.
+        self.assertEqual(len(serie), 30)
+        self.assertTrue(any(d["receita"] == 0 for d in serie))
+
+    def test_percentagens_somam_cem(self):
+        from painel import relatorios
+
+        linhas = relatorios.com_percentagem(relatorios.por_marca())
+        self.assertEqual(sum(l["percentagem"] for l in linhas), 100)
+
+    def test_pagina_abre_em_todos_os_cortes(self):
+        for corte in ("marca", "categoria", "produto", "cidade", "cliente"):
+            with self.subTest(corte):
+                resposta = self.client.get(reverse("painel:relatorios"), {"corte": corte})
+                self.assertEqual(resposta.status_code, 200)
+
+    def test_corte_invalido_nao_rebenta(self):
+        resposta = self.client.get(reverse("painel:relatorios"), {"corte": "lixo", "periodo": "x"})
+        self.assertEqual(resposta.status_code, 200)
+
+    def test_exportacao_csv(self):
+        resposta = self.client.get(reverse("painel:relatorios_exportar"), {"corte": "marca"})
+        self.assertEqual(resposta["Content-Type"], "text/csv")
+        self.assertIn(b"Marca Teste", resposta.content)
+
+    def test_cliente_nao_ve_relatorios(self):
+        self.client.logout()
+        Utilizador.objects.create_user(
+            email="c@teste.ao", password="Password1", primeiro_nome="A", apelido="B"
+        )
+        self.client.login(username="c@teste.ao", password="Password1")
+        self.assertEqual(self.client.get(reverse("painel:relatorios")).status_code, 302)
+
+
 class EntradasMalFormadasTests(BasePainel):
     """
     Os nomes dos campos e os valores vêm do cliente. Antes destas guardas, um
@@ -373,7 +478,7 @@ class PaginasRenderizamTests(BasePainel):
 
     SEM_ARGUMENTOS = [
         "painel:dashboard", "painel:produtos", "painel:marcas", "painel:categorias",
-        "painel:cupoes", "painel:avaliacoes", "painel:encomendas", "painel:stock",
+        "painel:cupoes", "painel:relatorios", "painel:avaliacoes", "painel:encomendas", "painel:stock",
         "painel:definicoes", "painel:marca_nova", "painel:categoria_nova",
         "painel:cupao_novo", "painel:produto_novo",
     ]

@@ -164,6 +164,9 @@ class Produto(models.Model):
 
     preco = models.PositiveIntegerField("preço (Kz)")
     preco_anterior = models.PositiveIntegerField("preço anterior (Kz)", null=True, blank=True)
+    # Quanto a loja pagou pela peça. Opcional: sem ele o lucro e a margem
+    # ficam por calcular, e é preferível não os mostrar a mostrá-los errados.
+    preco_custo = models.PositiveIntegerField("preço de custo (Kz)", null=True, blank=True)
 
     marca = models.ForeignKey(Marca, on_delete=models.PROTECT, related_name="produtos")
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT, related_name="produtos")

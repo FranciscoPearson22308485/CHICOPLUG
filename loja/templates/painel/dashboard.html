@@ -1,5 +1,7 @@
 {% extends "painel/base.html" %}
 {% block painel %}
+
+  {# ── Cartões principais ──────────────────────────────────────────────── #}
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     {% for rotulo, valor, nota in cartoes %}
       <div class="border border-border bg-background p-6">
@@ -10,6 +12,62 @@
     {% endfor %}
   </div>
 
+  {# ── Receita diária ──────────────────────────────────────────────────── #}
+  <div>
+    <div class="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+      <p class="eyebrow">Receita diária — 30 dias</p>
+      <p class="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+        Semana {{ d.receita_semana|kz }} · Mês {{ d.receita_mes|kz }}
+      </p>
+    </div>
+    <div class="border border-border bg-background p-6">
+      <div class="flex h-40 items-end gap-1">
+        {% for dia in serie_dias %}
+          <div class="group relative flex-1" title="{{ dia.dia|date:'d/m/Y' }}: {{ dia.receita|kz }}">
+            {# Altura mínima visível para os dias a zero não desaparecerem. #}
+            <span class="block w-full {% if dia.receita %}bg-brand{% else %}bg-muted{% endif %}"
+                  style="height: {% if dia.altura %}{{ dia.altura }}{% else %}2{% endif %}%; min-height: 2px;"></span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="mt-3 flex justify-between text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+        <span>{{ serie_dias.0.dia|date:"d/m" }}</span>
+        <span>{{ serie_dias|last|indice:"dia"|date:"d/m" }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── Operação ────────────────────────────────────────────────────────── #}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {% for rotulo, valor in operacao %}
+      <div class="border border-border bg-background px-5 py-4">
+        <p class="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{{ rotulo }}</p>
+        <p class="mt-1.5 text-xl font-semibold tabular-nums">{{ valor }}</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  {# ── Métricas que precisam de registo de visitas ─────────────────────── #}
+  {% if d.taxa_conversao is None %}
+    <div class="border border-border bg-background px-5 py-4">
+      <p class="text-[11px] leading-relaxed text-muted-foreground">
+        <span class="font-semibold text-foreground">Taxa de conversão</span> e
+        <span class="font-semibold text-foreground">produto mais visto</span> precisam de
+        registo de visitas, que ainda não existe na loja. Ficam por mostrar em vez de
+        aparecerem com um valor inventado.
+      </p>
+    </div>
+  {% endif %}
+
+  {# ── Cortes ──────────────────────────────────────────────────────────── #}
+  <div class="grid gap-6 xl:grid-cols-2">
+    {% include "painel/_barras.html" with linhas=top_marcas rotulo="Marcas mais vendidas" campos=campos_marca %}
+    {% include "painel/_barras.html" with linhas=top_categorias rotulo="Categorias mais vendidas" campos=campos_categoria %}
+    {% include "painel/_barras.html" with linhas=top_produtos rotulo="Peças mais vendidas" campos=campos_produto %}
+    {% include "painel/_barras.html" with linhas=top_cidades rotulo="Onde mais se compra" campos=campos_cidade %}
+  </div>
+
+  {# ── Encomendas recentes e stock ─────────────────────────────────────── #}
   <div class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
     <div>
       <p class="eyebrow mb-4">Encomendas recentes</p>

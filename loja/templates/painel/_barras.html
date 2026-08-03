@@ -1,0 +1,28 @@
+{% comment %}
+  Lista com barra proporcional. Recebe `linhas` (com `percentagem` e `receita`),
+  `rotulo` para o cabeçalho e `campos` — a lista de chaves a concatenar no nome.
+  Barras em CSS puro: nenhuma biblioteca de gráficos para desenhar rectângulos.
+{% endcomment %}
+<div>
+  <p class="eyebrow mb-4">{{ rotulo }}</p>
+  <div class="border border-border bg-background">
+    {% for linha in linhas %}
+      <div class="border-b border-border/60 px-5 py-4 last:border-0">
+        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4">
+          <p class="truncate text-sm">
+            {% for campo in campos %}{{ linha|indice:campo }}{% if not forloop.last %} {% endif %}{% endfor %}
+          </p>
+          <p class="shrink-0 text-sm tabular-nums">{{ linha.receita|kz }}</p>
+        </div>
+        <div class="mt-2.5 flex items-center gap-3">
+          <span class="h-1 flex-1 bg-muted">
+            <span class="block h-full bg-brand" style="width: {{ linha.percentagem }}%"></span>
+          </span>
+          <span class="w-9 shrink-0 text-right text-[10px] tabular-nums text-muted-foreground">{{ linha.percentagem }}%</span>
+        </div>
+      </div>
+    {% empty %}
+      <p class="px-5 py-10 text-center text-sm text-muted-foreground">Sem dados no período.</p>
+    {% endfor %}
+  </div>
+</div>

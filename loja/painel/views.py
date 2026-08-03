@@ -20,6 +20,8 @@ from encomendas.pagamentos import estado_integracao
 from encomendas.services import ErroDeNegocio, alertas_de_stock
 from encomendas.services import mudar_estado as mudar_estado_encomenda
 
+from . import relatorios
+
 from .forms import CategoriaForm, CupaoForm, ImagemFormSet, MarcaForm, ProdutoForm, VarianteFormSet
 
 # O acesso é decidido pelo papel, não pelo `is_staff` do Django.
@@ -33,6 +35,7 @@ def _menu(seccao):
         ("painel:marcas", "Marcas", "marcas"),
         ("painel:categorias", "Categorias", "categorias"),
         ("painel:cupoes", "Cupões", "cupoes"),
+        ("painel:relatorios", "Relatórios", "relatorios"),
         ("painel:avaliacoes", "Avaliações", "avaliacoes"),
         ("painel:encomendas", "Encomendas", "encomendas"),
         ("painel:stock", "Stock", "stock"),
@@ -50,28 +53,112 @@ def _kz(valor):
 
 @so_admin
 def dashboard(request):
-    ha_30_dias = timezone.now() - timezone.timedelta(days=30)
-    # Encomendas canceladas não contam como receita.
-    facturaveis = Encomenda.objects.exclude(estado=EstadoEncomenda.CANCELADA)
-    periodo = facturaveis.filter(criado_em__gte=ha_30_dias).aggregate(
-        receita=Sum("total"), total=Count("id")
-    )
-
-    hoje = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    d = relatorios.resumo()
 
     return render(request, "painel/dashboard.html", {
         **_menu("dashboard"),
         "titulo_painel": "Dashboard",
+        "d": d,
         "cartoes": [
-            ("Vendas (30d)", _kz(periodo["receita"]), None),
-            ("Encomendas", str(periodo["total"] or 0),
-             f"+{Encomenda.objects.filter(criado_em__gte=hoje).count()} hoje"),
-            ("Clientes", str(Utilizador.objects.filter(papel=Utilizador.Papel.CLIENTE).count()), None),
-            ("Produtos activos", str(Produto.objects.filter(activo=True).count()), None),
+            ("Receita (30d)", _kz(d["receita"]), f"{d['encomendas']} encomendas"),
+            ("Ticket médio", _kz(d["ticket_medio"]), f"{d['unidades']} peças vendidas"),
+            ("Lucro (30d)", _kz(d["lucro"]) if d["lucro"] is not None else "—",
+             f"margem {d['margem']}%" if d["margem"] is not None else "sem preços de custo"),
+            ("Clientes", str(d["clientes_total"]),
+             f"+{d['clientes_novos']} novos · {d['clientes_recorrentes']} recorrentes"),
         ],
+        "operacao": [
+            ("Encomendas pendentes", d["pendentes"]),
+            ("Encomendas enviadas", d["enviadas"]),
+            ("Carrinhos abandonados", d["carrinhos_abandonados"]),
+            ("Variantes em stock crítico", d["stock_critico"]),
+        ],
+        "serie_dias": relatorios.escalar(relatorios.por_dia(30)),
+        "top_marcas": relatorios.com_percentagem(relatorios.por_marca(limite=6)),
+        "top_categorias": relatorios.com_percentagem(relatorios.por_categoria(limite=6)),
+        "top_produtos": relatorios.com_percentagem(relatorios.por_produto(limite=6)),
+        "top_cidades": relatorios.com_percentagem(relatorios.por_cidade(limite=6)),
+        # Que chaves compõem o nome em cada lista de barras.
+        "campos_marca": ["marca"],
+        "campos_categoria": ["nome"],
+        "campos_produto": ["marca", "nome_produto"],
+        "campos_cidade": ["municipio", "provincia"],
         "recentes": Encomenda.objects.prefetch_related("itens")[:6],
         "alertas": alertas_de_stock()[:8],
     })
+
+
+# ─── Relatórios ───────────────────────────────────────────────────────────────
+
+CORTES = {
+    "marca": ("Por marca", relatorios.por_marca, ["marca"]),
+    "categoria": ("Por categoria", relatorios.por_categoria, ["nome"]),
+    "produto": ("Por produto", relatorios.por_produto, ["marca", "nome_produto"]),
+    "cidade": ("Por cidade", relatorios.por_cidade, ["provincia", "municipio"]),
+    "cliente": ("Por cliente", relatorios.por_cliente, ["nome_cliente", "email"]),
+}
+
+PERIODOS = {"7": "7 dias", "30": "30 dias", "90": "90 dias", "365": "12 meses", "": "Sempre"}
+
+
+def _parametros(request):
+    corte = request.GET.get("corte", "marca")
+    if corte not in CORTES:
+        corte = "marca"
+
+    periodo = request.GET.get("periodo", "30")
+    if periodo not in PERIODOS:
+        periodo = "30"
+
+    desde = None
+    if periodo:
+        desde = timezone.now() - timezone.timedelta(days=int(periodo))
+    return corte, periodo, desde
+
+
+@so_admin
+def relatorios_view(request):
+    corte, periodo, desde = _parametros(request)
+    rotulo, funcao, colunas = CORTES[corte]
+    linhas = relatorios.com_percentagem(funcao(desde=desde))
+
+    return render(request, "painel/relatorios.html", {
+        **_menu("relatorios"), "titulo_painel": "Relatórios",
+        "linhas": linhas,
+        "colunas": colunas,
+        "corte": corte,
+        "rotulo_corte": rotulo,
+        "cortes": {c: v[0] for c, v in CORTES.items()},
+        "periodo": periodo,
+        "periodos": PERIODOS,
+        "totais": {
+            "receita": sum(l.get("receita") or 0 for l in linhas),
+            "unidades": sum(l.get("unidades") or 0 for l in linhas),
+            "encomendas": sum(l.get("encomendas") or 0 for l in linhas),
+        },
+        "financeiro": relatorios.margem(desde),
+    })
+
+
+@so_admin
+def relatorios_exportar(request):
+    corte, periodo, desde = _parametros(request)
+    rotulo, funcao, colunas = CORTES[corte]
+    linhas = funcao(desde=desde)
+
+    resposta = HttpResponse(content_type="text/csv")
+    resposta["Content-Disposition"] = f'attachment; filename="relatorio-{corte}-{periodo or "sempre"}.csv"'
+
+    escritor = csv.writer(resposta)
+    metricas = ["receita", "unidades", "encomendas"]
+    # Só as métricas que este corte devolve — colunas sempre vazias são ruído.
+    metricas = [m for m in metricas if linhas and m in linhas[0]]
+    escritor.writerow([c.replace("_", " ").title() for c in colunas] + [m.title() for m in metricas])
+
+    for linha in linhas:
+        escritor.writerow([linha.get(c, "") for c in colunas] + [linha.get(m, 0) for m in metricas])
+
+    return resposta
 
 
 # ─── Produtos ─────────────────────────────────────────────────────────────────

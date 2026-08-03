@@ -232,6 +232,7 @@ class Command(BaseCommand):
             categorias = self._categorias()
             marcas = self._marcas(copiar_imagens)
             self._produtos(categorias, marcas, copiar_imagens)
+            self._custos()
             self._contas()
             self._encomendas_e_avaliacoes()
             self._cupoes()
@@ -381,6 +382,21 @@ class Command(BaseCommand):
             rua="Rua Amílcar Cabral, 42",
             principal=True,
         )
+
+    def _custos(self):
+        """
+        Preço de custo de demonstração, para o dashboard ter lucro e margem.
+
+        A revenda multimarca trabalha tipicamente com o custo entre 40% e 50%
+        do preço de venda; usamos 45%, variando ligeiramente por peça para as
+        margens do relatório não saírem todas iguais.
+        """
+        self.stdout.write("→ Preços de custo…")
+        for posicao, produto in enumerate(Produto.objects.order_by("id")):
+            fraccao = 0.42 + (posicao % 5) * 0.02
+            Produto.objects.filter(pk=produto.pk).update(
+                preco_custo=int(produto.preco * fraccao)
+            )
 
     def _encomendas_e_avaliacoes(self):
         """
