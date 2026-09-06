@@ -525,7 +525,8 @@ body.tema-xp::after {
 .tema-xp h2 {
   font-family: var(--font-display);
   font-weight: 800;
-  line-height: 0.9;
+  /* Ver nota no título do hero: os acentos em maiúsculas precisam de 0.93. */
+  line-height: 0.95;
   letter-spacing: -0.015em;
   text-transform: uppercase;
 }
@@ -1120,4 +1121,152 @@ body.tema-xp::after {
    abaixo do mínimo. Em modo noite passa ao azul claro. */
 .dark .tema-xp .xp-product-caption > div:first-child p:first-child {
   color: var(--sis-azul-claro) !important;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+
+/*
+ * O hero é um ficheiro aberto do arquivo. A barra por cima da fotografia dá-lhe
+ * a moldura de sistema e, mais importante, tira-lhe o ar de campanha de moda:
+ * uma fotografia com metadados por cima lê-se como documento, não como anúncio.
+ */
+.sis-hero-barra {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--sis-fio-forte);
+  border-bottom: 0;
+  background: var(--sis-chrome-alta);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sis-prata);
+}
+.sis-hero-barra span {
+  padding: 7px 13px;
+  border-right: 1px solid var(--sis-fio);
+}
+.sis-hero-ficheiro { color: var(--sis-tinta); }
+.sis-hero-estado {
+  margin-left: auto;
+  border-right: 0 !important;
+  color: var(--sis-azul);
+}
+.sis-hero-estado::before { content: "● "; }
+
+.sis-hero-palco {
+  position: relative;
+  height: 78svh;
+  min-height: 460px;
+  overflow: hidden;
+  border: 1px solid var(--sis-fio-forte);
+  background: #04060b;
+}
+
+/*
+ * Tratamento da fotografia: dessaturada, contrastada e escurecida. É o que faz
+ * a imagem parecer um ficheiro guardado há anos em vez de uma produção nova, e
+ * o que garante que o texto branco assenta sempre — em qualquer fotografia que
+ * venha a substituir esta.
+ */
+.tema-xp .xp-home-hero img {
+  filter: saturate(0.5) contrast(1.15) brightness(0.72);
+}
+
+.sis-hero-veu {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgb(4 6 11 / 88%) 0%, rgb(4 6 11 / 20%) 55%, rgb(4 6 11 / 55%) 100%),
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 3%) 0 1px, transparent 1px 3px);
+}
+
+/* Etiqueta técnica com separador, em vez de uma linha de texto corrida. */
+.sis-hero-etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 78%);
+}
+.sis-hero-etiqueta i {
+  width: 26px;
+  height: 1px;
+  background: var(--sis-azul-claro);
+}
+
+.sis-hero-titulo {
+  max-width: 15ch;
+  font-family: var(--font-display) !important;
+  font-size: clamp(2.9rem, 11vw, 8.5rem) !important;
+  font-weight: 800;
+  /*
+   * 0.95 e não 0.83.
+   *
+   * Em maiúsculas o acento agudo sobe acima da altura de capitular: medido,
+   * "Ó" precisa de 0.93 do corpo, contra 0.77 de um "O". Com a caixa mais
+   * apertada o acento era cortado e "SÓ LUGAR" lia-se "SO LUGAR" — um defeito
+   * que só se vê em português, e que passaria despercebido em inglês.
+   */
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+/* Metadados no canto — assinatura do sistema sobre a imagem. */
+.sis-hero-meta {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: rgb(255 255 255 / 62%);
+}
+.sis-hero-meta span {
+  padding: 6px 11px;
+  border-top: 1px solid rgb(255 255 255 / 18%);
+  border-left: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(4 6 11 / 55%);
+}
+
+/* Controlos de sistema sobre a fotografia. Cores fixas: seguir o tema
+   deixaria o botão escuro sobre escuro em modo noite. */
+.sis-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border: 1px solid rgb(255 255 255 / 42%);
+  background: rgb(255 255 255 / 6%);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  backdrop-filter: blur(2px);
+  transition: border-color 140ms linear, background 140ms linear, color 140ms linear;
+}
+.sis-botao:hover { border-color: #fff; background: rgb(255 255 255 / 14%); }
+
+.sis-botao-primario {
+  border-color: var(--sis-azul-claro);
+  background: var(--sis-azul);
+  color: #fff;
+}
+.sis-botao-primario:hover { border-color: #fff; background: var(--sis-azul-claro); }
+
+@media (max-width: 767px) {
+  .sis-hero-palco { height: 66svh; min-height: 380px; }
+  .sis-hero-barra span { padding: 6px 9px; }
+  .sis-hero-meta { display: none; }
 }

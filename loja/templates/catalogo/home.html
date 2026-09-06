@@ -5,34 +5,53 @@
 
 {% block conteudo %}
   <!-- ── HERO ─────────────────────────────────────────────────────────────── -->
-  <section class="xp-home-hero relative h-[92svh] min-h-[560px] w-full overflow-hidden bg-ink">
-    <img src="{% static 'img/hero.jpg' %}" alt="Editorial de streetwear CHICOPLUG"
-         width="1600" height="1904" fetchpriority="high"
-         class="absolute inset-0 size-full object-cover object-[50%_35%] opacity-90" />
-    <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-ink/30"></div>
+  {% comment %}
+    Hero como ficheiro aberto do arquivo, não como campanha de moda.
 
-    <div class="shell relative flex h-full flex-col justify-end pb-16 md:pb-24">
-      <p class="reveal text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
-        Streetwear premium — Luanda
-      </p>
-      <h1 class="reveal display-xl mt-6 max-w-[16ch] text-[13vw] text-white sm:text-[10vw] lg:text-[7.5vw]" style="--atraso:120ms">
-        As melhores<br />marcas num<br />só lugar
-      </h1>
-      <div class="reveal mt-10 flex flex-wrap items-center gap-4" style="--atraso:240ms">
-        {% comment %}
-          O hero assenta sobre fotografia escura nos dois temas: o botão é
-          branco fixo, senão em modo noturno ficaria escuro sobre escuro.
-        {% endcomment %}
-        <a href="{% url 'catalogo:shop' %}"
-           class="group inline-flex items-center gap-4 bg-white px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ink transition-colors hover:bg-brand hover:text-brand-foreground">
-          Comprar Agora
-          <svg class="size-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 12h14m-7-7 7 7-7 7"/></svg>
-        </a>
-        <a href="{% url 'catalogo:marcas' %}"
-           class="inline-flex items-center gap-4 border border-white/40 px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-white transition-colors hover:border-white hover:bg-white hover:text-ink">
-          Ver Marcas
-        </a>
+    A barra superior dá-lhe a moldura de sistema; a fotografia é tratada em
+    CSS (dessaturada, contrastada, escurecida) para parecer digitalizada e não
+    uma imagem de catálogo de luxo. Os botões são controlos de sistema, e o
+    canto inferior direito carrega os metadados do ficheiro.
+  {% endcomment %}
+  <section class="xp-home-hero relative w-full overflow-hidden bg-ink">
+    <div class="sis-hero-barra">
+      <span class="sis-hero-ficheiro">hero_luanda_01.jpg</span>
+      <span class="max-sm:hidden">1600 × 1904</span>
+      <span class="max-md:hidden">ARQUIVO / EDITORIAL</span>
+      <span class="sis-hero-estado">CARREGADO</span>
+    </div>
+
+    <div class="sis-hero-palco">
+      <img src="{% static 'img/hero.jpg' %}" alt="Editorial de streetwear CHICOPLUG em Luanda"
+           width="1600" height="1904" fetchpriority="high"
+           class="absolute inset-0 size-full object-cover object-[50%_35%]" />
+      <div class="sis-hero-veu"></div>
+
+      <div class="shell relative flex h-full flex-col justify-end pb-14 md:pb-20">
+        <p class="reveal sis-hero-etiqueta">
+          <span>Streetwear premium</span><i></i><span>Luanda / Angola</span>
+        </p>
+        <h1 class="reveal sis-hero-titulo mt-5" style="--atraso:120ms">
+          As melhores<br />marcas num<br />só lugar
+        </h1>
+
+        <div class="reveal mt-9 flex flex-wrap items-center gap-3" style="--atraso:240ms">
+          {% comment %}
+            Sobre fotografia escura nos dois ambientes, por isso as cores são
+            fixas: seguir o tema deixaria o botão escuro sobre escuro à noite.
+          {% endcomment %}
+          <a href="{% url 'catalogo:shop' %}" class="sis-botao sis-botao-primario">
+            Abrir catálogo
+            <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M5 12h14m-6-7 7 7-7 7"/></svg>
+          </a>
+          <a href="{% url 'catalogo:marcas' %}" class="sis-botao">Ver marcas</a>
+        </div>
       </div>
+
+      <p class="sis-hero-meta">
+        <span>CHICOPLUG SYSTEM</span>
+        <span>EST. 2026</span>
+      </p>
     </div>
   </section>
 
