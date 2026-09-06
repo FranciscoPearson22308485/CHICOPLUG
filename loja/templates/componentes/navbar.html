@@ -1,73 +1,50 @@
-{# Navbar da loja. As classes são exactamente as do desenho original. #}
-<header
-  id="navbar"
-  class="sticky top-0 z-50 border-b border-transparent bg-background transition-colors duration-500"
-  data-navbar
->
-  <div class="shell grid h-16 grid-cols-[auto_1fr_auto] items-center gap-4 md:h-20">
-    <!-- Menu mobile -->
-    <div class="flex items-center gap-2 md:hidden">
-      <button aria-label="Abrir menu" data-abrir-menu class="grid size-9 place-items-center">
-        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-    </div>
-
-    <!-- Navegação desktop -->
-    <nav class="hidden items-center gap-8 md:flex">
-      <a href="{% url 'catalogo:shop' %}" data-mega="1" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] {% if request.resolver_match.url_name == 'shop' %}text-foreground{% else %}text-muted-foreground hover:text-foreground{% endif %}">Shop</a>
-      <a href="{% url 'catalogo:marcas' %}" data-mega="1" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] {% if 'marca' in request.resolver_match.url_name %}text-foreground{% else %}text-muted-foreground hover:text-foreground{% endif %}">Marcas</a>
-      <a href="{% url 'catalogo:sobre' %}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Sobre</a>
-      <a href="{% url 'catalogo:contacto' %}" class="link-underline text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Contacto</a>
-    </nav>
-
-    <a href="{% url 'catalogo:home' %}" class="justify-self-center font-display text-xl uppercase leading-none tracking-brand md:text-2xl">
-      CHICO<span class="text-brand">PLUG</span>
-    </a>
-
-    <div class="flex items-center gap-1 justify-self-end md:gap-3">
-      <button data-tema aria-label="Alternar tema" class="grid size-9 place-items-center">
-        <svg data-icone-lua class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg data-icone-sol class="hidden size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-
-      <button data-abrir-pesquisa aria-label="Pesquisar" class="grid size-9 place-items-center">
-        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
-      </button>
-
-      <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}"
-         aria-label="{% if user.is_authenticated %}A minha conta{% else %}Entrar{% endif %}"
-         class="relative hidden size-9 place-items-center md:grid">
-        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        {% if user.is_authenticated %}<span class="absolute bottom-1 right-1 size-1.5 rounded-full bg-brand"></span>{% endif %}
-      </a>
-
-      <a href="{% url 'encomendas:carrinho' %}" aria-label="Carrinho" class="relative grid size-9 place-items-center">
-        <svg class="size-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path stroke-linecap="round" d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
-        <span data-contador-carrinho
-              class="absolute -right-0.5 -top-0.5 {% if not carrinho_total_pecas %}hidden {% endif %}grid size-4 place-items-center bg-brand text-[9px] font-bold text-brand-foreground">{{ carrinho_total_pecas }}</span>
-      </a>
-    </div>
+<header id="navbar" class="xp-browser" data-navbar>
+  <div class="xp-titlebar">
+    <a href="{% url 'catalogo:home' %}" class="xp-app-mark" aria-label="CHICOPLUG — página inicial">CP</a>
+    <p class="xp-window-title">CHICOPLUG Online</p>
+    <div class="xp-window-controls" aria-hidden="true"><span>—</span><span>□</span><span>×</span></div>
   </div>
 
-  <!-- Painel de pesquisa -->
-  <div data-painel-pesquisa class="hidden border-t border-border">
-    <form action="{% url 'catalogo:shop' %}" method="get" class="shell flex items-center gap-4 py-5">
-      <svg class="size-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
-      <input type="search" name="pesquisa" autocomplete="off" data-campo-pesquisa
-             placeholder="Procurar marcas, peças, categorias…" aria-label="Pesquisar no catálogo"
-             class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
-      <button type="submit" class="shrink-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground">Procurar</button>
+  <nav class="xp-menubar" aria-label="Navegação principal">
+    <button aria-label="Abrir menu" data-abrir-menu class="xp-menu-button md:hidden">☰</button>
+    <a href="{% url 'catalogo:shop' %}" data-mega="1">Loja</a>
+    <a href="{% url 'catalogo:marcas' %}" data-mega="1">Marcas</a>
+    <a href="{% url 'catalogo:promocoes' %}">Promoções</a>
+    <a href="{% url 'catalogo:novidades' %}">Novidades</a>
+    <a href="{% url 'catalogo:galeria' %}">Galeria</a>
+    <a href="{% url 'catalogo:contacto' %}">Contacto</a>
+  </nav>
+
+  <div class="xp-toolbar">
+    <a href="{% url 'catalogo:home' %}" class="xp-tool-button" title="Página inicial"><span class="xp-tool-icon">⌂</span><span>Início</span></a>
+    <a href="{% url 'catalogo:shop' %}" class="xp-tool-button"><span class="xp-tool-icon">◀</span><span>Loja</span></a>
+    <button data-abrir-pesquisa class="xp-tool-button" type="button"><span class="xp-tool-icon">⌕</span><span>Pesquisar</span></button>
+    <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}" class="xp-tool-button"><span class="xp-tool-icon">♙</span><span>{% if user.is_authenticated %}Conta{% else %}Entrar{% endif %}</span></a>
+    <a href="{% url 'encomendas:carrinho' %}" class="xp-tool-button xp-cart-button"><span class="xp-tool-icon">▣</span><span>Carrinho</span><b data-contador-carrinho class="{% if not carrinho_total_pecas %}hidden {% endif %}xp-cart-count">{{ carrinho_total_pecas }}</b></a>
+    <button data-tema aria-label="Alternar tema" class="xp-tool-button xp-theme-button" type="button"><span data-icone-lua>◐</span><span data-icone-sol class="hidden">☀</span><span class="max-sm:hidden">Tema</span></button>
+  </div>
+
+  <div class="xp-addressbar">
+    <span class="xp-address-label">Endereço</span>
+    <span class="xp-address-value">https://www.chicoplug.ao{{ request.path }}</span>
+    <a href="{% url 'catalogo:shop' %}" class="xp-go-button">Ir</a>
+  </div>
+
+  <div data-painel-pesquisa class="xp-search-panel hidden">
+    <form action="{% url 'catalogo:shop' %}" method="get" class="xp-search-form">
+      <label for="pesquisa-xp">Procurar</label>
+      <input id="pesquisa-xp" type="search" name="pesquisa" autocomplete="off" data-campo-pesquisa placeholder="Marcas, peças, categorias…" aria-label="Pesquisar no catálogo" />
+      <button type="submit" class="xp-go-button">Pesquisar</button>
     </form>
-    <div data-sugestoes class="shell hidden pb-6"></div>
+    <div data-sugestoes class="shell hidden pb-4"></div>
   </div>
 
-  <!-- Mega menu -->
   {% comment %}
     Sem md:block: o gatilho (data-mega) já só existe dentro do <nav> md:flex, e
     "hidden md:block" tornaria este menu visível em qualquer ecrã de desktop
     desde o primeiro render — o md:block ganha sempre ao hidden na cascata.
   {% endcomment %}
-  <div data-mega-menu class="hidden overflow-hidden border-t border-border">
+  <div data-mega-menu class="xp-mega-menu hidden">
     <div class="shell grid grid-cols-12 gap-10 py-12">
       <div class="col-span-3">
         <p class="eyebrow mb-6">Categorias</p>

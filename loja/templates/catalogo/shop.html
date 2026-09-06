@@ -8,7 +8,7 @@
 {% block descricao %}{{ descricao_pagina|default:"T-shirts, hoodies, jeans, sneakers, calças, casacos, bonés e acessórios das melhores marcas." }}{% endblock %}
 
 {% block conteudo %}
-<div class="pb-28 pt-14 md:pt-20">
+<div class="xp-page xp-catalogue pb-28 pt-14 md:pt-20">
   <div class="shell">
     <div class="reveal">
       <p class="eyebrow">{% if pesquisa %}Resultados da pesquisa{% else %}{{ eyebrow_pagina|default:"Todas as peças" }}{% endif %}</p>
@@ -26,7 +26,7 @@
       {% endif %}
     </div>
 
-    <div class="mt-14 grid gap-3 border-y border-border py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+    <div class="xp-catalogue-tools mt-14 grid gap-3 border-y border-border py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
       <div class="flex min-w-0 items-center gap-4">
         <button data-abrir-filtros class="inline-flex shrink-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] lg:hidden">
           Filtros{% if filtros_activos %} ({{ filtros_activos }}){% endif %}
@@ -117,7 +117,7 @@
 
       <div>
         {% if produtos %}
-          <div class="grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-3 md:gap-x-8">
+          <div class="xp-product-grid grid grid-cols-2 gap-x-4 gap-y-14 md:grid-cols-3 md:gap-x-8">
             {% for p in produtos %}
               <div class="reveal" style="--atraso:{{ forloop.counter0|mult:60 }}ms">
                 {% include "componentes/card_produto.html" with p=p prioridade=forloop.first %}

@@ -389,3 +389,643 @@
   outline: 2px solid var(--brand);
   outline-offset: 3px;
 }
+
+/*
+ * Tema da vitrina — catálogo retro inspirado na referência Windows XP.
+ *
+ * É deliberadamente aplicado só ao storefront (`.tema-xp`). O painel mantém
+ * a sua linguagem própria porque é uma ferramenta de trabalho, não uma janela
+ * de catálogo para clientes. Não há alterações de estrutura, dados ou fluxos:
+ * estes estilos só reapresentam os componentes que já existem.
+ */
+.tema-xp {
+  --font-display: "Trebuchet MS", Tahoma, Verdana, Arial, sans-serif;
+  --font-sans: Tahoma, Verdana, Arial, sans-serif;
+  --tracking-brand: 0;
+  --background: #ffffff;
+  --foreground: #111111;
+  --ink: #173a78;
+  --ink-foreground: #ffffff;
+  --surface: #ece9d8;
+  --line: #b7b7aa;
+  --card: #ffffff;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #0a55b8;
+  --primary-foreground: #ffffff;
+  --secondary: #ece9d8;
+  --secondary-foreground: #111111;
+  --muted: #e6e6dc;
+  --muted-foreground: #4a4a4a;
+  --accent: #d8e8ff;
+  --accent-foreground: #111111;
+  --brand: #0a63cf;
+  --brand-foreground: #ffffff;
+  --border: #7f9db9;
+  --input: #7f9db9;
+  --ring: #145dd0;
+  --destructive: #b91e1e;
+  --destructive-foreground: #ffffff;
+}
+
+.dark .tema-xp {
+  --background: #1e2a42;
+  --foreground: #f8f8f8;
+  --ink: #14213d;
+  --ink-foreground: #ffffff;
+  --surface: #293b5b;
+  --line: #5877a8;
+  --card: #243553;
+  --card-foreground: #f8f8f8;
+  --popover: #243553;
+  --popover-foreground: #f8f8f8;
+  --primary: #c9e0ff;
+  --primary-foreground: #172641;
+  --secondary: #293b5b;
+  --secondary-foreground: #f8f8f8;
+  --muted: #2d4265;
+  --muted-foreground: #c3d0e5;
+  --accent: #3d5d8f;
+  --accent-foreground: #ffffff;
+  --brand: #5fa6ff;
+  --brand-foreground: #071b39;
+  --border: #6489be;
+  --input: #7696c5;
+  --ring: #9ecbff;
+}
+
+body.tema-xp {
+  background: #6d8fc5;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  image-rendering: auto;
+}
+
+.tema-xp main {
+  max-width: 1600px;
+  min-height: calc(100svh - 160px);
+  margin: 0 auto;
+  background: var(--background);
+  border-inline: 1px solid #5279b5;
+}
+
+.tema-xp h1,
+.tema-xp h2,
+.tema-xp h3,
+.tema-xp h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.15;
+  text-transform: none;
+}
+
+.tema-xp h1 { font-size: clamp(1.5rem, 2.8vw, 2rem) !important; }
+.tema-xp h2 { font-size: clamp(1.25rem, 2vw, 1.55rem) !important; }
+.tema-xp .eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tema-xp .shell {
+  max-width: 1500px;
+  padding-inline: 18px;
+}
+
+.tema-xp .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.tema-xp .link-underline::after { display: none; }
+
+/* Janela e barras do faux-browser. */
+.xp-browser {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  max-width: 1600px;
+  margin: 0 auto;
+  overflow: visible;
+  border-inline: 1px solid #5279b5;
+  background: #ece9d8;
+  color: #000000;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+}
+
+.xp-titlebar {
+  display: flex;
+  align-items: center;
+  min-height: 31px;
+  padding: 3px 5px;
+  gap: 7px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #469cf3 0%, #1f77d5 45%, #0755b4 100%);
+  border-bottom: 1px solid #0a3e98;
+}
+
+.xp-app-mark {
+  display: grid;
+  width: 21px;
+  height: 21px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 80%);
+  background: linear-gradient(135deg, #d9efff 0 46%, #0b64c9 48% 100%);
+  color: #052d78;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  text-shadow: 1px 1px #ffffff;
+}
+
+.xp-window-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.xp-window-controls {
+  display: flex;
+  align-self: stretch;
+  margin-left: auto;
+  gap: 3px;
+}
+
+.xp-window-controls span {
+  display: grid;
+  width: 23px;
+  place-items: center;
+  border: 1px solid #ffffff;
+  border-radius: 3px;
+  background: linear-gradient(#5aaafa, #0b5cb9);
+  box-shadow: inset 1px 1px rgb(255 255 255 / 45%);
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.xp-window-controls span:last-child { background: linear-gradient(#ee8d75, #c13a1e); }
+
+.xp-menubar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-height: 27px;
+  padding: 0 7px;
+  background: #ece9d8;
+  border-block: 1px solid #f9f9f3;
+  box-shadow: inset 0 -1px #aca899;
+}
+
+.xp-menubar a,
+.xp-menu-button {
+  padding: 4px 10px;
+  color: #111111;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.xp-menubar a:hover,
+.xp-menubar a:focus-visible,
+.xp-menu-button:hover,
+.xp-menu-button:focus-visible {
+  color: #ffffff;
+  background: #316ac5;
+  outline: none;
+}
+
+.xp-menu-button {
+  border: 0;
+  background: transparent;
+}
+
+.xp-toolbar {
+  display: flex;
+  align-items: stretch;
+  min-height: 56px;
+  padding: 4px 8px;
+  gap: 2px;
+  overflow-x: auto;
+  background: linear-gradient(#f7f6ef, #dedccc);
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid #aaa89a;
+}
+
+.xp-tool-button {
+  display: inline-flex;
+  min-width: 58px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  color: #1a1a1a;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.xp-tool-button:hover,
+.xp-tool-button:focus-visible {
+  border-color: #7f9db9;
+  background: #d8e8ff;
+  outline: 1px dotted #1f4f9d;
+  outline-offset: -3px;
+}
+
+.xp-tool-icon {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  color: #0755b4;
+  border: 1px solid #7f9db9;
+  background: linear-gradient(#ffffff, #cee3ff);
+  font-family: Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  text-shadow: 1px 1px #ffffff;
+}
+
+.xp-cart-button { position: relative; }
+.xp-cart-count {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  display: grid;
+  min-width: 15px;
+  height: 15px;
+  place-items: center;
+  border: 1px solid #ffffff;
+  border-radius: 50%;
+  background: #c00000;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+}
+
+.xp-addressbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 33px;
+  gap: 5px;
+  padding: 4px 7px;
+  background: #ece9d8;
+  border-bottom: 1px solid #9e9b8d;
+}
+
+.xp-address-label { font-size: 12px; }
+.xp-address-value {
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px 6px;
+  border: 1px solid #7f9db9;
+  background: #ffffff;
+  box-shadow: inset 1px 1px 1px rgb(0 0 0 / 15%);
+  color: #111111;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xp-go-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 23px;
+  padding: 2px 10px;
+  border: 1px solid #7f9db9;
+  border-radius: 2px;
+  background: linear-gradient(#ffffff, #d8e2f1);
+  box-shadow: inset 1px 1px #ffffff, inset -1px -1px #b2b2aa;
+  color: #111111;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.xp-go-button:hover,
+.xp-go-button:focus-visible {
+  background: #d8e8ff;
+  outline: 1px dotted #0a55b8;
+  outline-offset: -4px;
+}
+
+.xp-search-panel,
+.xp-mega-menu {
+  background: #ece9d8;
+  border-bottom: 1px solid #7f9db9;
+}
+
+.xp-search-form {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 1500px;
+  padding: 8px 18px;
+  margin: 0 auto;
+}
+
+.xp-search-form input {
+  min-width: 0;
+  flex: 1;
+  min-height: 25px;
+  padding: 2px 6px;
+  border: 1px solid #7f9db9;
+  background: #ffffff;
+  color: #111111;
+  box-shadow: inset 1px 1px 2px rgb(0 0 0 / 18%);
+  outline: none;
+}
+
+.xp-search-form input:focus { outline: 1px solid #0a55b8; }
+
+.tema-xp .xp-mega-menu > .shell { padding-block: 15px; }
+.tema-xp .xp-mega-menu a { color: #000080; }
+
+/* Páginas e catálogo. */
+.tema-xp .xp-page,
+.tema-xp .xp-catalogue {
+  background: #ffffff;
+}
+
+/*
+ * Painel de conteúdo.
+ *
+ * Duas formas, porque os templates não têm todos a mesma estrutura: no
+ * catálogo o `.shell` é filho do `.xp-page`, mas nas páginas de conta,
+ * carrinho e checkout o `.shell` É o próprio `.xp-page`. Cobrir as duas aqui
+ * evita reestruturar vinte templates só para satisfazer um selector.
+ */
+.tema-xp .xp-catalogue > .shell > .reveal,
+.tema-xp .xp-page > .shell > .reveal,
+.tema-xp .xp-page.shell > .reveal {
+  padding: 12px;
+  border: 1px solid #d3d3c8;
+  background: linear-gradient(#ffffff, #f8f8f4);
+}
+
+.tema-xp .xp-catalogue-tools {
+  padding: 8px !important;
+  border: 1px solid #aca899 !important;
+  background: #ece9d8;
+  box-shadow: inset 1px 1px #ffffff;
+}
+
+.tema-xp .xp-catalogue aside > div {
+  padding: 10px;
+  border: 1px solid #aca899;
+  background: #f4f3eb;
+  box-shadow: inset 1px 1px #ffffff;
+}
+
+.tema-xp .xp-catalogue aside .eyebrow {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #c9c7b9;
+  color: #000080;
+}
+
+.tema-xp .xp-product-grid {
+  gap: 12px !important;
+}
+
+@media (min-width: 1280px) {
+  .tema-xp .xp-product-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+}
+
+.xp-product-card {
+  padding: 3px;
+  border: 1px solid #ffffff;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #d3d3c8;
+}
+
+.xp-product-card:hover {
+  border-color: #0a55b8;
+  box-shadow: 0 0 0 1px #0a55b8;
+}
+
+.xp-product-photo {
+  border: 1px solid #7f9db9;
+  background: #d7d6cc;
+}
+
+.xp-product-card .group-hover\:scale-\[1\.04\]:hover,
+.xp-product-card .group-hover\:scale-105:hover { transform: none; }
+
+.xp-product-badges { left: 4px; top: 4px; gap: 3px; }
+.xp-product-badges span {
+  padding: 2px 4px !important;
+  border: 1px solid #7f9db9;
+  box-shadow: 1px 1px 0 rgb(0 0 0 / 15%);
+  font-family: var(--font-sans);
+  font-size: 9px !important;
+  letter-spacing: 0 !important;
+}
+
+.xp-product-caption {
+  min-height: 52px;
+  margin: 5px 2px 2px;
+  gap: 1px !important;
+  font-family: var(--font-sans);
+}
+
+.xp-product-caption h3 {
+  margin-top: 1px !important;
+  font-family: var(--font-sans);
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: 0 !important;
+  line-height: 1.2;
+  text-transform: none;
+}
+
+.xp-product-caption p { font-size: 10px !important; letter-spacing: 0 !important; text-transform: none !important; }
+.xp-product-price { color: #000080; font-family: Georgia, "Times New Roman", serif; font-size: 14px !important; }
+
+.tema-xp .xp-home-hero {
+  height: min(46vw, 440px);
+  min-height: 300px;
+  border-bottom: 1px solid #7f9db9;
+}
+
+.tema-xp .xp-home-hero h1 { max-width: 20ch; font-size: clamp(1.8rem, 4vw, 3rem) !important; line-height: 1.04; }
+.tema-xp .xp-home-hero .shell { padding-bottom: 30px; }
+
+/* Controlos com relevo, próximos dos formulários da referência. */
+.tema-xp input:not([type="range"]),
+.tema-xp select,
+.tema-xp textarea {
+  border-color: #7f9db9;
+  border-radius: 0;
+  box-shadow: inset 1px 1px 2px rgb(0 0 0 / 18%);
+}
+
+.tema-xp button:not(.xp-tool-button):not(.xp-menu-button),
+.tema-xp input[type="submit"] {
+  border-radius: 0;
+  box-shadow: inset 1px 1px #ffffff, inset -1px -1px #a9a79c;
+}
+
+.tema-xp button:not(.xp-tool-button):not(.xp-menu-button):active,
+.tema-xp input[type="submit"]:active {
+  box-shadow: inset 1px 1px #8e8c83, inset -1px -1px #ffffff;
+}
+
+.tema-xp .xp-statusbar {
+  max-width: 1600px;
+  margin: 0 auto;
+  border: 1px solid #5279b5;
+  border-top: 0;
+  background: #ece9d8 !important;
+  color: #111111 !important;
+  box-shadow: inset 1px 1px #ffffff;
+}
+
+.tema-xp .xp-statusbar .shell { padding-block: 22px; }
+.tema-xp .xp-statusbar h2 { font-size: 18px !important; }
+.tema-xp .xp-statusbar p,
+.tema-xp .xp-statusbar a { color: #202020 !important; font-family: var(--font-sans); }
+.tema-xp .xp-statusbar .font-display { font-size: clamp(2.2rem, 7vw, 5rem) !important; color: #0a55b8 !important; opacity: 0.16; }
+
+@media (max-width: 767px) {
+  body.tema-xp { background: #ffffff; }
+  .tema-xp main,
+  .xp-browser,
+  .tema-xp .xp-statusbar { border-inline: 0; }
+  .xp-window-controls { display: none; }
+  .xp-menubar { overflow-x: auto; }
+  .xp-menubar a { padding-inline: 8px; font-size: 12px; }
+  .xp-toolbar { min-height: 48px; }
+  .xp-tool-button { min-width: 49px; padding-inline: 5px; }
+  .xp-address-label { display: none; }
+  .xp-addressbar { grid-template-columns: minmax(0, 1fr) auto; }
+  .tema-xp .xp-product-grid { gap: 8px !important; }
+  .xp-product-caption { min-height: 58px; }
+  .tema-xp .xp-home-hero { height: 310px; min-height: 0; }
+}
+
+/*
+ * Modo escuro do tema XP.
+ *
+ * A paleta escura (.dark .tema-xp) já existia, mas as superfícies de conteúdo
+ * tinham o branco escrito à mão em vez de virem de uma variável. Resultado: em
+ * modo escuro o texto passava a quase branco e os painéis continuavam brancos —
+ * texto branco sobre fundo branco, ilegível.
+ *
+ * Aqui as mesmas superfícies ganham o equivalente escuro. A cromagem da janela
+ * (barra de título azul, menus, barra de ferramentas) fica como está: é a
+ * assinatura visual do XP e continua legível sobre escuro.
+ */
+.dark .tema-xp .xp-page,
+.dark .tema-xp .xp-catalogue {
+  background: var(--background);
+}
+
+.dark .tema-xp .xp-catalogue > .shell > .reveal,
+.dark .tema-xp .xp-page > .shell > .reveal,
+.dark .tema-xp .xp-page.shell > .reveal {
+  border-color: var(--line);
+  background: linear-gradient(var(--card), var(--surface));
+}
+
+.dark .tema-xp .xp-product-card {
+  border-color: var(--line);
+  background: var(--card);
+}
+
+.dark .tema-xp .xp-catalogue aside > div,
+.dark .tema-xp .xp-catalogue-tools {
+  border-color: var(--line) !important;
+  background: var(--surface);
+}
+
+/* Campos de texto: o branco fixo cegava o cursor e o texto escrito. */
+.dark .tema-xp .xp-address-value,
+.dark .tema-xp .xp-search-form input {
+  border-color: var(--line);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* A barra de estado tinha o texto fixado a quase-preto. */
+.dark .tema-xp .xp-statusbar p,
+.dark .tema-xp .xp-statusbar a { color: var(--foreground) !important; }
+
+@media (max-width: 767px) {
+  .dark body.tema-xp { background: var(--background); }
+}
+
+/*
+ * Botões principais.
+ *
+ * Já havia o bevel XP, mas a face continuava preta (`bg-foreground`), o que
+ * dava uma lousa preta com relevo — nada que exista no Luna. Aqui a face passa
+ * a ser a beje do XP, com o texto escuro que ela exige.
+ *
+ * Restringido a `button`/`a`/`input` para não apanhar elementos decorativos que
+ * também usam `bg-foreground` (pontos, badges, barras de gráfico).
+ */
+.tema-xp button.bg-foreground,
+.tema-xp a.bg-foreground,
+.tema-xp input[type="submit"].bg-foreground {
+  border: 1px solid #7f7d72 !important;
+  background: linear-gradient(#fbfbf7, #dedbc8) !important;
+  color: #111111 !important;
+  letter-spacing: 0.12em !important;
+}
+
+.tema-xp button.bg-foreground:hover,
+.tema-xp a.bg-foreground:hover,
+.tema-xp input[type="submit"].bg-foreground:hover {
+  border-color: #2b5fa8 !important;
+  background: linear-gradient(#eaf3ff, #bcd7f5) !important;
+  color: #0a2c5c !important;
+}
+
+/* Desactivado (esgotado) tem de continuar a ler-se como indisponível. */
+.tema-xp button.bg-foreground:disabled,
+.tema-xp button.bg-foreground[disabled] {
+  border-color: #b8b6ab !important;
+  background: #eceae0 !important;
+  color: #8a887e !important;
+}
+
+.dark .tema-xp button.bg-foreground,
+.dark .tema-xp a.bg-foreground,
+.dark .tema-xp input[type="submit"].bg-foreground {
+  border-color: var(--line) !important;
+  background: linear-gradient(#3d537d, #2a3d5e) !important;
+  color: var(--foreground) !important;
+}
+
+/*
+ * Azul-marinho do IE em modo escuro.
+ *
+ * #000080 sobre o cartão escuro dá contraste 1.30 — o preço, que é a
+ * informação comercialmente mais importante do cartão, ficava ilegível.
+ * O mínimo acessível é 4.5. Aqui passa para o azul claro do XP, que sobre
+ * #243553 fica acima de 7.
+ */
+.dark .tema-xp .xp-product-price,
+.dark .tema-xp .xp-mega-menu a,
+.dark .tema-xp .xp-catalogue aside a {
+  color: #a9c9f5;
+}

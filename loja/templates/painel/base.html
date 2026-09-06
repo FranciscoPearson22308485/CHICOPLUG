@@ -1,4 +1,11 @@
 {% extends "base.html" %}
+{% block classe_body %}tema-painel{% endblock %}
+{% comment %}
+  Sem a moldura de browser retro nem o rodapé da loja: o painel tem a sua
+  própria barra lateral e não deve vestir-se de vitrina.
+{% endcomment %}
+{% block navegacao %}{% endblock %}
+{% block rodape %}{% endblock %}
 {% block titulo %}{{ titulo_painel|default:"Painel" }} — CHICOPLUG{% endblock %}
 {% block robots %}<meta name="robots" content="noindex, nofollow" />{% endblock %}
 

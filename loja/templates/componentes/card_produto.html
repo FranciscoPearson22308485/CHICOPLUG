@@ -1,7 +1,7 @@
 {# Card de produto. Marca acima do nome — é o que se procura primeiro numa boutique multimarca. #}
-<article class="group relative">
+<article class="xp-product-card group relative">
   <a href="{{ p.get_absolute_url }}" class="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-    <div class="relative overflow-hidden bg-surface">
+    <div class="xp-product-photo relative overflow-hidden bg-surface">
       {% if p.imagem_principal %}
         <img src="{{ p.imagem_principal }}" alt="{{ p.marca.nome }} {{ p.nome }}" width="1000" height="1250"
              loading="{% if prioridade %}eager{% else %}lazy{% endif %}"
@@ -14,7 +14,7 @@
         <div class="aspect-[4/5] w-full bg-surface"></div>
       {% endif %}
 
-      <div class="absolute left-3 top-3 flex flex-col items-start gap-2">
+      <div class="xp-product-badges absolute left-3 top-3 flex flex-col items-start gap-2">
         {% if p.etiqueta %}
           <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] {% if not p.tem_stock %}bg-muted text-muted-foreground{% else %}bg-foreground text-background{% endif %}">{{ p.etiqueta }}</span>
         {% endif %}
@@ -30,14 +30,14 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+    <div class="xp-product-caption mt-4 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div class="min-w-0">
         <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{{ p.marca.nome }}</p>
         <h3 class="mt-1.5 text-[13px] font-semibold tracking-normal normal-case sm:truncate">{{ p.nome }}</h3>
         <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{{ p.categoria.nome }}</p>
       </div>
       <div class="shrink-0 sm:text-right">
-        <p class="text-[13px] font-semibold">{{ p.preco|kz }}</p>
+        <p class="xp-product-price text-[13px] font-semibold">{{ p.preco|kz }}</p>
         {% if p.preco_anterior %}<p class="text-[11px] text-muted-foreground line-through">{{ p.preco_anterior|kz }}</p>{% endif %}
       </div>
     </div>

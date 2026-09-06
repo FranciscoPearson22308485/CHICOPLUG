@@ -23,7 +23,7 @@
     <title>{% block titulo %}CHICOPLUG — Streetwear Premium | Nike, Jordan, Corteiz e mais{% endblock %}</title>
     <meta name="description" content="{% block descricao %}As melhores marcas de streetwear num só lugar. Nike, Jordan, Adidas, Corteiz, Represent e Essentials, com entrega em todo o Angola.{% endblock %}" />
     <meta name="author" content="CHICOPLUG" />
-    <meta name="theme-color" content="#111111" />
+    <meta name="theme-color" content="#0058c9" />
     <meta name="apple-mobile-web-app-title" content="CHICOPLUG" />
 
     <meta property="og:site_name" content="CHICOPLUG" />
@@ -57,15 +57,20 @@
     {% block dados_estruturados %}{% endblock %}
   </head>
 
-  <body>
-    {% if not esconder_navegacao %}{% include "componentes/navbar.html" %}{% endif %}
+  <body class="{% block classe_body %}tema-xp{% endblock %}">
+    {% comment %}
+      Em bloco para o painel a poder desligar: a navegação da loja é agora a
+      moldura de browser retro, que não tem lugar numa ferramenta
+      administrativa — e o painel já tem a sua própria barra lateral.
+    {% endcomment %}
+    {% block navegacao %}{% if not esconder_navegacao %}{% include "componentes/navbar.html" %}{% endif %}{% endblock %}
 
     <main class="min-h-screen">
       {% include "componentes/mensagens.html" %}
       {% block conteudo %}{% endblock %}
     </main>
 
-    {% if not esconder_navegacao %}{% include "componentes/footer.html" %}{% endif %}
+    {% block rodape %}{% if not esconder_navegacao %}{% include "componentes/footer.html" %}{% endif %}{% endblock %}
 
     {# Recipiente das notificações; o JS injecta aqui. #}
     <div id="avisos" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3" aria-live="polite"></div>
