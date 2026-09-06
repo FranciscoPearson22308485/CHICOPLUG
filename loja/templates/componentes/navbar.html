@@ -15,19 +15,53 @@
     <a href="{% url 'catalogo:contacto' %}">Contacto</a>
   </nav>
 
+  {% comment %}
+    Ícones desenhados em SVG, não glifos unicode: os glifos herdam a fonte do
+    sistema e mudam de forma e peso conforme a máquina — é o que faz uma
+    barra de ferramentas parecer improvisada.
+  {% endcomment %}
   <div class="xp-toolbar">
-    <a href="{% url 'catalogo:home' %}" class="xp-tool-button" title="Página inicial"><span class="xp-tool-icon">⌂</span><span>Início</span></a>
-    <a href="{% url 'catalogo:shop' %}" class="xp-tool-button"><span class="xp-tool-icon">◀</span><span>Loja</span></a>
-    <button data-abrir-pesquisa class="xp-tool-button" type="button"><span class="xp-tool-icon">⌕</span><span>Pesquisar</span></button>
-    <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}" class="xp-tool-button"><span class="xp-tool-icon">♙</span><span>{% if user.is_authenticated %}Conta{% else %}Entrar{% endif %}</span></a>
-    <a href="{% url 'encomendas:carrinho' %}" class="xp-tool-button xp-cart-button"><span class="xp-tool-icon">▣</span><span>Carrinho</span><b data-contador-carrinho class="{% if not carrinho_total_pecas %}hidden {% endif %}xp-cart-count">{{ carrinho_total_pecas }}</b></a>
-    <button data-tema aria-label="Alternar tema" class="xp-tool-button xp-theme-button" type="button"><span data-icone-lua>◐</span><span data-icone-sol class="hidden">☀</span><span class="max-sm:hidden">Tema</span></button>
+    <a href="{% url 'catalogo:home' %}" class="xp-tool-button" title="Página inicial">
+      <span class="xp-tool-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 7l6-4.5L14 7v6.5h-4V10H6v3.5H2z" stroke-linejoin="round"/></svg></span>
+      <span>Início</span>
+    </a>
+    <a href="{% url 'catalogo:shop' %}" class="xp-tool-button">
+      <span class="xp-tool-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.2" width="4.6" height="4.6"/><rect x="9.2" y="2.2" width="4.6" height="4.6"/><rect x="2.2" y="9.2" width="4.6" height="4.6"/><rect x="9.2" y="9.2" width="4.6" height="4.6"/></svg></span>
+      <span>Loja</span>
+    </a>
+    <button data-abrir-pesquisa class="xp-tool-button" type="button">
+      <span class="xp-tool-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2L14 14" stroke-linecap="round"/></svg></span>
+      <span>Pesquisar</span>
+    </button>
+    <a href="{% if user.is_authenticated %}{% url 'contas:perfil' %}{% else %}{% url 'contas:entrar' %}{% endif %}" class="xp-tool-button">
+      <span class="xp-tool-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="5.4" r="2.8"/><path d="M2.6 13.6c.7-2.7 2.8-4 5.4-4s4.7 1.3 5.4 4" stroke-linecap="round"/></svg></span>
+      <span>{% if user.is_authenticated %}Conta{% else %}Entrar{% endif %}</span>
+    </a>
+    <a href="{% url 'encomendas:carrinho' %}" class="xp-tool-button xp-cart-button">
+      <span class="xp-tool-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3.4 2.2h9.2l-.9 9.4a1 1 0 01-1 .9H5.3a1 1 0 01-1-.9z" stroke-linejoin="round"/><path d="M5.9 4.8c0 1.3.9 2.2 2.1 2.2s2.1-.9 2.1-2.2" stroke-linecap="round"/></svg></span>
+      <span>Carrinho</span>
+      <b data-contador-carrinho class="{% if not carrinho_total_pecas %}hidden {% endif %}xp-cart-count">{{ carrinho_total_pecas }}</b>
+    </a>
+    {% comment %}
+      Ícone e etiqueta partilham os mesmos ganchos (`data-icone-*`), por isso o
+      JavaScript que já existe troca os dois de uma vez, sem código novo.
+    {% endcomment %}
+    <button data-tema aria-label="Alternar entre modo noite e modo dia" class="xp-tool-button xp-theme-button" type="button">
+      <span class="xp-tool-icon" data-icone-lua><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 016.4 2.8a5.6 5.6 0 106.8 6.8z" stroke-linejoin="round"/></svg></span>
+      <span class="xp-tool-icon hidden" data-icone-sol><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="2.9"/><path d="M8 1.4v1.6M8 13v1.6M1.4 8h1.6M13 8h1.6M3.3 3.3l1.1 1.1M11.6 11.6l1.1 1.1M12.7 3.3l-1.1 1.1M4.4 11.6l-1.1 1.1" stroke-linecap="round"/></svg></span>
+      <span data-icone-lua class="max-sm:hidden">Noite</span>
+      <span data-icone-sol class="hidden max-sm:hidden">Dia</span>
+    </button>
   </div>
 
+  {% comment %}
+    Caminho de arquivo em vez de URL de browser: a loja apresenta-se como um
+    sistema que se percorre, não como um site que se visita.
+  {% endcomment %}
   <div class="xp-addressbar">
-    <span class="xp-address-label">Endereço</span>
-    <span class="xp-address-value">https://www.chicoplug.ao{{ request.path }}</span>
-    <a href="{% url 'catalogo:shop' %}" class="xp-go-button">Ir</a>
+    <span class="xp-address-label">Caminho</span>
+    <span class="xp-address-value">chicoplug://arquivo{{ request.path }}</span>
+    <a href="{% url 'catalogo:shop' %}" class="xp-go-button">Abrir</a>
   </div>
 
   <div data-painel-pesquisa class="xp-search-panel hidden">

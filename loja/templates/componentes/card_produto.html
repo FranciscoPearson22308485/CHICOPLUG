@@ -41,6 +41,15 @@
         {% if p.preco_anterior %}<p class="text-[11px] text-muted-foreground line-through">{{ p.preco_anterior|kz }}</p>{% endif %}
       </div>
     </div>
+
+    {% comment %}
+      Rodapé de ficha. A referência é a chave real da peça na base de dados,
+      não um número decorativo: procurá-la no painel encontra esta peça.
+    {% endcomment %}
+    <p class="xp-product-ref">
+      <span>REF CP-{{ p.pk|stringformat:"04d" }}</span>
+      <span>{% if p.tem_stock %}EM ARQUIVO{% else %}ESGOTADO{% endif %}</span>
+    </p>
   </a>
 
   <button type="button" data-favorito="{{ p.pk }}"

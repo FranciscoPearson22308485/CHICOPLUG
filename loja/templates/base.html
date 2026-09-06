@@ -45,7 +45,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Silkscreen:wght@400;700&display=swap"
     />
     <link rel="stylesheet" href="{% static 'css/loja.css' %}" />
 
@@ -70,7 +70,22 @@
       {% block conteudo %}{% endblock %}
     </main>
 
-    {% block rodape %}{% if not esconder_navegacao %}{% include "componentes/footer.html" %}{% endif %}{% endblock %}
+    {% block rodape %}
+      {% if not esconder_navegacao %}
+        {% include "componentes/footer.html" %}
+        {% comment %}
+          Linha de estado do sistema. Fecha a janela por baixo do rodapé e é
+          onde a loja assina: onde está, o que é, desde quando. Detalhe
+          discreto e permanente, não um enfeite.
+        {% endcomment %}
+        <div class="sis-statusline" role="contentinfo" aria-label="Estado do sistema">
+          <span class="sis-online">Online</span>
+          <span>Luanda / Angola</span>
+          <span class="max-sm:hidden">CHICOPLUG SYSTEM v1.0</span>
+          <span>Est. 2026</span>
+        </div>
+      {% endif %}
+    {% endblock %}
 
     {# Recipiente das notificações; o JS injecta aqui. #}
     <div id="avisos" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3" aria-live="polite"></div>
